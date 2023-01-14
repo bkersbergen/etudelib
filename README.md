@@ -27,7 +27,7 @@ pip install -e .
 
 
 
-## training 
+## Training 
 
 Training a model on a specific dataset and category requires further configuration. Each model has its own configuration file, config.yaml , which contains data, model and training configurable parameters. To train a specific model on a specific dataset and category, the config file is to be provided:
 `python tools/train.py --config <path/to/model/config.yaml>`
@@ -62,5 +62,14 @@ python tools/hpo/sweep.py \
     --model_config path_to_config.yaml
     --sweep_config tools/hpo/sweep.yaml
 ```
+
+
+#### Troubleshooting install
+Mac M1 grpcio install error: "Python.h: No such file or directory"
+This can be solved by pip install special fixed builds
+```bash
+pip install https://github.com/pietrodn/grpcio-mac-arm-build/releases/download/1.51.1/grpcio-1.51.1-cp39-cp39-macosx_11_0_arm64.whl
+```
+
 
 
