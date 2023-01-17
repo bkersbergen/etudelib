@@ -1,6 +1,7 @@
 # ETUDELIB
 
-A framework for inference lantency of session based recommendation models
+Etude - A Framework for Measuring the Inference Latency of Session-Based Recommendation Models at Scale
+
 
 ## Introduction
 Etudelib is a deep learning library that aims to enable algorithm designers and data scientists to evaluate the computational performance of their models, without forcing them to go through a difficult deployment cycle
