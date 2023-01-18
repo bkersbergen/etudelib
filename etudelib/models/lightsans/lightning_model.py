@@ -49,18 +49,26 @@ class LightSANs(pl.LightningModule, ABC):
         return torch.optim.Adam(self.parameters(), lr=0.02)
 
 
-class LightSANsLightning(LightSANs):
+class LightSANsLightning(LightSANsModel):
     """PL Lightning Module for the LightSANs model.
         Args:
             hparams (Union[DictConfig, ListConfig]): Model params
         """
 
     def __init__(self, hparams: Union[DictConfig, ListConfig]) -> None:
-        super().__init__(
-            input_size=hparams.model.input_size,
-            backbone=hparams.model.backbone,
-            gamma_c=hparams.model.gamma_c,
-            gamma_d=hparams.model.gamma_d,
-        )
+        super().__init__(n_layers=hparams.model.n_layers,
+                         n_heads=hparams.model.n_heads,
+                         k_interests=hparams.model.k_interests,
+                         hidden_size=hparams.model.hidden_size,
+                         inner_size=hparams.model.inner_size,
+                         hidden_dropout_prob=hparams.model.hidden_dropout_prob,
+                         attn_dropout_prob=hparams.model.attn_dropout_prob,
+                         hidden_act=hparams.model.hidden_act,
+                         layer_norm_eps=hparams.model.layer_norm_eps,
+                         initializer_range=hparams.model.initializer_range,
+                         max_seq_length=hparams.model.max_seq_length,
+                         n_items=hparams.model.n_items,
+                         topk=hparams.model.topk,
+                         )
         self.hparams: Union[DictConfig, ListConfig]  # type: ignore
         self.save_hyperparameters(hparams)
