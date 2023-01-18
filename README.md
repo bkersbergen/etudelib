@@ -30,7 +30,7 @@ pip install -e .
 ## Training 
 
 Training a model on a specific dataset and category requires further configuration. Each model has its own configuration file, config.yaml , which contains data, model and training configurable parameters. To train a specific model on a specific dataset and category, the config file is to be provided:
-`python tools/train.py --config <path/to/model/config.yaml>`
+`python etudelib/tools/train.py --config <path/to/model/config.yaml>`
 
 Alternatively, a model name could also be provided as an argument, where the scripts automatically find the corresponding config file.
 where the current available models are:

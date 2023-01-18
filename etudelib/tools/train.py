@@ -1,12 +1,85 @@
+
 import logging
 import warnings
+import os
 from argparse import ArgumentParser, Namespace
 
-from pytorch_lightning import Trainer, seed_everything
+from omegaconf import OmegaConf, DictConfig, ListConfig
+from importlib import import_module
 
-from etudelib.config import get_configurable_parameters
-from etudelib.data import get_datamodule
-from etudelib.data.utils import TestSplitMode
-from etudelib.models import get_model
-from etudelib.utils.callbacks import LoadModelCallback, get_callbacks
-from etudelib.utils.loggers import configure_logger, get_experiment_logger
+from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.callbacks import TQDMProgressBar
+from torch.utils.data import DataLoader
+
+from etudelib.data.synthetic.synthetic import SyntheticDataset
+from etudelib.utils.loggers import configure_logger
+
+logger = logging.getLogger("etudelib")
+
+
+def get_args() -> Namespace:
+    """Get command line arguments.
+
+    Returns:
+        Namespace: List of arguments.
+    """
+    parser = ArgumentParser()
+    parser.add_argument("--model", type=str, default="lightsans", help="Name of the algorithm to train/test")
+    parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
+    parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
+
+    args = parser.parse_args()
+    return args
+
+def train():
+    """Train an session based recommendation based on a provided configuration file."""
+    args = get_args()
+    configure_logger(level=args.log_level)
+
+    if args.log_level == "ERROR":
+        warnings.filterwarnings("ignore")
+
+    config_path = os.path.join(f"etudelib/models/{args.model}/config.yaml".lower())
+    config = OmegaConf.load(config_path)
+
+    if config.get('project', {}).get("seed") is not None:
+        seed_everything(config.project.seed)
+
+    qty_interactions = 10000
+    n_items = 5000
+    max_seq_length = 43
+    qty_sessions = qty_interactions
+    batch_size = 32
+
+    config['data'] = {}
+    config['data']['n_items'] = n_items
+    config['data']['max_seq_length'] = max_seq_length
+
+    logger.info(config)
+
+    train_ds = SyntheticDataset(qty_interactions=qty_interactions,
+                                qty_sessions=qty_sessions,
+                                n_items=n_items,
+                                max_seq_length=max_seq_length)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
+    test_ds = SyntheticDataset(qty_interactions=qty_interactions,
+                               qty_sessions=qty_sessions,
+                               n_items=n_items,
+                               max_seq_length=max_seq_length)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=2, persistent_workers=True)
+
+    module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
+    model = getattr(module, f"{config.model.name}Lightning")(config)
+
+    trainer = Trainer(
+        accelerator="auto",
+        devices=None,
+        max_epochs=3,
+        callbacks=[TQDMProgressBar()],
+    )
+
+    trainer.fit(model, train_loader, test_loader)
+
+
+if __name__ == "__main__":
+    train()

@@ -22,6 +22,11 @@ def main(hparams):
                                 n_items=n_items,
                                 max_seq_length=max_seq_length)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
+    test_ds = SyntheticDataset(qty_interactions=qty_interactions,
+                                qty_sessions=qty_sessions,
+                                n_items=n_items,
+                                max_seq_length=max_seq_length)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=2, persistent_workers=True)
 
     backbone = LightSANsModel(n_layers=2,
                               n_heads=2,
@@ -47,7 +52,7 @@ def main(hparams):
         callbacks=[TQDMProgressBar()],
     )
 
-    trainer.fit(model, train_loader)
+    trainer.fit(model, train_loader, test_loader)
 
 
 if __name__ == "__main__":
