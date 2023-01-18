@@ -1,4 +1,3 @@
-
 import logging
 import warnings
 import os
@@ -31,6 +30,7 @@ def get_args() -> Namespace:
     args = parser.parse_args()
     return args
 
+
 def train():
     """Train an session based recommendation based on a provided configuration file."""
     args = get_args()
@@ -39,7 +39,7 @@ def train():
     if args.log_level == "ERROR":
         warnings.filterwarnings("ignore")
 
-    config_path = os.path.join(f"etudelib/models/{args.model}/config.yaml".lower())
+    config_path = os.path.join("../..", f"etudelib/models/{args.model}/config.yaml".lower())
     config = OmegaConf.load(config_path)
 
     if config.get('project', {}).get("seed") is not None:
@@ -62,6 +62,11 @@ def train():
                                 n_items=n_items,
                                 max_seq_length=max_seq_length)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
+    val_ds = SyntheticDataset(qty_interactions=qty_interactions,
+                              qty_sessions=qty_sessions,
+                              n_items=n_items,
+                              max_seq_length=max_seq_length)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=2, persistent_workers=True)
     test_ds = SyntheticDataset(qty_interactions=qty_interactions,
                                qty_sessions=qty_sessions,
                                n_items=n_items,
@@ -73,12 +78,15 @@ def train():
 
     trainer = Trainer(
         accelerator="auto",
-        devices=None,
+        devices=1,
         max_epochs=3,
-        callbacks=[TQDMProgressBar()],
+        callbacks=[TQDMProgressBar(refresh_rate=5)],
     )
 
-    trainer.fit(model, train_loader, test_loader)
+    trainer.fit(model, train_loader, val_loader)
+
+    trainer.test(model, test_loader)
+    trainer.save_checkpoint("../../results/lightsans.chkpoint")
 
 
 if __name__ == "__main__":

@@ -75,6 +75,9 @@ class LightSANs(pl.LightningModule, ABC):
         # self.hparams available because we called self.save_hyperparameters()
         return torch.optim.AdamW(self.parameters(), lr=self.hparams.optimizer.lr)
 
+    def get_backbone(self):
+        return self.model
+
 
 class LightSANsLightning(LightSANs):
     """Torch Lightning Module for the LightSANs model.
