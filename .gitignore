@@ -1,9 +1,19 @@
+*.dot
+.git
+.pytest_cache
+.tox
+.vscode
 .idea/
 venv/
 *.egg-info/
-
 __pycache__/
 *.py[cod]
-
 .ipynb_checkpoints/
 
+{toxworkdir}
+datasets/
+embeddings/
+lightning_logs/
+lightning_test/
+papers/
+results/

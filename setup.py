@@ -55,8 +55,8 @@ def get_required_packages(requirement_files: List[str]) -> List[str]:
             packages.
 
     Example:
-        >>> get_required_packages(requirement_files=["openvino"])
-        ['onnx>=1.8.1', 'networkx~=2.5', 'openvino-dev==2021.4.1', ...]
+        >>> get_required_packages(requirement_files=["onnx"])
+        ['onnx>=1.8.1', 'networkx~=2.5', ...]
 
     Returns:
         List[str]: List of required packages
@@ -77,17 +77,17 @@ def get_required_packages(requirement_files: List[str]) -> List[str]:
 VERSION = get_version()
 LONG_DESCRIPTION = (Path(__file__).parent / "README.md").read_text(encoding="utf8")
 INSTALL_REQUIRES = get_required_packages(requirement_files=["base"])
-# EXTRAS_REQUIRE = {
-#     "openvino": get_required_packages(requirement_files=["openvino"]),
-#     "full": get_required_packages(requirement_files=["docs", "openvino"]),
-# }
+EXTRAS_REQUIRE = {
+    "dev": get_required_packages(requirement_files=["dev"]),
+    "full": get_required_packages(requirement_files=["docs", "dev"]),
+}
 
 
 setup(
     name="etudelib",
     version=get_version(),
     author="bolcom",
-    author_email="anonymous@bol.com",
+    author_email="bkersbergen@bol.com",
     description="etude",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
@@ -98,7 +98,7 @@ setup(
     python_requires=">=3.9",
     packages=find_packages(exclude=("tests",)),
     install_requires=INSTALL_REQUIRES,
-    # extras_require=EXTRAS_REQUIRE,
+    extras_require=EXTRAS_REQUIRE,
     package_data={"": ["config.yaml"]},
     entry_points={"console_scripts": ["etudelib=etudelib.utils.cli.cli:main"]},
 )
