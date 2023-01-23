@@ -48,6 +48,7 @@ class LightSANs(pl.LightningModule, ABC):
                  max_seq_length,
                  n_items,
                  topk)
+        self.topk: int = topk
 
     def forward(self, x):
         return self.model(x)
@@ -96,8 +97,8 @@ class LightSANsLightning(LightSANs):
                          hidden_act=hparams.model.hidden_act,
                          layer_norm_eps=hparams.model.layer_norm_eps,
                          initializer_range=hparams.model.initializer_range,
-                         max_seq_length=hparams.data.max_seq_length,
-                         n_items=hparams.data.n_items,
+                         max_seq_length=hparams.dataset.max_seq_length,
+                         n_items=hparams.dataset.n_items,
                          topk=hparams.model.topk,
                          )
         self.hparams: Union[DictConfig, ListConfig]  # type: ignore

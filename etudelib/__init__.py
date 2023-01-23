@@ -1,4 +1,4 @@
-"""Etude2 library for research and benchmarking."""
+"""Etude2 library for research and benchmarker."""
 
 # Copyright (C) 2022
 # SPDX-License-Identifier: Apache-2.0

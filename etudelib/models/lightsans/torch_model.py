@@ -105,3 +105,7 @@ class LightSANsModel(nn.Module):
         gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1])
         output_tensor = output.gather(dim=1, index=gather_index)
         return output_tensor.squeeze(1)
+
+    # def topk_forward(self, item_seq, item_seq_len):
+    #     scores = self.forward(item_seq, item_seq_len)
+    #     return torch.topk(scores, self.topk)
