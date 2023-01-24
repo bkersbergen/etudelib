@@ -63,6 +63,23 @@ class RegLoss(nn.Module):
         return reg_loss
 
 
+def embLoss_fn(*embeddings, require_pow: bool = False, norm: int = 2):
+    if require_pow:
+        emb_loss = torch.zeros(1).to(embeddings[-1].device)
+        for embedding in embeddings:
+            emb_loss += torch.pow(
+                input=torch.norm(embedding, p=norm), exponent=norm
+            )
+        emb_loss /= embeddings[-1].shape[0]
+        emb_loss /= norm
+        return emb_loss
+    else:
+        emb_loss = torch.zeros(1).to(embeddings[-1].device)
+        for embedding in embeddings:
+            emb_loss += torch.norm(embedding, p=norm)
+        emb_loss /= embeddings[-1].shape[0]
+        return emb_loss
+
 class EmbLoss(nn.Module):
     """EmbLoss, regularization on embeddings"""
 
