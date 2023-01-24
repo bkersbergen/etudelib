@@ -1,15 +1,13 @@
-from abc import ABC
 import logging
-from typing import List, Optional, Tuple, Union
-from omegaconf import DictConfig, ListConfig
+from abc import ABC
+from typing import Union
 
+import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-
-from pytorch_lightning.callbacks import EarlyStopping
+from omegaconf import DictConfig, ListConfig
 from pytorch_lightning.utilities.cli import MODEL_REGISTRY
-from torch import optim
-import pytorch_lightning as pl
+
 from .torch_model import LightSANsModel
 
 logger = logging.getLogger(__name__)
@@ -31,7 +29,6 @@ class LightSANs(pl.LightningModule, ABC):
                  initializer_range: float,
                  max_seq_length: int,
                  n_items: int,
-                 topk: int,
                  ):
         super().__init__()
 
@@ -47,8 +44,7 @@ class LightSANs(pl.LightningModule, ABC):
                  initializer_range,
                  max_seq_length,
                  n_items,
-                 topk)
-        self.topk: int = topk
+                 )
 
     def forward(self, x):
         return self.model(x)
@@ -99,7 +95,6 @@ class LightSANsLightning(LightSANs):
                          initializer_range=hparams.model.initializer_range,
                          max_seq_length=hparams.dataset.max_seq_length,
                          n_items=hparams.dataset.n_items,
-                         topk=hparams.model.topk,
                          )
         self.hparams: Union[DictConfig, ListConfig]  # type: ignore
         self.save_hyperparameters(hparams)

@@ -10,7 +10,6 @@ model:
   hidden_act: gelu
   layer_norm_eps: 1e-12
   initializer_range: 0.02
-  topk: 21
 
 optimizer:
   lr: 0.02

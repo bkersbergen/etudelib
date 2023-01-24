@@ -26,7 +26,6 @@ class LightSANsModel(nn.Module):
                  initializer_range: float,
                  max_seq_length: int,
                  n_items: int,
-                 topk: int,
                  ):
         super(LightSANsModel, self).__init__()
         self.n_layers = n_layers
@@ -44,7 +43,6 @@ class LightSANsModel(nn.Module):
 
         self.max_seq_length = max_seq_length
         self.n_items = n_items
-        self.topk = topk
         # define layers and loss
         self.item_embedding = nn.Embedding(
             self.n_items, self.hidden_size, padding_idx=0
@@ -105,7 +103,3 @@ class LightSANsModel(nn.Module):
         gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1])
         output_tensor = output.gather(dim=1, index=gather_index)
         return output_tensor.squeeze(1)
-
-    # def topk_forward(self, item_seq, item_seq_len):
-    #     scores = self.forward(item_seq, item_seq_len)
-    #     return torch.topk(scores, self.topk)

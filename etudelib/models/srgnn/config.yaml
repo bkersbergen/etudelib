@@ -1,0 +1,10 @@
+model:
+  name: SRGNN
+  embedding_size: 64              # (int) The embedding size of items.
+  step: 1                         # (int) The number of layers in GNN.
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">
