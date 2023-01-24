@@ -1,0 +1,12 @@
+model:
+  name: GRU4Rec
+  num_layers: 1
+  embedding_size: 64
+  hidden_size: 128
+  dropout_prob: 0.3
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">

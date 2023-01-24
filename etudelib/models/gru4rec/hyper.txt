@@ -1,0 +1,5 @@
+learning_rate choice [0.01,0.005,0.001,0.0005,0.0001]
+num_layers choice [1, 2]
+embedding_size choice [64]
+hidden_size choice [128]
+dropout_prob choice [0.2,0.3,0.4]
