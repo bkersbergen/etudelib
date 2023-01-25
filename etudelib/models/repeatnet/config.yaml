@@ -1,0 +1,12 @@
+model:
+  name: RepeatNet
+  embedding_size: 64
+  hidden_size: 64
+  joint_train: False
+  dropout_prob: 0.5
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">

@@ -30,7 +30,7 @@ def get_args() -> Namespace:
         Namespace: List of arguments.
     """
     parser = ArgumentParser()
-    parser.add_argument("--model", type=str, default="sasrec", help="Name of the algorithm to train/test")
+    parser.add_argument("--model", type=str, default="repeatnet", help="Name of the algorithm to train/test")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
@@ -85,13 +85,14 @@ def microbenchmark():
     trainer.fit(model, train_loader)
 
     eager_model = model.get_backbone()
-    eager_path = save_eager_model(eager_model.to('cpu'), Path(projectdir))
-
-    eager_model = load_eager_model(eager_path, device='cpu')
-    print(eager_model)
 
     eager_model = TopKDecorator(eager_model, topk=21)
     eager_model.eval()
+
+    # eager_path = save_eager_model(eager_model.to('cpu'), Path(projectdir))
+
+    # eager_model = load_eager_model(eager_path, device='cpu')
+    # print(eager_model)
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
     item_seq, session_length, next_item = next(iter(benchmark_loader))
