@@ -1,0 +1,10 @@
+learning_rate choice [0.01,0.005,0.001,0.0005,0.0001]
+prototype_size choice [50,100,500,1000,2000,5000]
+interest_size choice [3,4,8,12,16]
+embedding_size choice [64]
+layer_norm_eps choice [1e-12]
+prototype_size choice [50]
+interest_size choice [3]
+tau_ratio choice [0.1]
+reg_loss_ratio choice [0.5]
+

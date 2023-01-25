@@ -55,7 +55,7 @@ def export(eager_model, model_input, export_mode: ExportMode, export_root):
             eager_model,
             model_input,
             onnx_path,
-            input_names=['item_seq', 'session_length'],  # the model's input names
+            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
             output_names=['output'],  # the model's output names
         )
         return onnx_path

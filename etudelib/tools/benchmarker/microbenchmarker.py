@@ -70,12 +70,18 @@ class MicroBenchmark:
 
     @staticmethod
     def benchmark_onnxed_predictions(ort_sess, dataloader):
+        # onnx crashes when unused input Tensors are provided to a onnx-session
+        qty_input_params = len([node.name for node in ort_sess._inputs_meta])
         gc.collect()
         result = []
-        for item_seq, session_length, next_item in iter(dataloader):
+        for item_seq, item_seq_len, next_item in iter(dataloader):
             start = timer()
-            reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, {'item_seq': item_seq.numpy(),
-                                     'session_length': np.array([session_length], dtype=np.int64)}))
+            if qty_input_params == 1:
+                key = {'item_id_list': item_seq.numpy()}
+            elif qty_input_params == 2:
+                key = {'item_id_list': item_seq.numpy(),
+                 'max_seq_length': np.array([item_seq_len.numpy()], dtype=np.int64)}
+            reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, key))
             duration = timer() - start
             result.append([duration * 1000, datetime.now()])
         df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
