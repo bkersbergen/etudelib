@@ -17,6 +17,7 @@ from tqdm import trange
 
 logger = logging.getLogger(__name__)
 
+
 class MicroBenchmark:
     def __init__(self):
         self.cpu_brand = get_cpu_info().get('brand_raw')
@@ -75,12 +76,12 @@ class MicroBenchmark:
         gc.collect()
         result = []
         for item_seq, item_seq_len, next_item in iter(dataloader):
-            start = timer()
             if qty_input_params == 1:
                 key = {'item_id_list': item_seq.numpy()}
             elif qty_input_params == 2:
                 key = {'item_id_list': item_seq.numpy(),
-                 'max_seq_length': np.array([item_seq_len.numpy()], dtype=np.int64)}
+                       'max_seq_length': np.array([item_seq_len.numpy()], dtype=np.int64)}
+            start = timer()
             reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, key))
             duration = timer() - start
             result.append([duration * 1000, datetime.now()])
@@ -94,8 +95,6 @@ class MicroBenchmark:
         seq_output = ort_sess.run(None, {'item_id_list': item_seq.numpy(),
                                          'max_seq_length': np.array([item_seq_len], dtype=np.int64)})
         return seq_output
-
-
 
     @staticmethod
     def get_item_ids(tensor):
