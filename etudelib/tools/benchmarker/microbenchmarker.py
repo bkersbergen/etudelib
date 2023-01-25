@@ -80,7 +80,7 @@ class MicroBenchmark:
                 key = {'item_id_list': item_seq.numpy()}
             elif qty_input_params == 2:
                 key = {'item_id_list': item_seq.numpy(),
-                       'max_seq_length': np.array([item_seq_len.numpy()], dtype=np.int64)}
+                       'max_seq_length': np.array(item_seq_len.numpy(), dtype=np.int64)}
             start = timer()
             reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, key))
             duration = timer() - start
