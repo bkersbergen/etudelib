@@ -1,0 +1,12 @@
+model:
+  name: NARM
+  embedding_size: 64
+  hidden_size: 128
+  n_layers: 1
+  dropout_probs: [0.25,0.5]
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">
