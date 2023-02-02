@@ -21,7 +21,7 @@ import math
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as fn
+import torch.nn.functional as F
 from torch.nn.init import normal_
 
 # from etudelib.utils import FeatureType, FeatureSource
@@ -252,11 +252,11 @@ class AttLayer(nn.Module):
 
     def forward(self, infeatures):
         att_signal = self.w(infeatures)  # [batch_size, M, att_dim]
-        att_signal = fn.relu(att_signal)  # [batch_size, M, att_dim]
+        att_signal = F.relu(att_signal)  # [batch_size, M, att_dim]
 
         att_signal = torch.mul(att_signal, self.h)  # [batch_size, M, att_dim]
         att_signal = torch.sum(att_signal, dim=2)  # [batch_size, M]
-        att_signal = fn.softmax(att_signal, dim=1)  # [batch_size, M]
+        att_signal = F.softmax(att_signal, dim=1)  # [batch_size, M]
 
         return att_signal
 
@@ -346,7 +346,7 @@ class SequenceAttLayer(nn.Module):
 
         # get the weight of each user's history list about the target item
         if self.softmax_stag:
-            output = fn.softmax(output, dim=2)  # [B, 1, T]
+            output = F.softmax(output, dim=2)  # [B, 1, T]
 
         if not self.return_seq_weight:
             output = torch.matmul(output, keys)  # [B, 1, H]
@@ -458,7 +458,7 @@ class MultiHeadAttention(nn.Module):
         # seem a bit unusual, but is taken from the original Transformer paper.
 
         attention_probs = self.attn_dropout(attention_probs)
-        context_layer = torch.matmul(attention_probs, value_layer)
+        context_layer = torch.matmul(attention_probs.to(torch.double), value_layer.to(torch.double)).to(torch.float32)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
         context_layer = context_layer.view(*new_context_layer_shape)
@@ -495,7 +495,7 @@ class FeedForward(nn.Module):
     def get_hidden_act(self, act):
         ACT2FN = {
             "gelu": self.gelu,
-            "relu": fn.relu,
+            "relu": F.relu,
             "swish": self.swish,
             "tanh": torch.tanh,
             "sigmoid": torch.sigmoid,
