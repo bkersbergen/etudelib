@@ -40,6 +40,7 @@ def export(eager_model, model_input, export_mode: ExportMode, export_root):
             :param export_mode: the format to export.
             :param export_root: the root folder of the exported model.
         """
+    Path(export_root).mkdir(parents=True, exist_ok=True)
     if export_mode == ExportMode.EAGER:
         save_eager_model(eager_model, export_root)
         raise RuntimeError('todo barrie needs to implement export_mode.EAGER')

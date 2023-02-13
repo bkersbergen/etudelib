@@ -6,7 +6,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
 from omegaconf import DictConfig, ListConfig
-from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 
 from .torch_model import GCSANModel
 from ..loss import EmbLoss, embLoss_fn
@@ -15,7 +14,6 @@ logger = logging.getLogger(__name__)
 __all__ = ["GCSAN", "GCSANLightning"]
 
 
-@MODEL_REGISTRY
 class GCSAN(pl.LightningModule, ABC):
     def __init__(self,
                  n_layers: int,

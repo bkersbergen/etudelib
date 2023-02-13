@@ -30,7 +30,7 @@ def get_args() -> Namespace:
         Namespace: List of arguments.
     """
     parser = ArgumentParser()
-    parser.add_argument("--model", type=str, default="core", help="Name of the algorithm to train/test")
+    parser.add_argument("--model", type=str, default="gcsan", help="Name of the algorithm to train/test")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
@@ -39,10 +39,10 @@ def get_args() -> Namespace:
 
 
 def microbenchmark():
-    """Microbenchmarks an session based recommendation based on a provided configuration file."""
+    """Microbenchmarks a session based recommendation based on a provided configuration file."""
     args = get_args()
     basedir = "../.."
-    projectdir = os.path.join(basedir, 'project/benchmark')
+    projectdir = Path(basedir, 'project/benchmark')
     configure_logger(level=args.log_level)
 
     if args.log_level == "ERROR":
@@ -99,16 +99,16 @@ def microbenchmark():
 
     import torch
     logger.info('eager mode {}'.format(config.model.name))
-    eager_results = MicroBenchmark.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
+    # eager_results = MicroBenchmark.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
 
     logger.info('JIT freeze mode {}'.format(config.model.name))
     model_input = (item_seq, session_length)
     jit_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
-    jit_results = MicroBenchmark.benchmark_pytorch_predictions(jit_model, benchmark_loader, 'cpu')
+    # jit_results = MicroBenchmark.benchmark_pytorch_predictions(jit_model, benchmark_loader, 'cpu')
 
     logger.info('JIT optimize mode {}'.format(config.model.name))
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-    jitopt_results = MicroBenchmark.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
+    # jitopt_results = MicroBenchmark.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
 
     logger.info('ONNX mode {}'.format(config.model.name))
     onnx_path = export(eager_model, model_input, ExportMode.ONNX, projectdir)
@@ -116,9 +116,9 @@ def microbenchmark():
     ort_sess = ort.InferenceSession(onnx_path, providers=providers)
     onnx_results = MicroBenchmark.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
 
-    logger.info(eager_results)
-    logger.info(jit_results)
-    logger.info(jitopt_results)
+    # logger.info(eager_results)
+    # logger.info(jit_results)
+    # logger.info(jitopt_results)
     logger.info(onnx_results)
 
 

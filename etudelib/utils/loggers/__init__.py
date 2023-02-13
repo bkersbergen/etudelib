@@ -5,7 +5,7 @@ from typing import Iterable, List, Union
 
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
-from pytorch_lightning.loggers import CSVLogger, LightningLoggerBase
+from pytorch_lightning.loggers import CSVLogger
 
 __all__ = [
     "configure_logger",

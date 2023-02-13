@@ -173,9 +173,9 @@ class GCSANModel(nn.Module):
     def _get_slice(self, item_seq):
         items, n_node, A, alias_inputs = [], [], [], []
         max_n_node = item_seq.size(1)
-        item_seq = item_seq.cpu().numpy()
+        item_seq_np = item_seq.cpu().numpy()
 
-        for u_input in item_seq:
+        for u_input in item_seq_np:
             node = np.unique(u_input)
             items.append(node.tolist() + (max_n_node - len(node)) * [0])
             u_A = np.zeros((max_n_node, max_n_node))
@@ -196,11 +196,11 @@ class GCSANModel(nn.Module):
 
             alias_inputs.append([np.where(node == i)[0][0] for i in u_input])
         # The relative coordinates of the item node, shape of [batch_size, max_session_len]
-        alias_inputs = torch.LongTensor(alias_inputs)
+        alias_inputs = torch.tensor(alias_inputs, dtype=torch.int64, device=item_seq.device)
         # The connecting matrix, shape of [batch_size, max_session_len, 2 * max_session_len]
-        A = torch.FloatTensor(np.array(A))
+        A = torch.tensor(np.array(A), dtype=torch.float32, device=item_seq.device)
         # The unique item nodes, shape of [batch_size, max_session_len]
-        items = torch.LongTensor(items)
+        items = torch.tensor(items, dtype=torch.int64, device=item_seq.device)
 
         return alias_inputs, A, items
 
@@ -236,13 +236,13 @@ class GCSANModel(nn.Module):
 
     def get_attention_mask(self, item_seq, bidirectional=False):
         """Generate left-to-right uni-directional or bidirectional attention mask for multi-head attention."""
-        attention_mask = item_seq != 0
+        attention_mask = (item_seq != 0).double()
         extended_attention_mask = attention_mask.unsqueeze(1).unsqueeze(2)  # torch.bool
         if not bidirectional:
             extended_attention_mask = torch.tril(
                 extended_attention_mask.expand((-1, -1, item_seq.size(-1), -1))
             )
-        extended_attention_mask = torch.where(extended_attention_mask, 0.0, -10000.0)
+        extended_attention_mask = torch.where(extended_attention_mask == 0.0, -10000.0, extended_attention_mask)
         return extended_attention_mask
 
 
