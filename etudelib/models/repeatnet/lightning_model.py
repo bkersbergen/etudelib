@@ -6,7 +6,6 @@ import pytorch_lightning as pl
 import torch
 from torch.nn import functional as F
 from omegaconf import DictConfig, ListConfig
-from pytorch_lightning.utilities.cli import MODEL_REGISTRY
 
 from .torch_model import RepeatNetModel
 
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 __all__ = ["RepeatNet", "RepeatNetLightning"]
 
 
-@MODEL_REGISTRY
 class RepeatNet(pl.LightningModule, ABC):
     def __init__(self, embedding_size: int,
                  hidden_size: int,
