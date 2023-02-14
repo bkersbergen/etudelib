@@ -66,8 +66,8 @@ class SINEModel(nn.Module):
         self.apply(self._init_weights)
 
     def _init_weight(self, shape):
-        mat = np.random.normal(0, self.initializer_range, shape)
-        return torch.tensor(mat, dtype=torch.float32)
+        mat = torch.tensor(np.random.normal(0, self.initializer_range, shape), dtype=torch.float)
+        return nn.Parameter(mat, requires_grad=True)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Embedding):
