@@ -157,8 +157,8 @@ class SRGNNModel(nn.Module):
         mask = item_seq.gt(0)
         items, n_node, A, alias_inputs = [], [], [], []
         max_n_node = item_seq.size(1)
-        item_seq = item_seq.cpu().numpy()
-        for u_input in item_seq:
+        item_seq_np = item_seq.cpu().numpy()
+        for u_input in item_seq_np:
             node = np.unique(u_input)
             items.append(node.tolist() + (max_n_node - len(node)) * [0])
             u_A = np.zeros((max_n_node, max_n_node))
@@ -182,11 +182,11 @@ class SRGNNModel(nn.Module):
 
             alias_inputs.append([np.where(node == i)[0][0] for i in u_input])
         # The relative coordinates of the item node, shape of [batch_size, max_session_len]
-        alias_inputs = torch.LongTensor(alias_inputs)
+        alias_inputs = torch.tensor(alias_inputs, dtype=torch.int64, device=item_seq.device)
         # The connecting matrix, shape of [batch_size, max_session_len, 2 * max_session_len]
-        A = torch.FloatTensor(np.array(A))
+        A = torch.tensor(np.array(A), dtype=torch.float32, device=item_seq.device)
         # The unique item nodes, shape of [batch_size, max_session_len]
-        items = torch.LongTensor(items)
+        items = torch.tensor(items, dtype=torch.int64, device=item_seq.device)
 
         return alias_inputs, A, items, mask
 
