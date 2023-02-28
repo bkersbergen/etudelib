@@ -288,10 +288,7 @@ class Explore_Recommendation_Decoder(nn.Module):
         batch_size, b_len = b_map.size()
         if max_index is None:
             max_index = b_map.max() + 1
-        if torch.cuda.is_available():
-            b_map_ = torch.FloatTensor(batch_size, b_len, max_index).fill_(0)
-        else:
-            b_map_ = torch.zeros(batch_size, b_len, max_index)
-        b_map_.scatter_(2, b_map.unsqueeze(2), 1.0)
+        b_map_ = torch.zeros(batch_size, b_len, max_index, device=b_map.device)
+        b_map_.scatter_(2, b_map.unsqueeze(2).long(), 1.0)
         b_map_.requires_grad = False
         return b_map_
