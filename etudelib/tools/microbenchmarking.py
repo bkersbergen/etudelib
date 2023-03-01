@@ -88,7 +88,13 @@ def microbenchmark():
 
     eager_model = TopKDecorator(eager_model, topk=21)
     eager_model.eval()
-
+    params = []
+    for name, parameter in eager_model.named_parameters():
+        if parameter.requires_grad:
+            # param = parameter.numel()
+            params.append([name, parameter.shape])
+    for idx, layer in enumerate(params):
+        print(idx, layer)
     # eager_path = save_eager_model(eager_model.to('cpu'), Path(projectdir))
 
     # eager_model = load_eager_model(eager_path, device='cpu')
