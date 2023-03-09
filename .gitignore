@@ -18,3 +18,4 @@ lightning_test/
 papers/
 results/
 projects/
+*.csv
