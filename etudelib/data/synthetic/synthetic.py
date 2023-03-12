@@ -24,23 +24,40 @@ class SyntheticDataset(Dataset):
         item_f_new = distribution.rvs(*item_fit_params, size=n_items)
         item_f_new = np.ceil(item_f_new).astype(int)
         self.item_p_new = item_f_new / np.sum(item_f_new)
+        self.current_session = torch.tensor([])
+        self.next_item = torch.tensor(0)
+        self.current_session_idx = 1000000
 
     def __len__(self):
         return self.qty_interactions
 
     # This returns given an index the i-th sample and label
     def __getitem__(self, _idx):
-        session_length = self.rng.choice(len(self.session_p_new),
-                                         size=1,
-                                         replace=True,
-                                         p=self.session_p_new)
+        if self.current_session_idx < len(self.current_session):
+            evolving_items = self.current_session[self.current_session_idx]
+            self.current_session_idx += 1
+            session_length = self.current_session_idx
+        else:
+            session_length = self.rng.choice(len(self.session_p_new),
+                                             size=1,
+                                             replace=True,
+                                             p=self.session_p_new)[0]
 
-        item_seq = self.rng.choice(len(self.item_p_new),
-                                   size=session_length + 1,
-                                   replace=True,
-                                   p=self.item_p_new)
+            item_seq = self.rng.choice(len(self.item_p_new),
+                                       size=session_length + 1,
+                                       replace=True,
+                                       p=self.item_p_new)
 
-        next_item = item_seq[-1]  # next item is the last item generated list
-        evolving_items = np.array(item_seq[:-1])
-        evolving_items.resize(self.max_seq_length, refcheck=False)
-        return torch.tensor(evolving_items), torch.tensor(session_length), torch.tensor(next_item)
+            self.next_item =  torch.tensor(item_seq[-1])  # last item in the generated list
+            all_items = np.array(item_seq[:-1])  # all but the last item
+            all_items.resize(self.max_seq_length, refcheck=False)
+            all_items = torch.tensor(all_items)
+
+            self.current_session = torch.tril(all_items.expand(len(all_items), len(all_items)), diagonal=0)
+            self.current_session = self.current_session[:session_length]
+            self.current_session_idx = 0
+            evolving_items = self.current_session[self.current_session_idx]
+            self.current_session_idx += 1
+            session_length = self.current_session_idx
+
+        return evolving_items, session_length, self.next_item
