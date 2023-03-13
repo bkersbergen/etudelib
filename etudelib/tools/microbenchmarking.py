@@ -30,9 +30,9 @@ def get_args() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument("--model", type=str, default="sine", help="Name of the model. E.g. core or gcsan etc")
-    parser.add_argument("--qty_interactions", type=int, default=1000, help="Number of user-item interactions")
-    parser.add_argument("--C", type=int, default=50_000, help="Number of distinct items in catalog")
-    parser.add_argument("--t", type=int, default=50, help="Number of timesteps or sequence length of a session as input for a model")
+    parser.add_argument("--qty_interactions", type=int, default=1000, help="Sythetic dataset: Number of user-item interactions to generate.")
+    parser.add_argument("--C", type=int, default=50_000, help="Sythetic dataset: Number of distinct items in catalog to generate.")
+    parser.add_argument("--t", type=int, default=50, help="Sythetic dataset: Number of timesteps or sequence length of a session as input for a model")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
