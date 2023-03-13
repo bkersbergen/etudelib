@@ -106,18 +106,27 @@ def microbenchmark():
     item_seq, session_length, next_item = next(iter(benchmark_loader))
 
     import torch
-    logger.info('eager mode {}'.format(config.model.name))
 
     bench = MicroBenchmark()
     eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
+    logger.info('eager_model_cpu {}'.format(config.model.name))
     results = {'modelname': config.model.name,
                'runtime': 'eager_model_cpu',
                'latency_df': eager_cpu_results,
                }
     bench.write_results(results, projectdir / 'results')
 
-    logger.info('JIT freeze mode {}'.format(config.model.name))
+    if torch.cuda.is_available():
+        logger.info('eager_model_cuda {}'.format(config.model.name))
+        eager_gpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'eager_model_cuda',
+                   'latency_df': eager_gpu_results,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
     model_input = (item_seq, session_length)
+    logger.info('jit_model_cpu {}'.format(config.model.name))
     jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
     jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cpu')
     results = {'modelname': config.model.name,
@@ -126,8 +135,17 @@ def microbenchmark():
                }
     bench.write_results(results, projectdir / 'results')
 
-    logger.info('JIT optimize mode {}'.format(config.model.name))
+    if torch.cuda.is_available():
+        logger.info('jit_model_cuda {}'.format(config.model.name))
+        jit_cuda_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'jit_model_cuda',
+                   'latency_df': jit_cuda_results,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
+    logger.info('jitopt_model_cpu {}'.format(config.model.name))
     jitopt_cpu_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
     results = {'modelname': config.model.name,
                'runtime': 'jitopt_model_cpu',
@@ -135,16 +153,36 @@ def microbenchmark():
                }
     bench.write_results(results, projectdir / 'results')
 
-    logger.info('ONNX mode {}'.format(config.model.name))
+    if torch.cuda.is_available():
+        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cuda')
+        logger.info('jitopt_model_cuda {}'.format(config.model.name))
+        results = {'modelname': config.model.name,
+                   'runtime': 'jitopt_model_cuda',
+                   'latency_df': jitopt_cuda_results,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
     onnx_path = export(eager_model, model_input, ExportMode.ONNX, projectdir)
     providers = ['CPUExecutionProvider']
     ort_sess = ort.InferenceSession(onnx_path, providers=providers)
+    logger.info('onnx_model_cpu {}'.format(config.model.name))
     onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'onnx_model_cpu',
                'latency_df': onnx_cpu_results,
                }
     bench.write_results(results, projectdir / 'results')
+
+    if torch.cuda.is_available():
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        ort_sess = ort.InferenceSession(onnx_path, providers=providers)
+        logger.info('onnx_model_cuda {}'.format(config.model.name))
+        onnx_cuda_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
+        results = {'modelname': config.model.name,
+                   'runtime': 'onnx_model_cuda',
+                   'latency_df': onnx_cuda_results,
+                   }
+        bench.write_results(results, projectdir / 'results')
 
 
 if __name__ == "__main__":
