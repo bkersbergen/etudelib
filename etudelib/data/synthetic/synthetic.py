@@ -42,6 +42,7 @@ class SyntheticDataset(Dataset):
                                              size=1,
                                              replace=True,
                                              p=self.session_p_new)[0]
+            session_length = max(session_length, 1)
 
             item_seq = self.rng.choice(len(self.item_p_new),
                                        size=session_length + 1,
