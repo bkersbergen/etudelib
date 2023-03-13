@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import warnings
 import os
@@ -59,6 +60,7 @@ def microbenchmark():
     max_seq_length = 43
     qty_sessions = qty_interactions
     batch_size = 32
+    device_type = 'cuda'
 
     config['dataset'] = {}
     config['dataset']['n_items'] = n_items
@@ -76,7 +78,7 @@ def microbenchmark():
     model = getattr(module, f"{config.model.name}Lightning")(config)
 
     trainer = Trainer(
-        accelerator="auto",
+        accelerator='gpu' if device_type == 'cuda' else 'cpu',
         devices=1,
         max_epochs=1,
         callbacks=[TQDMProgressBar(refresh_rate=5)],
@@ -105,27 +107,44 @@ def microbenchmark():
 
     import torch
     logger.info('eager mode {}'.format(config.model.name))
-    # eager_results = MicroBenchmark.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
+
+    bench = MicroBenchmark()
+    eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
+    results = {'modelname': config.model.name,
+               'runtime': 'eager_model_cpu',
+               'latency_df': eager_cpu_results,
+               }
+    bench.write_results(results, projectdir / 'results')
 
     logger.info('JIT freeze mode {}'.format(config.model.name))
     model_input = (item_seq, session_length)
-    jit_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
-    # jit_results = MicroBenchmark.benchmark_pytorch_predictions(jit_model, benchmark_loader, 'cpu')
+    jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
+    jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cpu')
+    results = {'modelname': config.model.name,
+               'runtime': 'jit_model_cpu',
+               'latency_df': jit_cpu_results,
+               }
+    bench.write_results(results, projectdir / 'results')
 
     logger.info('JIT optimize mode {}'.format(config.model.name))
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-    # jitopt_results = MicroBenchmark.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
+    jitopt_cpu_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
+    results = {'modelname': config.model.name,
+               'runtime': 'jitopt_model_cpu',
+               'latency_df': jitopt_cpu_results,
+               }
+    bench.write_results(results, projectdir / 'results')
 
     logger.info('ONNX mode {}'.format(config.model.name))
     onnx_path = export(eager_model, model_input, ExportMode.ONNX, projectdir)
     providers = ['CPUExecutionProvider']
     ort_sess = ort.InferenceSession(onnx_path, providers=providers)
-    onnx_results = MicroBenchmark.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
-
-    # logger.info(eager_results)
-    # logger.info(jit_results)
-    # logger.info(jitopt_results)
-    logger.info(onnx_results)
+    onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
+    results = {'modelname': config.model.name,
+               'runtime': 'onnx_model_cpu',
+               'latency_df': onnx_cpu_results,
+               }
+    bench.write_results(results, projectdir / 'results')
 
 
 if __name__ == "__main__":

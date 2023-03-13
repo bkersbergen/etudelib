@@ -24,17 +24,17 @@ class MicroBenchmark:
         self.platform = platform.platform()
         self.python_version = platform.python_version()
         self.pt_model_file = None
-        logger.info('Platform:', self.platform)
-        logger.info('Python:', self.python_version)
-        logger.info('CPU detected:', self.cpu_brand)
+        logger.info('Platform:' + self.platform)
+        logger.info('Python:' + self.python_version)
+        logger.info('CPU detected:' + self.cpu_brand)
         if torch.cuda.is_available():
             self.gpu_brand = torch.cuda.get_device_name(0)
-            logger.info('GPU detected:', self.gpu_brand)
+            logger.info('GPU detected:' + self.gpu_brand)
         elif torch.backends.mps.is_available():
             self.mps_brand = "mps"
-            logger.info('MPS detected:', self.mps_brand)
+            logger.info('MPS detected:' + self.mps_brand)
         else:
-            logger.info('GPU detected: None. Disabling GPU tests')
+            logger.info('No accelerator detected. CPU only tests')
 
     @staticmethod
     def printresults(t_records):
@@ -47,11 +47,10 @@ class MicroBenchmark:
         m_secs = round((sum(t_records) / len(t_records)) * 10 ** 3, 2)
         logger.info(f"Average Time Taken: {m_secs}ms")
 
-    @staticmethod
-    def benchmark_pytorch_predictions(pytorch_model, dataloader, device_type):
-        gc.collect()
+    def benchmark_pytorch_predictions(self, pytorch_model, dataloader, device_type):
         result = []
         pytorch_model.eval()
+        gc.collect()
         with torch.no_grad():
             for item_seq, session_length, next_item in iter(dataloader):
                 start = timer()
@@ -61,13 +60,13 @@ class MicroBenchmark:
         df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
         return df
 
-    @staticmethod
-    def pytorch_predict(pytorch_model: Module, item_seq: Tensor, item_seq_len: Tensor, device_type: str):
-        # Tensors and model must be on same device
-        # pytorch_model can be eager-cpu, eager-gpu, script-cpu, script-gpu, trace-cpu, trace-gpu
-        # Tensor 'item_seq' and 'item_seq_len' must be on the same device.
-        seq_output = pytorch_model.topk_forward(item_seq, item_seq_len)
-        return seq_output
+    # @staticmethod
+    # def pytorch_predict(pytorch_model: Module, item_seq: Tensor, item_seq_len: Tensor, device_type: str):
+    #     # Tensors and model must be on same device
+    #     # pytorch_model can be eager-cpu, eager-gpu, script-cpu, script-gpu, trace-cpu, trace-gpu
+    #     # Tensor 'item_seq' and 'item_seq_len' must be on the same device.
+    #     seq_output = pytorch_model.topk_forward(item_seq, item_seq_len)
+    #     return seq_output
 
     @staticmethod
     def benchmark_onnxed_predictions(ort_sess, dataloader):
@@ -110,13 +109,17 @@ class MicroBenchmark:
         else:
             return tensor.detach().cpu().numpy()
 
-    @staticmethod
-    def write_results(results, result_path):
+    def write_results(self, results, result_path):
+        results['benchmark'] = 'single threaded microbenchmark'
+        results['device'] = self.cpu_brand
+        results['platform'] = self.platform
+        results['python_version'] = self.python_version
+        results['dt'] = datetime.now()
         mandatory_keys = {'modelname',
                           'benchmark',
                           'runtime',
                           'latency_df',
-                          'interaction_data',
+                          # 'interaction_data',
                           'device',
                           'platform',
                           'python_version',
