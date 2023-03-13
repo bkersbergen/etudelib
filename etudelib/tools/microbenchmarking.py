@@ -29,7 +29,10 @@ def get_args() -> Namespace:
         Namespace: List of arguments.
     """
     parser = ArgumentParser()
-    parser.add_argument("--model", type=str, default="sine", help="Name of the algorithm to train/test")
+    parser.add_argument("--model", type=str, default="sine", help="Name of the model. E.g. core or gcsan etc")
+    parser.add_argument("--qty_interactions", type=int, default=1000, help="Number of user-item interactions")
+    parser.add_argument("--C", type=int, default=50_000, help="Number of distinct items in catalog")
+    parser.add_argument("--t", type=int, default=50, help="Number of timesteps or sequence length of a session as input for a model")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
@@ -52,23 +55,20 @@ def microbenchmark(args):
     if config.get('project', {}).get("seed") is not None:
         seed_everything(config.project.seed)
 
-    qty_interactions = 1000
-    n_items = 50000
-    max_seq_length = 43
-    qty_sessions = qty_interactions
+    qty_sessions = args.qty_interactions
     batch_size = 32
     device_type = 'cuda'
 
     config['dataset'] = {}
-    config['dataset']['n_items'] = n_items
-    config['dataset']['max_seq_length'] = max_seq_length
+    config['dataset']['n_items'] = args.C
+    config['dataset']['max_seq_length'] = args.t
 
     logger.info(config)
 
-    train_ds = SyntheticDataset(qty_interactions=qty_interactions,
+    train_ds = SyntheticDataset(qty_interactions=args.qty_interactions,
                                 qty_sessions=qty_sessions,
-                                n_items=n_items,
-                                max_seq_length=max_seq_length)
+                                n_items=args.C,
+                                max_seq_length=args.t)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
 
     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
@@ -184,6 +184,10 @@ def microbenchmark(args):
 
 if __name__ == "__main__":
     args = get_args()
+    args.qty_interactions = 1000
+    args.C = 50000
+    args.t = 43
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp']:
         args.model = model_name
         microbenchmark(args)
+        break

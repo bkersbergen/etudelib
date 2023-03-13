@@ -119,7 +119,6 @@ class MicroBenchmark:
                           'benchmark',
                           'runtime',
                           'latency_df',
-                          # 'interaction_data',
                           'device',
                           'platform',
                           'python_version',
