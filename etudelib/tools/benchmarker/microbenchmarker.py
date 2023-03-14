@@ -123,6 +123,8 @@ class MicroBenchmark:
                           'platform',
                           'python_version',
                           'dt',
+                          'C',
+                          't',
                           }
         for key in mandatory_keys:
             if key not in results.keys():

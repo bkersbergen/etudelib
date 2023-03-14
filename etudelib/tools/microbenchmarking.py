@@ -110,6 +110,8 @@ def microbenchmark(args):
     results = {'modelname': config.model.name,
                'runtime': 'eager_model_cpu',
                'latency_df': eager_cpu_results,
+               'C': args.C,
+               't': args.t,
                }
     bench.write_results(results, projectdir / 'results')
 
@@ -119,6 +121,8 @@ def microbenchmark(args):
         results = {'modelname': config.model.name,
                    'runtime': 'eager_model_cuda',
                    'latency_df': eager_gpu_results,
+                   'C': args.C,
+                   't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
 
@@ -129,6 +133,8 @@ def microbenchmark(args):
     results = {'modelname': config.model.name,
                'runtime': 'jit_model_cpu',
                'latency_df': jit_cpu_results,
+               'C': args.C,
+               't': args.t,
                }
     bench.write_results(results, projectdir / 'results')
 
@@ -138,6 +144,8 @@ def microbenchmark(args):
         results = {'modelname': config.model.name,
                    'runtime': 'jit_model_cuda',
                    'latency_df': jit_cuda_results,
+                   'C': args.C,
+                   't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
 
@@ -147,6 +155,8 @@ def microbenchmark(args):
     results = {'modelname': config.model.name,
                'runtime': 'jitopt_model_cpu',
                'latency_df': jitopt_cpu_results,
+               'C': args.C,
+               't': args.t,
                }
     bench.write_results(results, projectdir / 'results')
 
@@ -156,6 +166,8 @@ def microbenchmark(args):
         results = {'modelname': config.model.name,
                    'runtime': 'jitopt_model_cuda',
                    'latency_df': jitopt_cuda_results,
+                   'C': args.C,
+                   't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
 
@@ -167,6 +179,8 @@ def microbenchmark(args):
     results = {'modelname': config.model.name,
                'runtime': 'onnx_model_cpu',
                'latency_df': onnx_cpu_results,
+               'C': args.C,
+               't': args.t,
                }
     bench.write_results(results, projectdir / 'results')
 
@@ -178,13 +192,15 @@ def microbenchmark(args):
         results = {'modelname': config.model.name,
                    'runtime': 'onnx_model_cuda',
                    'latency_df': onnx_cuda_results,
+                   'C': args.C,
+                   't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
 
 
 if __name__ == "__main__":
     args = get_args()
-    args.qty_interactions = 1000
+    args.qty_interactions = 2000
     args.C = 50000
     args.t = 43
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp']:
