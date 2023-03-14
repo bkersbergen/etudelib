@@ -200,10 +200,12 @@ def microbenchmark(args):
 
 if __name__ == "__main__":
     args = get_args()
-    args.qty_interactions = 2000
-    args.C = 50000
-    args.t = 43
-    for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp']:
-        args.model = model_name
-        microbenchmark(args)
+    args.qty_interactions = 10_000
+    args.t = 50
+    for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
+                       'stamp']:
+        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
+            args.C = C
+            args.model = model_name
+            microbenchmark(args)
         break

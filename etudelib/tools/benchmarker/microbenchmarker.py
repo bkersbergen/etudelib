@@ -130,7 +130,7 @@ class MicroBenchmark:
             if key not in results.keys():
                 raise Exception("field: '{}' is missing in results".format(key))
 
-        output_file = '{}/{}_{}_results.pickle'.format(result_path, results['modelname'], results['runtime'])
+        output_file = '{}/{}_{}_{}_{}_results.pickle'.format(result_path, results['modelname'], results['runtime'], results['C'], results['t'])
         os.makedirs(result_path, exist_ok=True)
         with open(output_file, 'wb') as handle:
             pickle.dump(results, handle)
