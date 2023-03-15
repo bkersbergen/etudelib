@@ -7,6 +7,7 @@ from pathlib import Path
 from omegaconf import OmegaConf
 from importlib import import_module
 
+import torch
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
@@ -30,9 +31,12 @@ def get_args() -> Namespace:
     """
     parser = ArgumentParser()
     parser.add_argument("--model", type=str, default="sine", help="Name of the model. E.g. core or gcsan etc")
-    parser.add_argument("--qty_interactions", type=int, default=1000, help="Sythetic dataset: Number of user-item interactions to generate.")
-    parser.add_argument("--C", type=int, default=50_000, help="Sythetic dataset: Number of distinct items in catalog to generate.")
-    parser.add_argument("--t", type=int, default=50, help="Sythetic dataset: Number of timesteps or sequence length of a session as input for a model")
+    parser.add_argument("--qty_interactions", type=int, default=1000,
+                        help="Sythetic dataset: Number of user-item interactions to generate.")
+    parser.add_argument("--C", type=int, default=50_000,
+                        help="Sythetic dataset: Number of distinct items in catalog to generate.")
+    parser.add_argument("--t", type=int, default=50,
+                        help="Sythetic dataset: Number of timesteps or sequence length of a session as input for a model")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
@@ -101,23 +105,23 @@ def microbenchmark(args):
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
     item_seq, session_length, next_item = next(iter(benchmark_loader))
-
-    import torch
+    model_input = (item_seq, session_length)
+    model_path = export(eager_model, model_input, ExportMode.EAGER, projectdir)
 
     bench = MicroBenchmark()
-    eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cpu')
-    logger.info('{} eager_model_cpu'.format(config.model.name))
-    results = {'modelname': config.model.name,
-               'runtime': 'eager_model_cpu',
-               'latency_df': eager_cpu_results,
-               'C': args.C,
-               't': args.t,
-               }
-    bench.write_results(results, projectdir / 'results')
+    # logger.info('{} C:{} t:{} eager cpu'.format(config.model.name, args.C, args.t))
+    # eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model_path, benchmark_loader, 'cpu')
+    # results = {'modelname': config.model.name,
+    #            'runtime': 'eager_model_cpu',
+    #            'latency_df': eager_cpu_results,
+    #            'C': args.C,
+    #            't': args.t,
+    #            }
+    # bench.write_results(results, projectdir / 'results')
 
     if torch.cuda.is_available():
-        logger.info('{} eager_model_cuda'.format(config.model.name))
-        eager_gpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader, 'cuda')
+        logger.info('{} C:{} t:{} eager cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_results = bench.benchmark_pytorch_predictions(model_path, benchmark_loader, 'cuda')
         results = {'modelname': config.model.name,
                    'runtime': 'eager_model_cuda',
                    'latency_df': eager_gpu_results,
@@ -126,8 +130,7 @@ def microbenchmark(args):
                    }
         bench.write_results(results, projectdir / 'results')
 
-    model_input = (item_seq, session_length)
-    logger.info('{} jit_model_cpu'.format(config.model.name))
+    logger.info('{} C:{} t:{} jit cpu'.format(config.model.name, args.C, args.t))
     jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
     jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cpu')
     results = {'modelname': config.model.name,
@@ -139,7 +142,7 @@ def microbenchmark(args):
     bench.write_results(results, projectdir / 'results')
 
     if torch.cuda.is_available():
-        logger.info('{} jit_model_cuda'.format(config.model.name))
+        logger.info('{} C:{} t:{} jit cuda'.format(config.model.name, args.C, args.t))
         jit_cuda_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cuda')
         results = {'modelname': config.model.name,
                    'runtime': 'jit_model_cuda',
@@ -149,8 +152,8 @@ def microbenchmark(args):
                    }
         bench.write_results(results, projectdir / 'results')
 
+    logger.info('{} C:{} t:{} jitopt cpu'.format(config.model.name, args.C, args.t))
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-    logger.info('{} jitopt_model_cpu'.format(config.model.name))
     jitopt_cpu_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
     results = {'modelname': config.model.name,
                'runtime': 'jitopt_model_cpu',
@@ -161,8 +164,8 @@ def microbenchmark(args):
     bench.write_results(results, projectdir / 'results')
 
     if torch.cuda.is_available():
+        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
         jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cuda')
-        logger.info('{} jitopt_model_cuda'.format(config.model.name))
         results = {'modelname': config.model.name,
                    'runtime': 'jitopt_model_cuda',
                    'latency_df': jitopt_cuda_results,
@@ -174,7 +177,7 @@ def microbenchmark(args):
     onnx_path = export(eager_model, model_input, ExportMode.ONNX, projectdir)
     providers = ['CPUExecutionProvider']
     ort_sess = ort.InferenceSession(onnx_path, providers=providers)
-    logger.info('{} onnx_model_cpu'.format(config.model.name))
+    logger.info('{} C:{} t:{} onnx cpu'.format(config.model.name, args.C, args.t))
     onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'onnx_model_cpu',
@@ -187,7 +190,7 @@ def microbenchmark(args):
     if torch.cuda.is_available():
         providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
         ort_sess = ort.InferenceSession(onnx_path, providers=providers)
-        logger.info('{} onnx_model_cuda'.format(config.model.name))
+        logger.info('{} C:{} t:{} onnx cuda'.format(config.model.name, args.C, args.t))
         onnx_cuda_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
         results = {'modelname': config.model.name,
                    'runtime': 'onnx_model_cuda',
@@ -204,7 +207,8 @@ if __name__ == "__main__":
     args.t = 50
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
                        'stamp']:
-        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
+        # for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
+        for C in [1_000]:
             args.C = C
             args.model = model_name
             microbenchmark(args)
