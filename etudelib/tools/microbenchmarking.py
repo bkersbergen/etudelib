@@ -97,11 +97,7 @@ def microbenchmark(args):
             # param = parameter.numel()
             params.append([name, parameter.shape])
     for idx, layer in enumerate(params):
-        print(idx, layer)
-    # eager_path = save_eager_model(eager_model.to('cpu'), Path(projectdir))
-
-    # eager_model = load_eager_model(eager_path, device='cpu')
-    # print(eager_model)
+        logger.info(f"{idx} {layer}")
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
     item_seq, session_length, next_item = next(iter(benchmark_loader))
@@ -111,9 +107,9 @@ def microbenchmark(args):
 
     bench = MicroBenchmark()
     logger.info('-----------------------------------------------------------------------------------------------')
-    logger.info('BENCHMARK '+config.model.name+' ON CPU: ' + bench.cpu_brand)
+    logger.info(f'BENCHMARK {config.model.name} ON CPU: ${bench.cpu_brand}')
 
-    logger.info('{} C:{} t:{} eager cpu'.format(config.model.name, args.C, args.t))
+    logger.info(f'{config.model.name} C:{args.C} t:{args.t} eager cpu')
     eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'eager_model_cpu',
@@ -123,8 +119,7 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
-
-    logger.info('{} C:{} t:{} jit cpu'.format(config.model.name, args.C, args.t))
+    logger.info(f"{config.model.name} C:{args.C} t:{args.t} jit cpu")
     eager_model = load_eager_model(eager_model_path, device='cpu')
     jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
     jit_model_path = save_jit_model(jit_cpu_model, projectdir)
@@ -138,7 +133,7 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
-    logger.info('{} C:{} t:{} jitopt cpu'.format(config.model.name, args.C, args.t))
+    logger.info(f"{config.model.name} C:{args.C} t:{args.t} jitopt cpu")
     eager_model = load_eager_model(eager_model_path, device='cpu')
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
     jit_model_path = save_jit_model(jitopt_model, projectdir)
@@ -152,9 +147,9 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
+    logger.info(f"{config.model.name} C:{args.C} t:{args.t} onnx cpu")
     onnx_model_path = save_onnx_model(eager_model, projectdir, model_input)
     ort_sess = load_onnx_session(onnx_model_path, 'cpu')
-    logger.info('{} C:{} t:{} onnx cpu'.format(config.model.name, args.C, args.t))
     onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'onnx_model_cpu',
@@ -164,11 +159,10 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
-
     if torch.cuda.is_available():
         logger.info('-----------------------------------------------------------------------------------------------')
         logger.info('BENCHMARK '+config.model.name+' ON GPU: ' + bench.gpu_brand)
-        logger.info('{} C:{} t:{} eager cuda'.format(config.model.name, args.C, args.t))
+        logger.info(f"{config.model.name} C:{args.C} t:{args.t} eager cuda")
         eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
         eager_gpu_results = bench.benchmark_pytorch_predictions(eager_gpu_model, benchmark_loader, device='cuda')
         results = {'modelname': config.model.name,
@@ -180,12 +174,15 @@ def microbenchmark(args):
         bench.write_results(results, projectdir / 'results')
         logger.info('Removing model from GPU')
         eager_gpu_model.to('cpu')
+        torch.cuda.empty_cache()
+        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
 
-        logger.info('{} C:{} t:{} jit cuda'.format(config.model.name, args.C, args.t))
+        logger.info(f"{config.model.name} C:{args.C} t:{args.t} jit cuda")
         eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
         jit_gpu_model = torch.jit.freeze(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
         eager_gpu_model.to('cpu')
         jit_model_path = save_jit_model(jit_gpu_model, projectdir)
+        jit_gpu_model.to('cpu')
         jit_gpu_model = load_jit_model(jit_model_path, device='cuda')
         jitopt_cuda_results = bench.benchmark_pytorch_predictions(jit_gpu_model, benchmark_loader, 'cuda')
         results = {'modelname': config.model.name,
@@ -195,27 +192,16 @@ def microbenchmark(args):
                    't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
+        jit_gpu_model.to('cpu')
+        torch.cuda.empty_cache()
+        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
 
-        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
-        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
-        jit_gpu_model = torch.jit.freeze(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
-        eager_gpu_model.to('cpu')
-        jit_model_path = save_jit_model(jit_gpu_model, projectdir)
-        jit_gpu_model = load_jit_model(jit_model_path, device='cuda')
-        jit_cuda_results = bench.benchmark_pytorch_predictions(jit_gpu_model, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'jit_model_cuda',
-                   'latency_df': jit_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-
-        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
+        logger.info(f"{config.model.name} C:{args.C} t:{args.t} jitopt cuda")
         eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
         jitopt_gpu_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
         eager_gpu_model.to('cpu')
         jit_model_path = save_jit_model(jitopt_gpu_model, projectdir)
+        jitopt_gpu_model.to('cpu')
         jitopt_gpu_model = load_jit_model(jit_model_path, device='cuda')
         jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_gpu_model, benchmark_loader, 'cuda')
         results = {'modelname': config.model.name,
@@ -225,8 +211,10 @@ def microbenchmark(args):
                    't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
+        jitopt_gpu_model.to('cpu')
+        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
 
-        logger.info('{} C:{} t:{} ONNX cuda'.format(config.model.name, args.C, args.t))
+        logger.info(f"{config.model.name} C:{args.C} t:{args.t} onnx cuda")
         eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
         onnx_model_path = save_onnx_model(eager_gpu_model, projectdir, (model_input[0].to('cuda'), model_input[1].to('cuda')))
         eager_gpu_model.to('cpu')
@@ -238,20 +226,22 @@ def microbenchmark(args):
                    'C': args.C,
                    't': args.t,
                    }
+        ort_sess.set_providers(['CPUExecutionProvider'])
+        torch.cuda.empty_cache()
         bench.write_results(results, projectdir / 'results')
+        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
 
 
 
 
 if __name__ == "__main__":
     args = get_args()
-    args.qty_interactions = 10_000
-    args.t = 50
+    args.qty_interactions = 50_000
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
                        'stamp']:
-        # for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000]:
-        for C in [1_000]:
+        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 50_000_000]:
             args.C = C
             args.model = model_name
-            microbenchmark(args)
-        break
+            for t in [50]:
+                args.t = t
+                microbenchmark(args)

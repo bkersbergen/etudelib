@@ -4,16 +4,12 @@ import pickle
 import platform
 from datetime import datetime
 from timeit import default_timer as timer
-from typing import Optional, Union
 import logging
 
 import numpy as np
 import pandas as pd
 import torch
 from cpuinfo import get_cpu_info
-from torch import Tensor, device
-from torch.nn import Module
-from tqdm import trange
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +31,7 @@ class MicroBenchmark:
             logger.info('MPS detected:' + self.mps_brand)
         else:
             logger.info('No accelerator detected. CPU only tests')
+        self.min_duration_secs = 1  # 60 + 60  # warmup needed was 40 secs for windows
 
     @staticmethod
     def printresults(t_records):
@@ -52,13 +49,22 @@ class MicroBenchmark:
         model.eval()
         gc.collect()
         with torch.no_grad():
-            for item_seq, session_length, next_item in iter(dataloader):
+            test_start = timer()
+            iterator = iter(dataloader)
+            while timer() - test_start < self.min_duration_secs:
+                try:
+                    item_seq, session_length, next_item = next(iterator)
+                except StopIteration:
+                    iterator = iter(dataloader)
+                    item_seq, session_length, next_item = next(iterator)
                 item_seq = item_seq.to(device)
                 session_length = session_length.to(device)
                 start = timer()
                 reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
                 duration = timer() - start
                 result.append([duration * 1000, datetime.now()])
+            torch.cuda.empty_cache()
+        logger.info(f"Benchmark ran for {int(timer() - test_start)} secs")
         df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
         return df
 
@@ -70,23 +76,30 @@ class MicroBenchmark:
     #     seq_output = pytorch_model.topk_forward(item_seq, item_seq_len)
     #     return seq_output
 
-    @staticmethod
-    def benchmark_onnxed_predictions(ort_sess, dataloader):
+    def benchmark_onnxed_predictions(self, ort_sess, dataloader):
         # onnx crashes when unused input Tensors are provided to a onnx-session
         input_params = set([node.name for node in ort_sess._inputs_meta])
         gc.collect()
         result = []
-        for item_seq, item_seq_len, next_item in iter(dataloader):
+        test_start = timer()
+        iterator = iter(dataloader)
+        while timer() - test_start < self.min_duration_secs:
+            try:
+                item_seq, session_length, next_item = next(iterator)
+            except StopIteration:
+                iterator = iter(dataloader)
+                item_seq, session_length, next_item = next(iterator)
             key = {}
             for onnx_param in input_params:
                 if onnx_param == 'item_id_list':
                     key[onnx_param] = item_seq.numpy()
                 elif onnx_param == 'max_seq_length':
-                    key[onnx_param] = np.array(item_seq_len.numpy(), dtype=np.int64)
+                    key[onnx_param] = np.array(session_length.numpy(), dtype=np.int64)
             start = timer()
             reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, key))
             duration = timer() - start
             result.append([duration * 1000, datetime.now()])
+        logger.info(f"Benchmark ran for {int(timer() - test_start)} secs")
         df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
         return df
 
