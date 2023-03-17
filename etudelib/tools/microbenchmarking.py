@@ -13,7 +13,7 @@ from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
 
 from etudelib.data.synthetic.synthetic import SyntheticDataset
-from etudelib.deploy.export import export, ExportMode
+from etudelib.deploy.export import *
 from etudelib.models.topkdecorator import TopKDecorator
 from etudelib.tools.benchmarker.microbenchmarker import MicroBenchmark
 from etudelib.utils.loggers import configure_logger
@@ -85,7 +85,7 @@ def microbenchmark(args):
         callbacks=[TQDMProgressBar(refresh_rate=5)],
     )
 
-    trainer.fit(model, train_loader)
+    # trainer.fit(model, train_loader)
 
     eager_model = model.get_backbone()
 
@@ -106,33 +106,30 @@ def microbenchmark(args):
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
     item_seq, session_length, next_item = next(iter(benchmark_loader))
     model_input = (item_seq, session_length)
-    model_path = export(eager_model, model_input, ExportMode.EAGER, projectdir)
+    eager_model_path = save_eager_model(eager_model, projectdir)
+    eager_model = load_eager_model(eager_model_path, device='cpu')
 
     bench = MicroBenchmark()
-    # logger.info('{} C:{} t:{} eager cpu'.format(config.model.name, args.C, args.t))
-    # eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model_path, benchmark_loader, 'cpu')
-    # results = {'modelname': config.model.name,
-    #            'runtime': 'eager_model_cpu',
-    #            'latency_df': eager_cpu_results,
-    #            'C': args.C,
-    #            't': args.t,
-    #            }
-    # bench.write_results(results, projectdir / 'results')
+    logger.info('-----------------------------------------------------------------------------------------------')
+    logger.info('BENCHMARK '+config.model.name+' ON CPU: ' + bench.cpu_brand)
 
-    if torch.cuda.is_available():
-        logger.info('{} C:{} t:{} eager cuda'.format(config.model.name, args.C, args.t))
-        eager_gpu_results = bench.benchmark_pytorch_predictions(model_path, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'eager_model_cuda',
-                   'latency_df': eager_gpu_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
+    logger.info('{} C:{} t:{} eager cpu'.format(config.model.name, args.C, args.t))
+    eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader)
+    results = {'modelname': config.model.name,
+               'runtime': 'eager_model_cpu',
+               'latency_df': eager_cpu_results,
+               'C': args.C,
+               't': args.t,
+               }
+    bench.write_results(results, projectdir / 'results')
+
 
     logger.info('{} C:{} t:{} jit cpu'.format(config.model.name, args.C, args.t))
+    eager_model = load_eager_model(eager_model_path, device='cpu')
     jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
-    jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cpu')
+    jit_model_path = save_jit_model(jit_cpu_model, projectdir)
+    jit_cpu_model = load_jit_model(jit_model_path, 'cpu')
+    jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'jit_model_cpu',
                'latency_df': jit_cpu_results,
@@ -141,20 +138,12 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
-    if torch.cuda.is_available():
-        logger.info('{} C:{} t:{} jit cuda'.format(config.model.name, args.C, args.t))
-        jit_cuda_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'jit_model_cuda',
-                   'latency_df': jit_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-
     logger.info('{} C:{} t:{} jitopt cpu'.format(config.model.name, args.C, args.t))
+    eager_model = load_eager_model(eager_model_path, device='cpu')
     jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-    jitopt_cpu_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cpu')
+    jit_model_path = save_jit_model(jitopt_model, projectdir)
+    jit_cpu_model = load_jit_model(jit_model_path, 'cpu')
+    jitopt_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader)
     results = {'modelname': config.model.name,
                'runtime': 'jitopt_model_cpu',
                'latency_df': jitopt_cpu_results,
@@ -163,20 +152,8 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
-    if torch.cuda.is_available():
-        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
-        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_model, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'jitopt_model_cuda',
-                   'latency_df': jitopt_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-
-    onnx_path = export(eager_model, model_input, ExportMode.ONNX, projectdir)
-    providers = ['CPUExecutionProvider']
-    ort_sess = ort.InferenceSession(onnx_path, providers=providers)
+    onnx_model_path = save_onnx_model(eager_model, projectdir, model_input)
+    ort_sess = load_onnx_session(onnx_model_path, 'cpu')
     logger.info('{} C:{} t:{} onnx cpu'.format(config.model.name, args.C, args.t))
     onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
     results = {'modelname': config.model.name,
@@ -187,10 +164,73 @@ def microbenchmark(args):
                }
     bench.write_results(results, projectdir / 'results')
 
+
     if torch.cuda.is_available():
-        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        ort_sess = ort.InferenceSession(onnx_path, providers=providers)
-        logger.info('{} C:{} t:{} onnx cuda'.format(config.model.name, args.C, args.t))
+        logger.info('-----------------------------------------------------------------------------------------------')
+        logger.info('BENCHMARK '+config.model.name+' ON GPU: ' + bench.gpu_brand)
+        logger.info('{} C:{} t:{} eager cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
+        eager_gpu_results = bench.benchmark_pytorch_predictions(eager_gpu_model, benchmark_loader, device='cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'eager_model_cuda',
+                   'latency_df': eager_gpu_results,
+                   'C': args.C,
+                   't': args.t,
+                   }
+        bench.write_results(results, projectdir / 'results')
+        logger.info('Removing model from GPU')
+        eager_gpu_model.to('cpu')
+
+        logger.info('{} C:{} t:{} jit cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
+        jit_gpu_model = torch.jit.freeze(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
+        eager_gpu_model.to('cpu')
+        jit_model_path = save_jit_model(jit_gpu_model, projectdir)
+        jit_gpu_model = load_jit_model(jit_model_path, device='cuda')
+        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jit_gpu_model, benchmark_loader, 'cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'jitopt_model_cuda',
+                   'latency_df': jitopt_cuda_results,
+                   'C': args.C,
+                   't': args.t,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
+        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
+        jit_gpu_model = torch.jit.freeze(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
+        eager_gpu_model.to('cpu')
+        jit_model_path = save_jit_model(jit_gpu_model, projectdir)
+        jit_gpu_model = load_jit_model(jit_model_path, device='cuda')
+        jit_cuda_results = bench.benchmark_pytorch_predictions(jit_gpu_model, benchmark_loader, 'cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'jit_model_cuda',
+                   'latency_df': jit_cuda_results,
+                   'C': args.C,
+                   't': args.t,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
+        logger.info('{} C:{} t:{} jitopt cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
+        jitopt_gpu_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
+        eager_gpu_model.to('cpu')
+        jit_model_path = save_jit_model(jitopt_gpu_model, projectdir)
+        jitopt_gpu_model = load_jit_model(jit_model_path, device='cuda')
+        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_gpu_model, benchmark_loader, 'cuda')
+        results = {'modelname': config.model.name,
+                   'runtime': 'jitopt_model_cuda',
+                   'latency_df': jitopt_cuda_results,
+                   'C': args.C,
+                   't': args.t,
+                   }
+        bench.write_results(results, projectdir / 'results')
+
+        logger.info('{} C:{} t:{} ONNX cuda'.format(config.model.name, args.C, args.t))
+        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
+        onnx_model_path = save_onnx_model(eager_gpu_model, projectdir, (model_input[0].to('cuda'), model_input[1].to('cuda')))
+        eager_gpu_model.to('cpu')
+        ort_sess = load_onnx_session(onnx_model_path, 'cuda')
         onnx_cuda_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
         results = {'modelname': config.model.name,
                    'runtime': 'onnx_model_cuda',
@@ -199,6 +239,8 @@ def microbenchmark(args):
                    't': args.t,
                    }
         bench.write_results(results, projectdir / 'results')
+
+
 
 
 if __name__ == "__main__":

@@ -15,8 +15,6 @@ from torch import Tensor, device
 from torch.nn import Module
 from tqdm import trange
 
-from etudelib.deploy.export import load_torch_model
-
 logger = logging.getLogger(__name__)
 
 
@@ -49,21 +47,19 @@ class MicroBenchmark:
         m_secs = round((sum(t_records) / len(t_records)) * 10 ** 3, 2)
         logger.info(f"Average Time Taken: {m_secs}ms")
 
-    def benchmark_pytorch_predictions(self, pytorch_model_path, dataloader, device_type):
+    def benchmark_pytorch_predictions(self, model, dataloader, device='cpu'):
         result = []
-        model = load_torch_model(pytorch_model_path, device_type)
         model.eval()
         gc.collect()
         with torch.no_grad():
             for item_seq, session_length, next_item in iter(dataloader):
+                item_seq = item_seq.to(device)
+                session_length = session_length.to(device)
                 start = timer()
                 reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
                 duration = timer() - start
                 result.append([duration * 1000, datetime.now()])
         df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
-        if device_type != 'cpu':
-            logger.info("unloading model from " + device_type + " device")
-            model.to('cpu')  # unload model from accelerated hardware
         return df
 
     # @staticmethod
