@@ -31,7 +31,7 @@ class MicroBenchmark:
             logger.info('MPS detected:' + self.mps_brand)
         else:
             logger.info('No accelerator detected. CPU only tests')
-        self.min_duration_secs = 1  # 60 + 60  # warmup needed was 40 secs for windows
+        self.min_duration_secs = 60 + 60  # warmup needed was 40 secs for windows
 
     @staticmethod
     def printresults(t_records):
@@ -46,6 +46,7 @@ class MicroBenchmark:
 
     def benchmark_pytorch_predictions(self, model, dataloader, device='cpu'):
         result = []
+        model.to(device)
         model.eval()
         gc.collect()
         with torch.no_grad():

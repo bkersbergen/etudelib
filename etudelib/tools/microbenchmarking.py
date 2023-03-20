@@ -17,10 +17,55 @@ from etudelib.deploy.export import *
 from etudelib.models.topkdecorator import TopKDecorator
 from etudelib.tools.benchmarker.microbenchmarker import MicroBenchmark
 from etudelib.utils.loggers import configure_logger
+from multiprocessing import Process
 
 import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
+
+
+def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
+    bench = MicroBenchmark()
+    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000)} MB')
+    logger.info('-----------------------------------------------------------------------------------------------')
+    logger.info(f'BENCHMARK {results["modelname"]} ON {new_model_mode} USING DEVICE: ${device_type}')
+    item_seq, session_length, next_item = next(iter(benchmark_loader))
+    model_input = (item_seq, session_length)
+
+    eager_model.to(device_type)
+    if new_model_mode == 'eager':
+        model = eager_model
+        latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
+    elif new_model_mode == 'jit':
+        model = torch.jit.freeze(
+            torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
+        latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
+    elif new_model_mode == 'jitopt':
+        model = torch.jit.optimize_for_inference(
+            torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
+        latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
+    elif new_model_mode == 'onnx':
+        Path(projectdir).mkdir(parents=True, exist_ok=True)
+        export_path = str(projectdir / "model.pt.onnx")
+        print('export_path:' + export_path)
+        torch.onnx.export(
+            eager_model,
+            (model_input[0].to(device_type), model_input[1].to(device_type)),
+            export_path,
+            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+            output_names=['output'],  # the model's output names
+        )
+        if device_type == 'cuda':
+            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        else:
+            providers = ['CPUExecutionProvider']
+        ort_sess = ort.InferenceSession(export_path, providers=providers)
+        latency_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
+
+    results['runtime'] = '_'.join([new_model_mode, device_type])
+    results['latency_df'] = latency_results
+    bench.write_results(results, projectdir / 'results')
+    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000)} MB')
 
 
 def get_args() -> Namespace:
@@ -101,137 +146,40 @@ def microbenchmark(args):
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
     item_seq, session_length, next_item = next(iter(benchmark_loader))
-    model_input = (item_seq, session_length)
-    eager_model_path = save_eager_model(eager_model, projectdir)
-    eager_model = load_eager_model(eager_model_path, device='cpu')
 
-    bench = MicroBenchmark()
-    logger.info('-----------------------------------------------------------------------------------------------')
-    logger.info(f'BENCHMARK {config.model.name} ON CPU: ${bench.cpu_brand}')
-
-    logger.info(f'{config.model.name} C:{args.C} t:{args.t} eager cpu')
-    eager_cpu_results = bench.benchmark_pytorch_predictions(eager_model, benchmark_loader)
     results = {'modelname': config.model.name,
-               'runtime': 'eager_model_cpu',
-               'latency_df': eager_cpu_results,
                'C': args.C,
                't': args.t,
                }
-    bench.write_results(results, projectdir / 'results')
 
-    logger.info(f"{config.model.name} C:{args.C} t:{args.t} jit cpu")
-    eager_model = load_eager_model(eager_model_path, device='cpu')
-    jit_cpu_model = torch.jit.freeze(torch.jit.trace(eager_model, model_input))
-    jit_model_path = save_jit_model(jit_cpu_model, projectdir)
-    jit_cpu_model = load_jit_model(jit_model_path, 'cpu')
-    jit_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader)
-    results = {'modelname': config.model.name,
-               'runtime': 'jit_model_cpu',
-               'latency_df': jit_cpu_results,
-               'C': args.C,
-               't': args.t,
-               }
-    bench.write_results(results, projectdir / 'results')
-
-    logger.info(f"{config.model.name} C:{args.C} t:{args.t} jitopt cpu")
-    eager_model = load_eager_model(eager_model_path, device='cpu')
-    jitopt_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-    jit_model_path = save_jit_model(jitopt_model, projectdir)
-    jit_cpu_model = load_jit_model(jit_model_path, 'cpu')
-    jitopt_cpu_results = bench.benchmark_pytorch_predictions(jit_cpu_model, benchmark_loader)
-    results = {'modelname': config.model.name,
-               'runtime': 'jitopt_model_cpu',
-               'latency_df': jitopt_cpu_results,
-               'C': args.C,
-               't': args.t,
-               }
-    bench.write_results(results, projectdir / 'results')
-
-    logger.info(f"{config.model.name} C:{args.C} t:{args.t} onnx cpu")
-    onnx_model_path = save_onnx_model(eager_model, projectdir, model_input)
-    ort_sess = load_onnx_session(onnx_model_path, 'cpu')
-    onnx_cpu_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
-    results = {'modelname': config.model.name,
-               'runtime': 'onnx_model_cpu',
-               'latency_df': onnx_cpu_results,
-               'C': args.C,
-               't': args.t,
-               }
-    bench.write_results(results, projectdir / 'results')
-
+    device_types = ['cpu']
     if torch.cuda.is_available():
-        logger.info('-----------------------------------------------------------------------------------------------')
-        logger.info('BENCHMARK '+config.model.name+' ON GPU: ' + bench.gpu_brand)
-        logger.info(f"{config.model.name} C:{args.C} t:{args.t} eager cuda")
-        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
-        eager_gpu_results = bench.benchmark_pytorch_predictions(eager_gpu_model, benchmark_loader, device='cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'eager_model_cuda',
-                   'latency_df': eager_gpu_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-        logger.info('Removing model from GPU')
-        eager_gpu_model.to('cpu')
-        torch.cuda.empty_cache()
-        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
+        device_types.append('cuda')
 
-        logger.info(f"{config.model.name} C:{args.C} t:{args.t} jit cuda")
-        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
-        jit_gpu_model = torch.jit.freeze(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
-        eager_gpu_model.to('cpu')
-        jit_model_path = save_jit_model(jit_gpu_model, projectdir)
-        jit_gpu_model.to('cpu')
-        jit_gpu_model = load_jit_model(jit_model_path, device='cuda')
-        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jit_gpu_model, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'jitopt_model_cuda',
-                   'latency_df': jitopt_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-        jit_gpu_model.to('cpu')
-        torch.cuda.empty_cache()
-        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
+    for device_type in device_types:
+        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN EAGER MODE ON DEVICE: {device_type}')
+        p = Process(target=run_benchmark_process,
+                    args=(eager_model, 'eager', benchmark_loader, device_type, results, projectdir,))
+        p.start()
+        p.join()
 
-        logger.info(f"{config.model.name} C:{args.C} t:{args.t} jitopt cuda")
-        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
-        jitopt_gpu_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_gpu_model, (model_input[0].to('cuda'), model_input[1].to('cuda'))))
-        eager_gpu_model.to('cpu')
-        jit_model_path = save_jit_model(jitopt_gpu_model, projectdir)
-        jitopt_gpu_model.to('cpu')
-        jitopt_gpu_model = load_jit_model(jit_model_path, device='cuda')
-        jitopt_cuda_results = bench.benchmark_pytorch_predictions(jitopt_gpu_model, benchmark_loader, 'cuda')
-        results = {'modelname': config.model.name,
-                   'runtime': 'jitopt_model_cuda',
-                   'latency_df': jitopt_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        bench.write_results(results, projectdir / 'results')
-        jitopt_gpu_model.to('cpu')
-        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
+        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN JIT MODE ON DEVICE: {device_type}')
+        p = Process(target=run_benchmark_process,
+                    args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
+        p.start()
+        p.join()
 
-        logger.info(f"{config.model.name} C:{args.C} t:{args.t} onnx cuda")
-        eager_gpu_model = load_eager_model(eager_model_path, device='cuda')
-        onnx_model_path = save_onnx_model(eager_gpu_model, projectdir, (model_input[0].to('cuda'), model_input[1].to('cuda')))
-        eager_gpu_model.to('cpu')
-        ort_sess = load_onnx_session(onnx_model_path, 'cuda')
-        onnx_cuda_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
-        results = {'modelname': config.model.name,
-                   'runtime': 'onnx_model_cuda',
-                   'latency_df': onnx_cuda_results,
-                   'C': args.C,
-                   't': args.t,
-                   }
-        ort_sess.set_providers(['CPUExecutionProvider'])
-        torch.cuda.empty_cache()
-        bench.write_results(results, projectdir / 'results')
-        print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0)/1000)} MB')
+        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN JIT INFERENCE OPT MODE ON DEVICE: {device_type}')
+        p = Process(target=run_benchmark_process,
+                    args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
+        p.start()
+        p.join()
 
-
+        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN ONNX MODE ON DEVICE: {device_type}')
+        p = Process(target=run_benchmark_process,
+                    args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
+        p.start()
+        p.join()
 
 
 if __name__ == "__main__":
