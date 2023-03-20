@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
     bench = MicroBenchmark()
-    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000)} MB')
+    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000_000)} MB')
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type}')
     item_seq, session_length, next_item = next(iter(benchmark_loader))
@@ -65,7 +65,7 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     results['runtime'] = '_'.join([new_model_mode, device_type])
     results['latency_df'] = latency_results
     bench.write_results(results, projectdir / 'results')
-    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000)} MB')
+    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000_000)} MB')
 
 
 def get_args() -> Namespace:
@@ -82,6 +82,8 @@ def get_args() -> Namespace:
                         help="Sythetic dataset: Number of distinct items in catalog to generate.")
     parser.add_argument("--t", type=int, default=50,
                         help="Sythetic dataset: Number of timesteps or sequence length of a session as input for a model")
+    parser.add_argument("--param_source", type=str, default="bolcom",
+                        help="Sythetic dataset: using fit parameters from this datasource")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
 
@@ -118,7 +120,7 @@ def microbenchmark(args):
     train_ds = SyntheticDataset(qty_interactions=args.qty_interactions,
                                 qty_sessions=qty_sessions,
                                 n_items=args.C,
-                                max_seq_length=args.t)
+                                max_seq_length=args.t, param_source=args.param_source)
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
 
     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
@@ -143,13 +145,17 @@ def microbenchmark(args):
             # param = parameter.numel()
             params.append([name, parameter.shape])
     for idx, layer in enumerate(params):
-        logger.info(f"{idx} {layer}")
+        # logger.info(f"{idx} {layer}")
+        pass
+
+    print(args)
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
 
     results = {'modelname': config.model.name,
                'C': args.C,
                't': args.t,
+               'param_source': args.param_source,
                }
 
     device_types = ['cpu']
@@ -184,9 +190,11 @@ if __name__ == "__main__":
     args.qty_interactions = 50_000
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
                        'stamp']:
-        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 50_000_000]:
+        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000]:
             args.C = C
             args.model = model_name
             for t in [50]:
                 args.t = t
-                microbenchmark(args)
+                for param_source in ['bolcom', 'rsc15']:
+                    args.param_source = param_source
+                    microbenchmark(args)
