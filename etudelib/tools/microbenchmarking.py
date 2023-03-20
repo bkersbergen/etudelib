@@ -1,13 +1,11 @@
-import logging
 import warnings
 import os
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 
 from omegaconf import OmegaConf
 from importlib import import_module
 
-import torch
+import time
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
@@ -19,16 +17,19 @@ from etudelib.tools.benchmarker.microbenchmarker import MicroBenchmark
 from etudelib.utils.loggers import configure_logger
 from multiprocessing import Process
 
+# force ONNX to use 1 thread. Set this before the import onnxruntime statement
+os.environ["OMP_NUM_THREADS"] = "1"
 import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
 
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
+    Path(projectdir).mkdir(parents=True, exist_ok=True)
     bench = MicroBenchmark()
     print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000)} MB')
-    logger.info('-----------------------------------------------------------------------------------------------')
-    logger.info(f'BENCHMARK {results["modelname"]} ON {new_model_mode} USING DEVICE: ${device_type}')
+    print('-----------------------------------------------------------------------------------------------')
+    print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type}')
     item_seq, session_length, next_item = next(iter(benchmark_loader))
     model_input = (item_seq, session_length)
 
@@ -45,7 +46,6 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
             torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
         latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
     elif new_model_mode == 'onnx':
-        Path(projectdir).mkdir(parents=True, exist_ok=True)
         export_path = str(projectdir / "model.pt.onnx")
         print('export_path:' + export_path)
         torch.onnx.export(
@@ -92,7 +92,8 @@ def get_args() -> Namespace:
 def microbenchmark(args):
     """Microbenchmarks a session based recommendation based on a provided configuration file."""
     basedir = "../.."
-    projectdir = Path(basedir, 'project/benchmark')
+
+    projectdir = Path(basedir, 'project/benchmark', time.strftime("%Y%m%d-%H%M%S"))
     configure_logger(level=args.log_level)
 
     if args.log_level == "ERROR":
@@ -145,7 +146,6 @@ def microbenchmark(args):
         logger.info(f"{idx} {layer}")
 
     benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
-    item_seq, session_length, next_item = next(iter(benchmark_loader))
 
     results = {'modelname': config.model.name,
                'C': args.C,
@@ -157,25 +157,22 @@ def microbenchmark(args):
         device_types.append('cuda')
 
     for device_type in device_types:
-        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN EAGER MODE ON DEVICE: {device_type}')
+        # Run benchmarks in separate processes to release (CUDA) memory when done
         p = Process(target=run_benchmark_process,
                     args=(eager_model, 'eager', benchmark_loader, device_type, results, projectdir,))
         p.start()
         p.join()
 
-        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN JIT MODE ON DEVICE: {device_type}')
         p = Process(target=run_benchmark_process,
                     args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
         p.start()
         p.join()
 
-        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN JIT INFERENCE OPT MODE ON DEVICE: {device_type}')
         p = Process(target=run_benchmark_process,
                     args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
         p.start()
         p.join()
 
-        logger.info(f'BENCHMARK MODEL "{config.model.name}" IN ONNX MODE ON DEVICE: {device_type}')
         p = Process(target=run_benchmark_process,
                     args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
         p.start()
