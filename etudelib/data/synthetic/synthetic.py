@@ -24,12 +24,12 @@ class SyntheticDataset(Dataset):
         distribution = getattr(st, distribution_name)
 
         session_f_new = distribution.rvs(*session_fit_params, size=qty_sessions)
-        session_f_new = np.ceil(session_f_new).astype(int)
-        self.session_p_new = session_f_new / np.sum(session_f_new)
+        session_f_new = np.ceil(session_f_new).astype(int).astype('float64')
+        self.session_p_new = session_f_new / session_f_new.sum()
 
         item_f_new = distribution.rvs(*item_fit_params, size=n_items)
-        item_f_new = np.ceil(item_f_new).astype(int)
-        self.item_p_new = item_f_new / np.sum(item_f_new)
+        item_f_new = np.ceil(item_f_new).astype(int).astype('float64')
+        self.item_p_new = item_f_new / item_f_new.sum()
         self.current_session = torch.tensor([])
         self.next_item = torch.tensor(0)
         self.current_session_idx = 1000000

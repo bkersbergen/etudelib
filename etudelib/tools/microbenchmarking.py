@@ -94,6 +94,7 @@ def get_args() -> Namespace:
 def microbenchmark(args):
     """Microbenchmarks a session based recommendation based on a provided configuration file."""
     basedir = "../.."
+    basedir = "."
 
     projectdir = Path(basedir, 'project/benchmark', time.strftime("%Y%m%d-%H%M%S"))
     configure_logger(level=args.log_level)
