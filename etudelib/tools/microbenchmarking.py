@@ -29,7 +29,7 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     bench = MicroBenchmark()
     print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000_000)} MB')
     print('-----------------------------------------------------------------------------------------------')
-    print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type}')
+    print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
     item_seq, session_length, next_item = next(iter(benchmark_loader))
     model_input = (item_seq, session_length)
 
@@ -98,10 +98,10 @@ def get_args() -> Namespace:
 
 def microbenchmark(args):
     """Microbenchmarks a session based recommendation based on a provided configuration file."""
-    basedir = "../.."
+    # basedir = "../.."
     basedir = "."
 
-    projectdir = Path(basedir, 'project/benchmark', time.strftime("%Y%m%d-%H%M%S"))
+    projectdir = Path(basedir, 'project/microbenchmark')
     configure_logger(level=args.log_level)
 
     if args.log_level == "ERROR":
@@ -162,6 +162,7 @@ def microbenchmark(args):
                'C': args.C,
                't': args.t,
                'param_source': args.param_source,
+               'config': config,
                }
 
     device_types = ['cpu']
