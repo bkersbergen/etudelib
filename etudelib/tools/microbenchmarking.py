@@ -55,6 +55,11 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
             input_names=['item_id_list', 'max_seq_length'],  # the model's input names
             output_names=['output'],  # the model's output names
         )
+        if device_type == 'cuda' and 'CUDAExecutionProvider' not in ort.get_available_providers():
+            logger.error('ONNX Runtime does not have CUDA support')
+            logger.error('Please install onnxruntime-gpu version')
+            exit(1)
+
         if device_type == 'cuda':
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
         else:
