@@ -101,7 +101,7 @@ def microbenchmark(args):
     # basedir = "../.."
     basedir = "."
 
-    projectdir = Path(basedir, 'project/microbenchmark')
+    projectdir = Path(basedir, 'projects/microbenchmark')
     configure_logger(level=args.log_level)
 
     if args.log_level == "ERROR":
