@@ -27,9 +27,11 @@ logger = logging.getLogger(__name__)
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
     bench = MicroBenchmark()
-    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000_000)} MB')
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
+    print(bench.get_metrics_cpu())
+    if device_type != 'cpu':
+        print(bench.get_metrics_gpu())
     item_seq, session_length, next_item = next(iter(benchmark_loader))
     model_input = (item_seq, session_length)
 
