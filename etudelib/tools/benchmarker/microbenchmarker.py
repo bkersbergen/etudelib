@@ -19,6 +19,9 @@ class MicroBenchmark:
     def __init__(self):
         self.cpu_brand = get_cpu_info().get('brand_raw')
         self.cpu_utilization, self.used_mem, self.total_mem = MicroBenchmark.get_metrics_cpu()
+        logger.info(f'CPU utilization: {self.cpu_utilization} %')
+        logger.info(f'used_mem: {self.used_mem} MB')
+        logger.info(f'total_mem: {self.total_mem} MB')
         self.platform = platform.platform()
         self.python_version = platform.python_version()
         logger.info('Platform:' + self.platform)
@@ -28,9 +31,9 @@ class MicroBenchmark:
             self.gpu_brand = torch.cuda.get_device_name(0)
             logger.info('GPU detected:' + self.gpu_brand)
             self.gpu_utilization, self.gpu_mem_used, self.gpu_memory_total = MicroBenchmark.get_metrics_gpu()
-            logger.info('GPU utilization:' + self.gpu_utilization)
-            logger.info('GPU gpu_mem_used:' + self.gpu_mem_used)
-            logger.info('GPU gpu_memory_total:' + self.gpu_memory_total)
+            logger.info(f'CUDA utilization: {self.gpu_utilization} %')
+            logger.info(f'CUDA mem_used: {self.gpu_mem_used} MB')
+            logger.info(f'CUDA memory_total: {self.gpu_memory_total} MB')
         elif torch.backends.mps.is_available():
             self.mps_brand = "mps"
             logger.info('MPS detected:' + self.mps_brand)
@@ -70,7 +73,7 @@ class MicroBenchmark:
         model.eval()
         output_columns = ['LatencyInMs', 'DateTime', 'CPUUtilization', 'UsedMem']
         if device != 'cpu':
-            output_columns.append('GPUUtilization', 'GPUMemUsed')
+            output_columns = output_columns + ['GPUUtilization', 'GPUMemUsed']
         last_metric_ts = 0
         seconds_between_metrics = 5
         gc.collect()
@@ -91,16 +94,14 @@ class MicroBenchmark:
                 duration = timer() - start
                 if timer() - last_metric_ts > seconds_between_metrics:
                     last_metric_ts = timer()
-                    cpu_utilization, used_mem, _total_mem = MicroBenchmark.get_metrics_cpu()
-                    if device != 'cpu':
-                        gpu_utilization, gpu_mem_used, _gpu_memory_total = MicroBenchmark.get_metrics_gpu()
+                    cpu_utilization, used_mem, _ = MicroBenchmark.get_metrics_cpu()
+                    gpu_utilization, gpu_mem_used, _ = MicroBenchmark.get_metrics_gpu() if device != 'cpu' else (
+                    None, None, None)
                 else:
-                    cpu_utilization, used_mem - None, None
-                    if device != 'cpu':
-                        gpu_utilization, gpu_mem_used = None, None
+                    cpu_utilization, used_mem, gpu_utilization, gpu_mem_used = None, None, None, None
                 row = [duration * 1000, datetime.now(), cpu_utilization, used_mem]
                 if device != 'cpu':
-                    row.append(gpu_utilization, gpu_mem_used)
+                    row = row + [gpu_utilization, gpu_mem_used]
                 result.append(row)
         logger.info(f"Benchmark ran for {int(timer() - test_start)} secs")
         df = pd.DataFrame(result, columns=output_columns)

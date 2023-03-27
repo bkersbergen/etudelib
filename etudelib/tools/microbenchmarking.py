@@ -29,9 +29,16 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     bench = MicroBenchmark()
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
-    print(bench.get_metrics_cpu())
+    cpu_utilization, used_mem, total_mem = MicroBenchmark.get_metrics_cpu()
+    print(f'CPU utilization : {cpu_utilization} %')
+    print(f'used_mem: {used_mem} MB')
+    print(f'total_mem: {total_mem} MB')
     if device_type != 'cpu':
-        print(bench.get_metrics_gpu())
+        gpu_utilization, gpu_mem_used, gpu_memory_total = MicroBenchmark.get_metrics_gpu()
+        logger.info(f'CUDA utilization: {gpu_utilization} %')
+        logger.info(f'CUDA mem_used: {gpu_mem_used} MB')
+        logger.info(f'CUDA memory_total: {gpu_memory_total} MB')
+
     item_seq, session_length, next_item = next(iter(benchmark_loader))
     model_input = (item_seq, session_length)
 
@@ -168,6 +175,7 @@ def microbenchmark(args):
                }
 
     device_types = ['cpu']
+    device_types = []
     if torch.cuda.is_available():
         device_types.append('cuda')
 
@@ -204,6 +212,7 @@ if __name__ == "__main__":
             args.model = model_name
             for t in [50]:
                 args.t = t
-                for param_source in ['bolcom', 'rsc15']:
+                # for param_source in ['bolcom', 'rsc15']:
+                for param_source in ['bolcom']:
                     args.param_source = param_source
                     microbenchmark(args)
