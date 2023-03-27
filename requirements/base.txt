@@ -4,4 +4,5 @@ lightning==1.9.0
 omegaconf==2.3.0
 py-cpuinfo==9.0.0
 onnxruntime-gpu==1.14.1
-
+psutil==5.9.4
+gputil==1.4.0
