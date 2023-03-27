@@ -17,8 +17,6 @@ from etudelib.tools.benchmarker.microbenchmarker import MicroBenchmark
 from etudelib.utils.loggers import configure_logger
 from multiprocessing import Process
 
-# force ONNX to use 1 thread. Set this before the import onnxruntime statement
-os.environ["OMP_NUM_THREADS"] = "1"
 import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
@@ -175,7 +173,6 @@ def microbenchmark(args):
                }
 
     device_types = ['cpu']
-    device_types = []
     if torch.cuda.is_available():
         device_types.append('cuda')
 
@@ -186,10 +183,10 @@ def microbenchmark(args):
         p.start()
         p.join()
 
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+        # p = Process(target=run_benchmark_process,
+        #             args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
+        # p.start()
+        # p.join()
 
         p = Process(target=run_benchmark_process,
                     args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
