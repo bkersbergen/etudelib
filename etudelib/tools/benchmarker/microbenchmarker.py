@@ -39,7 +39,7 @@ class MicroBenchmark:
             logger.info('MPS detected:' + self.mps_brand)
         else:
             logger.info('No accelerator detected. CPU only tests')
-        self.min_duration_secs = 10  # 60 + 60  # warmup needed was 40 secs for windows
+        self.min_duration_secs = 100  # 60 + 60  # warmup needed was 40 secs for windows
 
     @staticmethod
     def get_metrics_cpu():
