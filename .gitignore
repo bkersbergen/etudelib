@@ -18,3 +18,6 @@ lightning_test/
 papers/
 results/
 projects/
+target/
+logsdir/
+.bash_history
