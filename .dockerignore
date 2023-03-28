@@ -1,0 +1,16 @@
+*.dot
+.git
+.idea
+.pytest_cache
+.tox
+.vscode
+__pycache__
+.ipynb_checkpoints/
+.pytest_cache/
+etudelib.egg-info/
+projects/
+venv/
+lightning_logs/
+lightning_test/
+papers/
+results/

@@ -39,7 +39,7 @@ class MicroBenchmark:
             logger.info('MPS detected:' + self.mps_brand)
         else:
             logger.info('No accelerator detected. CPU only tests')
-        self.min_duration_secs = 100  # 60 + 60  # warmup needed was 40 secs for windows
+        self.min_duration_secs = 10  # 60 + 60  # warmup needed was 40 secs for windows
 
     @staticmethod
     def get_metrics_cpu():
@@ -176,11 +176,12 @@ class MicroBenchmark:
             if key not in results.keys():
                 raise Exception("field: '{}' is missing in results".format(key))
 
-        output_file = '{}/{}_{}_{}_C{}_t{}_results.pickle'.format(result_path, results['modelname'], results['runtime'],
+        output_filename = '{}/{}_{}_{}_C{}_t{}_results.pickle'.format(result_path, results['modelname'], results['runtime'],
                                                                   results['param_source'], results['C'], results['t'])
         os.makedirs(result_path, exist_ok=True)
-        with open(output_file, 'wb') as handle:
+        with open(output_filename, 'wb') as handle:
             pickle.dump(results, handle)
+
 
     @staticmethod
     def read_results(result_path):

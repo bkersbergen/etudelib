@@ -10,6 +10,7 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
 
+from etudelib.data.googlefs.googlefs import upload_to_gcs
 from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.deploy.export import *
 from etudelib.models.topkdecorator import TopKDecorator
@@ -89,17 +90,24 @@ def get_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument("--model", type=str, default="sine", help="Name of the model. E.g. core or gcsan etc")
     parser.add_argument("--qty_interactions", type=int, default=1000,
-                        help="Sythetic dataset: Number of user-item interactions to generate.")
+                        help="Synthetic dataset: Number of user-item interactions to generate.")
     parser.add_argument("--C", type=int, default=50_000,
-                        help="Sythetic dataset: Number of distinct items in catalog to generate.")
+                        help="Synthetic dataset: Number of distinct items in catalog to generate.")
     parser.add_argument("--t", type=int, default=50,
-                        help="Sythetic dataset: Number of timesteps or sequence length of a session as input for a model")
+                        help="Synthetic dataset: Number of timesteps or sequence length of a session as input for a "
+                             "model")
     parser.add_argument("--param_source", type=str, default="bolcom",
-                        help="Sythetic dataset: using fit parameters from this datasource")
+                        help="Synthetic dataset: using fit parameters from this datasource")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
     parser.add_argument("--log-level", type=str, default="INFO", help="<DEBUG, INFO, WARNING, ERROR>")
+    parser.add_argument("--gcs_project_name", type=str, required=False,
+                        help="Google Storage Project that contains the bucket. e.g. bolcom-pro-reco-analytics-fcc")
+    parser.add_argument("--gcs_bucket_name", type=str, required=False,
+                        help="Google Storage Bucket name that contains the directory. e.g. bolcom-pro-reco-analytics-fcc-shared")
+    parser.add_argument("--gcs_dir", type=str, required=False,
+                        help="Google Storage Directory where to store the results. e.g. bkersbergen_etude")
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
     return args
 
 
@@ -139,12 +147,12 @@ def microbenchmark(args):
     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
     model = getattr(module, f"{config.model.name}Lightning")(config)
 
-    trainer = Trainer(
-        accelerator='gpu' if device_type == 'cuda' else 'cpu',
-        devices=1,
-        max_epochs=1,
-        callbacks=[TQDMProgressBar(refresh_rate=5)],
-    )
+    # trainer = Trainer(
+    #     accelerator='gpu' if device_type == 'cuda' else 'cpu',
+    #     devices=1,
+    #     max_epochs=1,
+    #     callbacks=[TQDMProgressBar(refresh_rate=5)],
+    # )
 
     # trainer.fit(model, train_loader)
 
@@ -198,13 +206,24 @@ def microbenchmark(args):
         p.start()
         p.join()
 
+    if args.gcs_project_name:
+        print('Start transferring results to google storage bucket')
+        upload_to_gcs(local_dir=projectdir,
+                      gcs_project_name=args.gcs_project_name,
+                      gcs_bucket_name=args.gcs_bucket_name,
+                      gcs_dir=args.gcs_dir)
+        print('End transferring results to google storage bucket')
+
 
 if __name__ == "__main__":
     args = get_args()
     args.qty_interactions = 50_000
+    args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
+    args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
+    args.gcs_dir = 'bkersbergen_etude'
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
                        'stamp']:
-        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000]:
+        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 20_000_000]:
             args.C = C
             args.model = model_name
             for t in [50]:

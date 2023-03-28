@@ -4,5 +4,9 @@ lightning==2.0.0
 omegaconf==2.3.0
 py-cpuinfo==9.0.0
 onnxruntime-gpu==1.14.1
+onnx==1.13.1
 psutil==5.9.4
 pynvml==11.5.0
+scipy==1.10.0
+google-cloud-storage
+
