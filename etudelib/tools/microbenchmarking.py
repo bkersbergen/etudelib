@@ -5,9 +5,8 @@ from argparse import ArgumentParser, Namespace
 from omegaconf import OmegaConf
 from importlib import import_module
 
-import time
+from datetime import date
 from pytorch_lightning import Trainer, seed_everything
-from pytorch_lightning.callbacks import TQDMProgressBar
 from torch.utils.data import DataLoader
 
 from etudelib.data.googlefs.googlefs import upload_to_gcs
@@ -25,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
-    bench = MicroBenchmark()
+    min_duration_secs = 100
+    bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
     cpu_utilization, used_mem, total_mem = MicroBenchmark.get_metrics_cpu()
@@ -78,7 +78,6 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     results['runtime'] = '_'.join([new_model_mode, device_type])
     results['latency_df'] = latency_results
     bench.write_results(results, projectdir / 'results')
-    print(f'CUDA memory used: {int(torch.cuda.memory_allocated(0) / 1000_000)} MB')
 
 
 def get_args() -> Namespace:
@@ -113,16 +112,15 @@ def get_args() -> Namespace:
 
 def microbenchmark(args):
     """Microbenchmarks a session based recommendation based on a provided configuration file."""
-    # basedir = "../.."
-    basedir = "."
+    rootdir = Path(__file__).parent.parent.parent
 
-    projectdir = Path(basedir, 'projects/microbenchmark')
+    projectdir = Path(rootdir, 'projects/microbenchmark')
     configure_logger(level=args.log_level)
 
     if args.log_level == "ERROR":
         warnings.filterwarnings("ignore")
 
-    config_path = os.path.join(basedir, f"etudelib/models/{args.model}/config.yaml".lower())
+    config_path = os.path.join(rootdir, f"etudelib/models/{args.model}/config.yaml".lower())
     config = OmegaConf.load(config_path)
 
     if config.get('project', {}).get("seed") is not None:
@@ -130,7 +128,6 @@ def microbenchmark(args):
 
     qty_sessions = args.qty_interactions
     batch_size = 32
-    device_type = 'cuda'
 
     config['dataset'] = {}
     config['dataset']['n_items'] = args.C
@@ -208,7 +205,7 @@ def microbenchmark(args):
 
     if args.gcs_project_name:
         print('Start transferring results to google storage bucket')
-        upload_to_gcs(local_dir=projectdir,
+        upload_to_gcs(local_dir=projectdir / str(date.today()),
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
                       gcs_dir=args.gcs_dir)
@@ -223,7 +220,7 @@ if __name__ == "__main__":
     args.gcs_dir = 'bkersbergen_etude'
     for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
                        'stamp']:
-        for C in [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 20_000_000]:
+        for C in [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
             args.C = C
             args.model = model_name
             for t in [50]:

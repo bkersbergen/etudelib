@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class MicroBenchmark:
-    def __init__(self):
+    def __init__(self, min_duration_secs):
         self.cpu_brand = get_cpu_info().get('brand_raw')
         self.cpu_utilization, self.used_mem, self.total_mem = MicroBenchmark.get_metrics_cpu()
         logger.info(f'CPU utilization: {self.cpu_utilization} %')
@@ -39,7 +39,8 @@ class MicroBenchmark:
             logger.info('MPS detected:' + self.mps_brand)
         else:
             logger.info('No accelerator detected. CPU only tests')
-        self.min_duration_secs = 100  # 60 + 60  # warmup needed was 40 secs for windows
+        self.seconds_between_metrics = 5
+        self.min_duration_secs = min_duration_secs  # 60 + 60  # warmup needed was 40 secs for windows
 
     @staticmethod
     def get_metrics_cpu():
@@ -56,17 +57,6 @@ class MicroBenchmark:
         gpu_memory_total = round(torch.cuda.get_device_properties(0).total_memory / 1_024_000)
         return gpu_utilization, gpu_mem_used, gpu_memory_total
 
-    @staticmethod
-    def printresults(t_records):
-        # t_records a list of 'timeit' floats
-        # printing the execution time
-        for index, exec_time in enumerate(t_records, 1):
-            # printing execution time of code in milliseconds
-            m_secs = round(exec_time * 10 ** 3, 2)
-            logger.info(f"Case {index}: Time Taken: {m_secs}ms")
-        m_secs = round((sum(t_records) / len(t_records)) * 10 ** 3, 2)
-        logger.info(f"Average Time Taken: {m_secs}ms")
-
     def benchmark_pytorch_predictions(self, model, dataloader, device='cpu'):
         result = []
         model.to(device)
@@ -75,7 +65,6 @@ class MicroBenchmark:
         if device != 'cpu':
             output_columns = output_columns + ['GPUUtilization', 'GPUMemUsed']
         last_metric_ts = 0
-        seconds_between_metrics = 5
         gc.collect()
         torch.cuda.empty_cache()
         with torch.no_grad():
@@ -87,12 +76,12 @@ class MicroBenchmark:
                 except StopIteration:
                     iterator = iter(dataloader)
                     item_seq, session_length, next_item = next(iterator)
+                start = timer()
                 item_seq = item_seq.to(device)
                 session_length = session_length.to(device)
-                start = timer()
                 reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
                 duration = timer() - start
-                if timer() - last_metric_ts > seconds_between_metrics:
+                if timer() - last_metric_ts > self.seconds_between_metrics:
                     last_metric_ts = timer()
                     cpu_utilization, used_mem, _ = MicroBenchmark.get_metrics_cpu()
                     gpu_utilization, gpu_mem_used, _ = MicroBenchmark.get_metrics_gpu() if device != 'cpu' else (
@@ -108,12 +97,18 @@ class MicroBenchmark:
         return df
 
     def benchmark_onnxed_predictions(self, ort_sess, dataloader):
+        result = []
         # onnx crashes when unused input Tensors are provided to a onnx-session
         input_params = set([node.name for node in ort_sess._inputs_meta])
-        gc.collect()
-        result = []
-        test_start = timer()
+        output_columns = ['LatencyInMs', 'DateTime', 'CPUUtilization', 'UsedMem']
+        device = 'cuda' if 'CUDAExecutionProvider' in ort_sess.get_providers() else 'cpu'
+        if device != 'cpu':
+            output_columns = output_columns + ['GPUUtilization', 'GPUMemUsed']
         iterator = iter(dataloader)
+        last_metric_ts = 0
+        gc.collect()
+        torch.cuda.empty_cache()
+        test_start = timer()
         while timer() - test_start < self.min_duration_secs:
             try:
                 item_seq, session_length, next_item = next(iterator)
@@ -129,9 +124,19 @@ class MicroBenchmark:
             start = timer()
             reco_items = MicroBenchmark.get_item_ids(ort_sess.run(None, key))
             duration = timer() - start
-            result.append([duration * 1000, datetime.now()])
+            if timer() - last_metric_ts > self.seconds_between_metrics:
+                last_metric_ts = timer()
+                cpu_utilization, used_mem, _ = MicroBenchmark.get_metrics_cpu()
+                gpu_utilization, gpu_mem_used, _ = MicroBenchmark.get_metrics_gpu() if device != 'cpu' else (
+                    None, None, None)
+            else:
+                cpu_utilization, used_mem, gpu_utilization, gpu_mem_used = None, None, None, None
+            row = [duration * 1000, datetime.now(), cpu_utilization, used_mem]
+            if device != 'cpu':
+                row = row + [gpu_utilization, gpu_mem_used]
+            result.append(row)
         logger.info(f"Benchmark ran for {int(timer() - test_start)} secs")
-        df = pd.DataFrame(result, columns=['LatencyInMs', 'DateTime'])
+        df = pd.DataFrame(result, columns=output_columns)
         return df
 
     @staticmethod
