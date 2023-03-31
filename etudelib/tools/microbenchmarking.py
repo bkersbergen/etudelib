@@ -5,7 +5,6 @@ from argparse import ArgumentParser, Namespace
 from omegaconf import OmegaConf
 from importlib import import_module
 
-from datetime import date
 from pytorch_lightning import Trainer, seed_everything
 from torch.utils.data import DataLoader
 
@@ -205,7 +204,7 @@ def microbenchmark(args):
 
     if args.gcs_project_name:
         print('Start transferring results to google storage bucket')
-        upload_to_gcs(local_dir=projectdir / str(date.today()),
+        upload_to_gcs(local_dir=projectdir,
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
                       gcs_dir=args.gcs_dir)

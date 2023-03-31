@@ -1,3 +1,5 @@
+from datetime import date
+
 from google.cloud import storage
 import os
 
@@ -11,6 +13,6 @@ def upload_to_gcs(local_dir: str, gcs_project_name: str, gcs_bucket_name: str, g
         for file in files:
             local_path = os.path.join(root, file)
             relative_path = os.path.relpath(local_path, local_dir)
-            gcs_path = os.path.join(gcs_dir, relative_path)
+            gcs_path = os.path.join(gcs_dir, relative_path, str(date.today()))
             blob = bucket.blob(gcs_path)
             blob.upload_from_filename(local_path)
