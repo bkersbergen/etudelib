@@ -1,6 +1,7 @@
 import warnings
 import os
 from argparse import ArgumentParser, Namespace
+from datetime import date
 
 from omegaconf import OmegaConf
 from importlib import import_module
@@ -207,7 +208,7 @@ def microbenchmark(args):
         upload_to_gcs(local_dir=projectdir,
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
-                      gcs_dir=args.gcs_dir)
+                      gcs_dir=args.gcs_dir + '/' + str(date.today()))
         print('End transferring results to google storage bucket')
 
 
