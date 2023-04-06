@@ -1,0 +1,52 @@
+{
+  "type": "record",
+  "name": "Report",
+  "namespace": "com.bol.etude.generated",
+  "doc": "output",
+  "fields": [
+
+    {
+      "name": "context",
+      "type": "string"
+    },
+
+    {
+      "name": "requests",
+      "type": {
+        "type": "array",
+        "items": {
+          "type":"long"
+        }
+      }
+    },
+
+    {
+      "name": "responses",
+      "type": {
+        "type": "array",
+        "items": {
+          "type":"record",
+          "name": "Response",
+          "fields": [
+            {
+              "name": "status",
+              "type": "int"
+            },
+            {
+              "name": "body",
+              "type": "string"
+            },
+            {
+              "name": "latency",
+              "type": "long"
+            },
+            {
+              "name": "timestamp",
+              "type": "long"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
