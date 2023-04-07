@@ -2,6 +2,7 @@ package com.bol.etude.ng;
 
 import javax.annotation.Nonnull;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
@@ -66,6 +67,18 @@ class Journeys {
 
         public List<Long> items() {
             return unmodifiableList(items);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Journey journey)) return false;
+            return Objects.equals(uid, journey.uid) && Objects.equals(items, journey.items);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(uid, items);
         }
     }
 }
