@@ -1,33 +1,35 @@
 {
+  "namespace": "com.bol.etude.generated",
   "type": "record",
   "name": "Report",
-  "namespace": "com.bol.etude.generated",
   "doc": "output",
   "fields": [
-
     {
-      "name": "context",
-      "type": "string"
-    },
-
-    {
-      "name": "requests",
+      "name": "interactions",
       "type": {
         "type": "array",
         "items": {
-          "type":"long"
-        }
-      }
-    },
-
-    {
-      "name": "responses",
-      "type": {
-        "type": "array",
-        "items": {
-          "type":"record",
-          "name": "Response",
+          "type": "record",
+          "name": "Interaction",
           "fields": [
+            {
+              "name": "input",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "long"
+                }
+              }
+            },
+            {
+              "name": "output",
+              "type": {
+                "type": "array",
+                "items": {
+                  "type": "long"
+                }
+              }
+            },
             {
               "name": "status",
               "type": "int"
@@ -37,12 +39,24 @@
               "type": "string"
             },
             {
-              "name": "latency",
+              "name": "latency_millis",
               "type": "long"
             },
             {
-              "name": "timestamp",
+              "name": "timestamp_epoch_millis",
               "type": "long"
+            },
+            {
+              "name": "preprocessing_millis",
+              "type": "float"
+            },
+            {
+              "name": "inferencing_millis",
+              "type": "float"
+            },
+            {
+              "name": "processing_millis",
+              "type": "float"
             }
           ]
         }

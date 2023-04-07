@@ -1,16 +1,17 @@
 package com.bol.etude.ng;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class GoogleVertxData {
-
+public class GoogleVertxRequest {
 
     public List<Instance> instances = new ArrayList<>(1);
+
     public List<Parameter> parameters =  new ArrayList<>(1) {{
         add(new Parameter());
     }};
 
-    GoogleVertxData(List<Long> values) {
+    GoogleVertxRequest(List<Long> values) {
         instances.add(new Instance(values));
     }
 
