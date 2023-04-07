@@ -2,14 +2,10 @@ package com.bol.etude.ng;
 
 import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
-import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.stream.LongStream;
 
@@ -25,7 +21,7 @@ public class Main {
     public static void main(String[] args) {
 
 
-        Requester<List<Long>> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
+        Requester<String> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
         try (persister; requester) {
