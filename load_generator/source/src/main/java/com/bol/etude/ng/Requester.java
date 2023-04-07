@@ -72,8 +72,10 @@ public class Requester<T> implements Closeable {
     }
 
     private SimpleHttpRequest post(T payload) {
+        String body = gson.toJson(payload);
         return SimpleRequestBuilder.post()
-                .setBody(gson.toJson(payload), APPLICATION_JSON)
+                .setHeader("Content-Length", String.valueOf(body.length()))
+                .setBody(body, APPLICATION_JSON)
                 .setUri(uri)
                 .build();
     }

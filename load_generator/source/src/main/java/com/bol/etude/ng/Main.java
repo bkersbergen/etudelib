@@ -20,8 +20,9 @@ public class Main {
 
     public static void main(String[] args) {
 
+        String str = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
+        Requester<GoogleVertxData> requester = new Requester<>(URI.create(str/*"https://httpbin.org/anything"*/), new GoogleBearerAuthenticator());
 
-        Requester<GoogleVertxData> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
         try (persister; requester) {
