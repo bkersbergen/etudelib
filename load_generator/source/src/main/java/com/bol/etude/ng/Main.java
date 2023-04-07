@@ -59,7 +59,7 @@ public class Main {
 
                                 Interaction.Builder interaction = Interaction.newBuilder();
                                 interaction.setTimestampEpochMillis(response.start.toEpochMilli());
-                                interaction.setInput(journey.items().subList(0, index));
+                                interaction.setInput(journey.items().subList(0, index + 1));
                                 interaction.setStatus(response.status);
                                 interaction.setLatencyMillis(response.latency.toMillis());
 
