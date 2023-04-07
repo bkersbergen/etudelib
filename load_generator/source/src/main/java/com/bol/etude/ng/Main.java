@@ -4,6 +4,7 @@ import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
 
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.LongStream;
@@ -18,10 +19,10 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Requester<List<Long>> requester = new Requester<>();
+        Requester<List<Long>> requester = new Requester<>(URI.create("https://httpbin.org/response-headers"));
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
-        try (requester; persister) {
+        try (persister; requester) {
             Journeys journeys = new Journeys(Main::items);
             Collector<Journey> collector = new Collector<>();
 
@@ -33,8 +34,8 @@ public class Main {
                         collector.remove(journey);
                         System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
                     } else {
-                        collector.add(journey, null);
-                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
+                        collector.add(journey, success);
+//                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
 
                         if (journey.last()) {
                             List<com.bol.etude.ng.Requester.Response> responses = collector.remove(journey);
@@ -49,15 +50,17 @@ public class Main {
                                 response.setBody(it.body);
                                 return response.build();
                             }).toList());
+
                             persister.accept(report.build());
-                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
-                        } else {
-                            journeys.push(journey);
+//                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
                         }
+
+                        journeys.push(journey);
                     }
                 });
             });
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

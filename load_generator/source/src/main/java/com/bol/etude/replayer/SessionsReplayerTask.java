@@ -80,15 +80,20 @@ public class SessionsReplayerTask implements Runnable {
                 HttpResponse response = httpClient.execute(httpPost);
                 Duration duration = Duration.between(start, Instant.now());
                 String content = EntityUtils.toString(response.getEntity(), Consts.UTF_8);
+
+
                 PyTorchResult.Builder prb = PyTorchResult.newBuilder();
-                prb.setContext(json);
-                prb.setResponse(content);
+
                 prb.setHttpStatusCode(response.getStatusLine().getStatusCode());
                 prb.setLatency(duration.toMillis());
+                prb.setEventTimestamp(start.toEpochMilli());
+
+                prb.setContext(json);
+                prb.setResponse(content);
                 prb.setEvolvingSessionItems(evolvingSessionItems);
                 prb.setNextSessionItems(nextSessionItems);
-                prb.setEventTimestamp(start.toEpochMilli());
                 prb.setIsEvaluationData(userSession.isEvaluationData());
+
                 predictionOutputQueue.add(prb.build());
             }
         }

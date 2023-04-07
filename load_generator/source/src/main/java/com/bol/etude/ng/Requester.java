@@ -12,6 +12,7 @@ import org.apache.hc.core5.http.ProtocolException;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Phaser;
@@ -23,6 +24,11 @@ public class Requester<T> implements Closeable {
     private static final String REQUEST_START = "request-start";
     private final CloseableHttpAsyncClient client = client();
     private final Phaser phaser = new Phaser();
+    private final URI uri;
+
+    Requester (URI uri) {
+        this.uri = uri;
+    }
 
     void exec(T payload, Callback callback) {
         phaser.register();
@@ -36,7 +42,8 @@ public class Requester<T> implements Closeable {
                     Duration latency = Duration.between(start, Instant.now());
 
                     callback.callback(new Response(start, status, body, latency), null);
-                } catch (ProtocolException e) {
+                } catch (Exception e) {
+                    e.printStackTrace();
                     callback.callback(null, e);
                 } finally {
                     phaser.arriveAndDeregister();
@@ -45,6 +52,7 @@ public class Requester<T> implements Closeable {
 
             @Override
             public void failed(Exception e) {
+//                e.printStackTrace();
                 callback.callback(null, e);
                 phaser.arriveAndDeregister();
             }
@@ -60,8 +68,7 @@ public class Requester<T> implements Closeable {
     private SimpleHttpRequest post(T payload) {
         return SimpleRequestBuilder.post()
                 .setBody(gson.toJson(payload), APPLICATION_JSON)
-                .setHttpHost(new HttpHost("httpbin.org"))
-                .setPath("/response-headers")
+                .setUri(uri)
                 .build();
     }
 
