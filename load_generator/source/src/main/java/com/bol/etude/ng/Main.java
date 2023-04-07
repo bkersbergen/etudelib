@@ -21,7 +21,7 @@ public class Main {
     public static void main(String[] args) {
 
 
-        Requester<String> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
+        Requester<GoogleVertxData> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
         try (persister; requester) {
@@ -31,7 +31,7 @@ public class Main {
             rampThenHold(10, ofSeconds(10), ofSeconds(60), () -> {
                 Journey journey = journeys.pull();
 
-                requester.exec(journey.item(), (success, failure) -> {
+                requester.exec(new GoogleVertxData(journey.item()), (success, failure) -> {
                     if (success == null) {
                         collector.remove(journey);
                         System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");

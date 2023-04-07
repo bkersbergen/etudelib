@@ -42,11 +42,10 @@ class Journeys {
             this.items = items;
         }
 
-        @Nonnull public String item() {
+        @Nonnull public List<Long> item() {
             if (last()) throw new RuntimeException("index = " + index + ", size = " + items.size());
             index += 1;
-            List<Long> zeroToNow = items.subList(0, index);
-            return  "{\"instances\": [{\"context\":" + zeroToNow + "}],\"parameters\": [{\"runtime\":  \"eager\"}]}";
+            return items.subList(0, index);
         }
 
         @Nonnull public Boolean first() {
