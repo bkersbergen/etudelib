@@ -154,7 +154,12 @@ class MicroBenchmark:
             return tensor.indices.detach().cpu().numpy()
         elif usecase == list:
             # onnx list. First element are the values, Second element are the indexed item ids
-            return tensor[1]
+            if len(tensor) == 2:
+                # Onnx TopK results
+                return tensor[1]
+            else:
+                # Onnx results
+                return tensor[0]
         elif usecase == tuple:
             return tensor[1].detach().cpu().numpy()
         else:
