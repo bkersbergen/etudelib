@@ -35,10 +35,6 @@
               "type": "int"
             },
             {
-              "name": "body",
-              "type": "string"
-            },
-            {
               "name": "latency_millis",
               "type": "long"
             },

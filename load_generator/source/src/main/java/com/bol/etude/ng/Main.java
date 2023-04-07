@@ -30,20 +30,25 @@ public class Main {
 
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
+        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(100);
+        double lambda = 5.597568416279968;
+        double xMin = 8.0E-5;
+        double exponent = 3.650557039874508;
+        supplier.fit(lambda, xMin, exponent);
         try (persister; requester) {
             Journeys journeys = new Journeys(Main::items);
             Collector<Journey> collector = new Collector<>();
 
-            rampThenHold(10, ofSeconds(10), ofSeconds(60), () -> {
+            rampThenHold(200, ofSeconds(30), ofSeconds(600), () -> {
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
                     if (success == null) {
                         collector.remove(journey);
-                        System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
+//                        System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
                     } else {
                         collector.add(journey, success);
-                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
+//                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
 
                         if (journey.last()) {
                             List<Response> responses = collector.remove(journey);
@@ -54,7 +59,7 @@ public class Main {
 
                                 Interaction.Builder interaction = Interaction.newBuilder();
                                 interaction.setTimestampEpochMillis(response.start.toEpochMilli());
-                                interaction.setInput(journey.item().subList(0, index));
+                                interaction.setInput(journey.items().subList(0, index));
                                 interaction.setStatus(response.status);
                                 interaction.setLatencyMillis(response.latency.toMillis());
 
@@ -73,7 +78,7 @@ public class Main {
                             report.setInteractions(interactions);
 
                             persister.accept(report.build());
-                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
+//                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
                         }
 
                         journeys.push(journey);
