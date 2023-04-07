@@ -2,10 +2,14 @@ package com.bol.etude.ng;
 
 import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
+import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.LongStream;
 
@@ -19,7 +23,9 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Requester<List<Long>> requester = new Requester<>(URI.create("https://httpbin.org/response-headers"));
+
+
+        Requester<List<Long>> requester = new Requester<>(URI.create("https://httpbin.org/response-headers")/*, new GoogleBearerAuthenticator()*/);
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
         try (persister; requester) {
@@ -35,7 +41,7 @@ public class Main {
                         System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
                     } else {
                         collector.add(journey, success);
-//                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
+                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
 
                         if (journey.last()) {
                             List<com.bol.etude.ng.Requester.Response> responses = collector.remove(journey);
@@ -52,7 +58,7 @@ public class Main {
                             }).toList());
 
                             persister.accept(report.build());
-//                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
+                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
                         }
 
                         journeys.push(journey);

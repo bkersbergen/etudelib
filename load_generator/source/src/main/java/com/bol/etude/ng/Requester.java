@@ -7,9 +7,9 @@ import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.core5.concurrent.FutureCallback;
-import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.ProtocolException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
@@ -25,9 +25,15 @@ public class Requester<T> implements Closeable {
     private final CloseableHttpAsyncClient client = client();
     private final Phaser phaser = new Phaser();
     private final URI uri;
+    private final Authenticator authenticator;
+
+    Requester (@Nonnull URI uri, @Nullable Authenticator authenticator) {
+        this.uri = uri;
+        this.authenticator = authenticator;
+    }
 
     Requester (URI uri) {
-        this.uri = uri;
+       this(uri, null);
     }
 
     void exec(T payload, Callback callback) {
@@ -78,9 +84,12 @@ public class Requester<T> implements Closeable {
         client.close();
     }
 
-    private static CloseableHttpAsyncClient client() {
+    private CloseableHttpAsyncClient client() {
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
                 .addRequestInterceptorFirst((request, entity, context) -> {
+                    if (authenticator != null) {
+                        request.setHeader("Authorization", "Bearer " + authenticator.token());
+                    }
                     context.setAttribute(REQUEST_START, Instant.now());
                 })
                 .addResponseInterceptorLast((response, entity, context) -> {
