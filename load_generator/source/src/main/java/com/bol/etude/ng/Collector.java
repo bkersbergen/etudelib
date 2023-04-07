@@ -3,12 +3,12 @@ package com.bol.etude.ng;
 import com.bol.etude.ng.Requester.Response;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Collector<T> {
 
-    private final HashMap<T, List<Response>> results = new HashMap<>();
+    private final ConcurrentHashMap<T, List<Response>> results = new ConcurrentHashMap<>();
 
     public void add(T key, Response value) {
         List<Response> values = results.computeIfAbsent(key, it -> new ArrayList<>());
