@@ -4,6 +4,7 @@ import com.bol.etude.generated.Interaction;
 import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
 import com.bol.etude.ng.Requester.Response;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -11,25 +12,35 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.stream.LongStream;
 
 import static com.bol.etude.ng.Tester.rampThenHold;
 import static java.time.Duration.ofSeconds;
 
 public class Main {
 
-    private static List<Long> items() {
-        return LongStream.range(0, new Random().nextLong(1, 20)).boxed().toList();
-    }
+    private static final Gson gson = new Gson();
 
-    public static void main(String[] args) {
-        Gson gson = new Gson();
-        String uri = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
-        Requester<GoogleVertxRequest> requester = new Requester<>(URI.create(uri), new GoogleBearerAuthenticator());
+    public static void main(String[] args) throws InterruptedException {
+        String endpoint = System.getenv("VERTX_ENDPOINT");
+        System.out.println("ENV_VAR[VERTX_ENDPOINT] = '" + endpoint + "'");
+
+        String catalogus = System.getenv("CATALOGUS_SIZE");
+        System.out.println("ENV_VAR[CATALOGUS_SIZE] = '" + catalogus + "'");
+
+        if (Strings.isNullOrEmpty(endpoint) || Strings.isNullOrEmpty(catalogus)) {
+            System.out.println("killing loadgen, env variables [VERTX_ENDPOINT, CATALOGUS_SIZE] are not both set");
+            Thread.sleep(10_000);
+            System.out.println("exit(1)");
+            System.exit(1);
+        }
+
+//        String uri = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
+//        int catalogus = 1000000;
+
+        Requester<GoogleVertxRequest> requester = new Requester<>(URI.create(endpoint), new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
-        int catalogSize = 1000000;
-        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(catalogSize);
+
+        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(Integer.parseInt(catalogus));
         double lambda = 5.597568416279968;
         double xMin = 8.0E-5;
         double exponent = 3.650557039874508;
@@ -45,17 +56,14 @@ public class Main {
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
                     if (success == null) {
                         collector.remove(journey);
-//                        System.out.println("item.err(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
                     } else {
                         collector.add(journey, success);
-//                        System.out.println("item.ok(journey = " + journey.uid + ", size = " + journey.size() + ", index = " + journey.index() + ")");
 
                         if (!journey.last()) {
                             journeys.push(journey);
                         } else {
                             Report report = report(journey, collector.remove(journey), gson);
                             persister.accept(report);
-//                            System.out.println("journey.done(uuid = " + journey.uid + ", size = " + journey.size() + ")");
                         }
                     }
                 });

@@ -3,12 +3,18 @@ package com.bol.etude.ng;
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
+import java.util.stream.LongStream;
 
 import static java.util.Collections.unmodifiableList;
 
 class Journeys {
+
+    static Supplier<List<Long>> randomJourneySupplier() {
+        return () -> LongStream.range(0, new Random().nextLong(1, 20)).boxed().toList();
+    }
 
     private static long counter = 0;
 
