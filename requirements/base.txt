@@ -9,4 +9,6 @@ psutil==5.9.4
 pynvml==11.5.0
 scipy==1.10.0
 google-cloud-storage
+torchserve==0.7.1
+
 
