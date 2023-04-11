@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vertex-create-endpoint
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: reco-analytics
+      restartPolicy: Never
+      containers:
+        - name: vertex-create-endpoint
+          image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
+          args: [
+            "--environment", "pro",
+            "--project", "bolcom-pro-reco-analytics-fcc",
+            "endpoints",
+            "create",
+            "--display-name", "noop_cpu",
+            "--description", "noop_cpu",
+          ]
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1001

@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vertex-deploy-model
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: reco-analytics
+      restartPolicy: Never
+      containers:
+        - name: vertex-deploy-model
+          image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
+          args: [
+            "--project", "bolcom-pro-reco-analytics-fcc",
+            "models",
+            "deploy",
+            "--display-name", "noop",
+            "--container-image-url", "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-noop:latest",
+            "--container-port", "7080",
+            "--predict-route", "/predictions/noop",
+            "--health-check-route", "/ping",
+            "--description", "noop",
+            "--is-default",
+          ]
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1001
+

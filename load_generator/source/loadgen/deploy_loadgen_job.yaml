@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: loadgen
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: reco-analytics
+      restartPolicy: Never
+      containers:
+        - name: deploy-loadgen
+          image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen"
+#          env:
+#            - name: CATALOG_SIZE
+#              value: "100"
+#            - name: VERTX_ENDPOINT
+#              value: ""
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1001
