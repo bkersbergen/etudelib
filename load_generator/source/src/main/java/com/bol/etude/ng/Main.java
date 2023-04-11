@@ -24,12 +24,12 @@ public class Main {
         String endpoint = System.getenv("VERTX_ENDPOINT");
         System.out.println("ENV_VAR[VERTX_ENDPOINT] = '" + endpoint + "'");
 
-        String catalogus = System.getenv("CATALOGUS_SIZE");
-        System.out.println("ENV_VAR[CATALOGUS_SIZE] = '" + catalogus + "'");
+        String catalog = System.getenv("CATALOG_SIZE");
+        System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog + "'");
 
-        if (Strings.isNullOrEmpty(endpoint) || Strings.isNullOrEmpty(catalogus)) {
-            System.out.println("killing loadgen, env variables [VERTX_ENDPOINT, CATALOGUS_SIZE] are not both set");
-            Thread.sleep(10_000);
+        if (Strings.isNullOrEmpty(endpoint) || Strings.isNullOrEmpty(catalog)) {
+            System.out.println("killing loadgen, env variables [VERTX_ENDPOINT, CATALOG_SIZE] are not both set");
+            Thread.sleep(300_000);
             System.out.println("exit(1)");
             System.exit(1);
         }
@@ -40,7 +40,7 @@ public class Main {
         Requester<GoogleVertxRequest> requester = new Requester<>(URI.create(endpoint), new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
-        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(Integer.parseInt(catalogus));
+        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(Integer.parseInt(catalog));
         double lambda = 5.597568416279968;
         double xMin = 8.0E-5;
         double exponent = 3.650557039874508;
