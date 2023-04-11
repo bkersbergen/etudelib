@@ -65,6 +65,7 @@ public class Main {
                     try {
                         persister.flush();
                     } catch (IOException e) {
+                        e.printStackTrace();
                         throw new RuntimeException(e);
                     }
                 });
