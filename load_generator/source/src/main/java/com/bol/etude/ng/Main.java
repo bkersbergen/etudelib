@@ -25,10 +25,8 @@ public class Main {
 
     public static void main(String[] args) {
         Gson gson = new Gson();
-//        String uri = "https://httpbin.org/anything";
         String uri = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
         Requester<GoogleVertxRequest> requester = new Requester<>(URI.create(uri), new GoogleBearerAuthenticator());
-
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
 
         SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(100);
@@ -36,6 +34,7 @@ public class Main {
         double xMin = 8.0E-5;
         double exponent = 3.650557039874508;
         supplier.fit(lambda, xMin, exponent);
+
         try (persister; requester) {
             Journeys journeys = new Journeys(Main::items);
             Collector<Journey> collector = new Collector<>();
