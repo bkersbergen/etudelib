@@ -3,6 +3,7 @@ package com.bol.etude.ng;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class Tester implements Iterable<Integer> {
 
@@ -23,14 +24,14 @@ public class Tester implements Iterable<Integer> {
         return new Iterators(ramper, maintainer);
     }
 
-    public static void rampThenHold(int target, Duration ramp, Duration maintain, Runnable runner) throws InterruptedException {
+    public static void rampThenHold(int target, Duration ramp, Duration maintain, Consumer<Tick> runner) throws InterruptedException {
         if (target < 0) throw new RuntimeException("target < 0");
         Objects.requireNonNull(ramp, "ramp == null");
         Objects.requireNonNull(ramp, "maintain == null");
         new Tester(target, ramp, maintain).run(runner);
     }
 
-    private void run (Runnable runner) throws InterruptedException {
+    private void run (Consumer<Tick> runner) throws InterruptedException {
         long start = System.nanoTime();
         long iterations = 0;
 
@@ -38,7 +39,8 @@ public class Tester implements Iterable<Integer> {
             iterations += 1;
 
             for (int i = 0; i < rps; i++) {
-                runner.run();
+                var last = i + 1 == rps;
+                runner.accept(new Tick(last));
             }
 
             long next = Duration.ofSeconds(1).toNanos() * iterations;
@@ -50,6 +52,18 @@ public class Tester implements Iterable<Integer> {
 
             long millis = Duration.ofNanos(delta).toMillis();
             Thread.sleep(millis);
+        }
+    }
+
+    static class Tick {
+        private final boolean complete;
+
+        Tick(boolean complete) {
+            this.complete = complete;
+        }
+
+        public void doOnComplete(Runnable runnable) {
+            if (complete) runnable.run();
         }
     }
 
