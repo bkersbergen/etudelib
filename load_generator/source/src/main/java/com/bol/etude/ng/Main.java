@@ -28,15 +28,15 @@ public class Main {
         String uri = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
         Requester<GoogleVertxRequest> requester = new Requester<>(URI.create(uri), new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(new File("/tmp/etude/report.avro"), Report.class);
-
-        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(100);
+        int catalogSize = 1000000;
+        SyntheticJourneySupplier supplier = new SyntheticJourneySupplier(catalogSize);
         double lambda = 5.597568416279968;
         double xMin = 8.0E-5;
         double exponent = 3.650557039874508;
         supplier.fit(lambda, xMin, exponent);
 
         try (persister; requester) {
-            Journeys journeys = new Journeys(Main::items);
+            Journeys journeys = new Journeys(supplier);
             Collector<Journey> collector = new Collector<>();
 
             rampThenHold(200, ofSeconds(30), ofSeconds(600), (tick) -> {
