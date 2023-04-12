@@ -1,0 +1,8 @@
+model:
+  name: NOOP
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">
