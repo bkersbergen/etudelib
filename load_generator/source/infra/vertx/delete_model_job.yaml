@@ -13,15 +13,15 @@ spec:
         - name: "${JOB_NAME}"
           image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
           args: [
-            "--environment", "pro",
             "--project", "bolcom-pro-reco-analytics-fcc",
-            "endpoints",
-            "create",
-            "--display-name", "etude-${VERTEX_ENDPOINT_NAME}",
-            "--description", "etude-${VERTEX_ENDPOINT_NAME}",
+            "models",
+            "delete",
+            "--model-id",
+            "${VERTX_MODEL_NAME_OR_ID}",
           ]
           imagePullPolicy: Always
           securityContext:
             runAsUser: 1001
             runAsNonRoot: true
+
 

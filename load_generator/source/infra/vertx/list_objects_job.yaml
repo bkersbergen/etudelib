@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "etude-list-objects-${OBJECT_TYPE}"
+  name: "${JOB_NAME}"
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
@@ -10,7 +10,7 @@ spec:
       serviceAccountName: reco-analytics
       restartPolicy: Never
       containers:
-        - name: "etude-list-objects-${OBJECT_TYPE}"
+        - name: "${JOB_NAME}"
           image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
           args: [
             "--environment", "pro",
