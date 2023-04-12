@@ -1,0 +1,37 @@
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime AS runtime
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y \
+    curl \
+    gnupg2 \
+    wget \
+    apt-transport-https;
+
+# Install Eclipse adoptium Java
+RUN mkdir -p /etc/apt/keyrings
+RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc
+RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
+RUN apt-get update -y && apt-get install -y temurin-17-jdk
+
+WORKDIR /app
+RUN pip install torchserve numpy
+
+# Installs python dependencies.
+COPY requirements.txt /tmp/
+RUN pip install -r /tmp/requirements.txt
+
+# Install generic configuration
+COPY log4j2.xml ./conf/
+COPY torchserve.properties ./conf/
+COPY start.sh ./
+
+# Setup the local account
+RUN groupadd -r app && useradd -r -g app -u 1001 app --home /app
+RUN chown -R app:app /app
+USER app
+
+COPY --from=redboxoss/scuttle:latest /scuttle /bin/scuttle
+ENTRYPOINT ["/bin/scuttle", "./start.sh"]
+EXPOSE 7080 7081 7082
+
+

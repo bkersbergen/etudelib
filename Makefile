@@ -20,5 +20,10 @@ microbenchmark: ## Run the microbenchmark in Google AI platform
 	  --master-machine-type n1-highmem-8 \
 	  --master-accelerator count=1,type=nvidia-tesla-t4 \
 
+dockerbaseimage: ## Build and push the Docker base image that the deployed models use.
+
+	@cp requirements/base.txt .docker/requirements.txt && cd .docker && docker build -f ServingDockerfile .
+
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
+

@@ -1,5 +1,6 @@
 import logging
 import os
+import onnxruntime as ort
 from importlib import import_module
 from pathlib import Path
 
@@ -19,8 +20,9 @@ logger = logging.getLogger(__name__)
 class TorchInferencer(BaseHandler):
 
     def __init__(self):
+        self.ort_sess = None
         self.max_seq_length = None
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device_type = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = None
         self.item2idx = None  # (dict) each key is an item_id and the value is the idx number
         self.idx2item = None  # (list) each position contains an item_id
@@ -42,14 +44,35 @@ class TorchInferencer(BaseHandler):
         logger.info('TorchInferencer.initialize_from_file(): {}'.format(model_path))
         if not os.path.isfile(model_path):
             logger.error("Model serializedFile not found:", model_path)
-        self.model = torch.load(model_path, map_location=self.device).to(self.device)
-        self.model.eval()
-
-        filename_without_extension = model_path.split('.eager.pth')[0]
-
+        if model_path.endswith('.eager.pth'):
+            self.runtime = 'eager'
+            filename_without_extension = model_path.split('.eager.pth')[0]
+            self.model = torch.load(model_path, map_location=self.device_type).to(self.device_type)
+            self.model.eval()
+        elif model_path.endswith('.jitopt.pth'):
+            self.runtime = 'jitopt'
+            filename_without_extension = model_path.split('.jitopt.pth')[0]
+            self.model = torch.jit.load(model_path, map_location=self.device_type).to(self.device_type)
+            self.model.eval()
+        elif model_path.endswith('.onnx.pth'):
+            self.runtime = 'onnx'
+            filename_without_extension = model_path.split('.onnx.pth')[0]
+            providers = (
+                ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                if self.device_type == "cuda"
+                else ["CPUExecutionProvider"]
+            )
+            try:
+                self.ort_sess = ort.InferenceSession(model_path, providers=providers)
+            except ImportError as error:
+                logger.warning("Onnx ImportError." + str(error))
+        logger.info(f'Runtime: {self.runtime}')
+        logger.info(f'Device type: {self.device_type}')
         payload = torch.load(filename_without_extension + '.payload.torch')
+
         self.max_seq_length = payload.get('max_seq_length')
         self.idx2item = payload.get('idx2item')  # list
+        self.C = payload.get('C')  # catalog size
         self.item2idx = dict(zip(self.idx2item, range(len(self.idx2item))))  # dict
 
     def handle(self, data, context):
@@ -74,9 +97,12 @@ class TorchInferencer(BaseHandler):
         }]
 
     def inference(self, data, *args, **kwargs):
-        items, lengths = data
-        with torch.no_grad():
-            return self.model.forward(items, lengths)
+        if self.runtime == 'onnx':
+            return self.ort_sess.run(None, data)
+        else:
+            items, lengths = data
+            with torch.no_grad():
+                return self.model.forward(items, lengths)
 
     def preprocess(self, data):
         # expected input:
@@ -109,12 +135,25 @@ class TorchInferencer(BaseHandler):
 
         evolving_session_items = evolving_session_items[-self.max_seq_length:]  # use most recent max_seq_length items
         idx_seq = [self.item2idx.get(item_id, 0) for item_id in evolving_session_items]
-        padded_tensor = torch.zeros((self.max_seq_length,), dtype=torch.int64, device=self.device)
-        padded_tensor[:len(idx_seq)] = torch.tensor(idx_seq, dtype=torch.int64, device=self.device)
+        padded_tensor = torch.zeros((self.max_seq_length,), dtype=torch.int64, device=self.device_type)
+        padded_tensor[:len(idx_seq)] = torch.tensor(idx_seq, dtype=torch.int64, device=self.device_type)
 
         # convert tensors to batch_size 1
-        return padded_tensor.unsqueeze(0), \
-            torch.tensor(len(idx_seq), device=self.device).unsqueeze(0)
+        item_seq = padded_tensor.unsqueeze(0)
+        session_length = torch.tensor(len(idx_seq), device=self.device_type).unsqueeze(0)
+
+        if self.runtime == 'onnx':
+            key = {}
+            # onnx crashes when unused input Tensors are provided to a onnx-session
+            input_params = set([node.name for node in self.ort_sess._inputs_meta])
+            for onnx_param in input_params:
+                if onnx_param == 'item_id_list':
+                    key[onnx_param] = item_seq.numpy()
+                elif onnx_param == 'max_seq_length':
+                    key[onnx_param] = np.array(session_length.numpy(), dtype=np.int64)
+            return key
+        else:
+            return item_seq, session_length
 
     def postprocess(self, tensor):
         usecase = type(tensor)
@@ -139,52 +178,52 @@ class TorchInferencer(BaseHandler):
                 reco_item_ids.append(self.idx2item[idx])
         return reco_item_ids
 
-
-if __name__ == '__main__':
-    model_name = 'core'
-    C = 1000000
-    max_seq_length = 50
-    dataset_name = 'synthetic'
-    rootdir = Path(__file__).parent.parent.parent.parent
-
-    projectdir = Path(rootdir, 'projects/benchmark')
-    configure_logger(level='INFO')
-
-    config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
-    config = OmegaConf.load(config_path)
-
-    config['dataset'] = {}
-    config['dataset']['n_items'] = C
-    config['dataset']['max_seq_length'] = max_seq_length
-
-    module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
-    model = getattr(module, f"{config.model.name}Lightning")(config)
-
-    eager_model = model.get_backbone()
-
-    eager_model = TopKDecorator(eager_model, topk=21)
-    eager_model.eval()
-
-    base_filename = f'{model_name}_{dataset_name}_{C}_{max_seq_length}'
-
-    payload = {'max_seq_length': max_seq_length,
-               'C': C,
-               'idx2item': [i for i in range(C)]
-               }
-    torch.save(payload, str(projectdir / f'{base_filename}.payload.torch'))
-
-    torch.save(eager_model, str(projectdir / f'{base_filename}.eager.pth'))
-
-    inferencer = TorchInferencer()
-    inferencer.initialize_from_file(str(projectdir / 'core_synthetic_1000000_50.eager.pth'))
-    request_data = [{'body':
-        {
-            'instances': [{'context': [1, 2, 3]}]
-        }
-    }]
-    preprocessed = inferencer.preprocess(request_data)
-    inferenced = inferencer.inference(preprocessed)
-    recos = inferencer.postprocess(inferenced)
-
-    recos = inferencer.handle(request_data, context=None)
-    print(recos)
+#
+# if __name__ == '__main__':
+#     model_name = 'core'
+#     C = 1000000
+#     max_seq_length = 50
+#     dataset_name = 'synthetic'
+#     rootdir = Path(__file__).parent.parent.parent.parent
+#
+#     projectdir = Path(rootdir, 'projects/benchmark')
+#     configure_logger(level='INFO')
+#
+#     config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
+#     config = OmegaConf.load(config_path)
+#
+#     config['dataset'] = {}
+#     config['dataset']['n_items'] = C
+#     config['dataset']['max_seq_length'] = max_seq_length
+#
+#     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
+#     model = getattr(module, f"{config.model.name}Lightning")(config)
+#
+#     eager_model = model.get_backbone()
+#
+#     eager_model = TopKDecorator(eager_model, topk=21)
+#     eager_model.eval()
+#
+#     base_filename = f'{model_name}_{dataset_name}_{C}_{max_seq_length}'
+#
+#     payload = {'max_seq_length': max_seq_length,
+#                'C': C,
+#                'idx2item': [i for i in range(C)]
+#                }
+#     torch.save(payload, str(projectdir / f'{base_filename}.payload.torch'))
+#
+#     torch.save(eager_model, str(projectdir / f'{base_filename}.eager.pth'))
+#
+#     inferencer = TorchInferencer()
+#     inferencer.initialize_from_file(str(projectdir / 'core_synthetic_1000000_50.eager.pth'))
+#     request_data = [{'body':
+#         {
+#             'instances': [{'context': [1, 2, 3]}]
+#         }
+#     }]
+#     preprocessed = inferencer.preprocess(request_data)
+#     inferenced = inferencer.inference(preprocessed)
+#     recos = inferencer.postprocess(inferenced)
+#
+#     recos = inferencer.handle(request_data, context=None)
+#     print(recos)

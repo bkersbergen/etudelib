@@ -1,0 +1,7 @@
+FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-torchserve:latest
+
+# COPY --chown=app:app log4j2-debug.xml ./conf/log4j2.xml
+
+COPY --chown=app:app custom_container/trained_models/lightsans_bolcom1m.mar ./models/
+
+ENV models {"lightsans_bolcom1m": {"1.0": {"batchSize": 1,"marName": "lightsans_bolcom1m.mar","maxBatchDelay": 1,"responseTimeout": 100}}}

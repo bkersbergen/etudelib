@@ -19,6 +19,8 @@ class SyntheticDataset(Dataset):
         elif param_source == 'rsc15':
             session_fit_params = (0.10324840656752753, 0.9999999999999999, 199.00000000000003)
             item_fit_params = (0.07980915552672938, 0.9999999999999999, 147418.00000000003)
+        else:
+            raise Exception("Needs further implementation. Only bolcom or rsc15 are supported")
 
         distribution_name = 'powerlaw'
         distribution = getattr(st, distribution_name)

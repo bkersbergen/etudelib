@@ -139,13 +139,6 @@ class MicroBenchmark:
         df = pd.DataFrame(result, columns=output_columns)
         return df
 
-    @staticmethod
-    def onnxed_predict(ort_sess, new_inter):
-        item_seq = new_inter['item_id_list']
-        item_seq_len = new_inter['item_length']
-        seq_output = ort_sess.run(None, {'item_id_list': item_seq.numpy(),
-                                         'max_seq_length': np.array([item_seq_len], dtype=np.int64)})
-        return seq_output
 
     @staticmethod
     def get_item_ids(tensor):
