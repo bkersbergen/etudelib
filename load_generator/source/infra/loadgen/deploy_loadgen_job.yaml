@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "${LOADGEN_JOB_NAME}"
+  name: "etude-loadtest-${LOADTEST_NAME}"
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
@@ -10,7 +10,7 @@ spec:
       serviceAccountName: reco-analytics
       restartPolicy: Never
       containers:
-        - name: deploy-loadgen
+        - name: "etude-loadtest-${LOADTEST_NAME}"
           image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen"
 #          env:
 #            - name: CATALOG_SIZE
