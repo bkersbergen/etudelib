@@ -24,8 +24,9 @@ class NOOPModel(nn.Module):
 
         generator = torch.Generator()
         generator.manual_seed(n_items)
-        # load parameters info
-        self.result = torch.rand(n_items, generator=generator).unsqueeze(0)
+        # # load parameters info
+        self.result = torch.rand(n_items, generator=generator)
 
     def forward(self, item_seq, item_seq_len):
-        return self.result
+        batch_size = item_seq.shape[0]
+        return self.result.repeat(batch_size, 1)
