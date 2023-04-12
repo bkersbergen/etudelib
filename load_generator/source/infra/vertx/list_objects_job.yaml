@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "etude-list-objects-${OBJECT_TYPE}"
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccountName: reco-analytics
+      restartPolicy: Never
+      containers:
+        - name: "etude-list-objects-${OBJECT_TYPE}"
+          image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
+          args: [
+            "--environment", "pro",
+            "--project",  "bolcom-pro-reco-analytics-fcc",
+            "${OBJECT_TYPE}",
+            "list"
+          ]
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1001
+

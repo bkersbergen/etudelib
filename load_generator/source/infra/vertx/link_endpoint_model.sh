@@ -8,7 +8,7 @@ fi
 export VERTEX_ENDPOINT="${1}"
 export VERTEX_MODEL="${2}"
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}" --ignore-not-found=true --timeout=10m
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "etude-vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}" --ignore-not-found=true --timeout=10m
 
 envsubst < ./link_endpoint_model_job.yaml > "/tmp/vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}.yaml"
 # cat "/tmp/vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}.yaml"
