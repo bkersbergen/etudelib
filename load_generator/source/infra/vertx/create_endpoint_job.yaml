@@ -23,3 +23,5 @@ spec:
           imagePullPolicy: Always
           securityContext:
             runAsUser: 1001
+            runAsNonRoot: true
+
