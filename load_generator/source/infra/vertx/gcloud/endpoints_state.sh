@@ -7,7 +7,7 @@ gcloud ai endpoints list \
   --format='json'
 &> /dev/null)
 
-#echo "$OUTPUT" | jq .
+# echo "$OUTPUT" | jq .
 
-echo "$OUTPUT" | jq '[.[] | {name:.name,display: .displayName, models: [.deployedModels[] | {name: .model, id: .id, display: .displayName, version: .modelVersionId, }]}]'
+echo "$OUTPUT" | jq '[.[] | {name:.name,display: .displayName, models: [.deployedModels[]? | {name: .model, id: .id, display: .displayName, version: .modelVersionId, }]}]'
 

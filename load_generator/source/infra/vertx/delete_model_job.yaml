@@ -17,7 +17,7 @@ spec:
             "models",
             "delete",
             "--model-id",
-            "${VERTX_MODEL_NAME_OR_ID}",
+            "${VERTEX_MODEL_NAME_OR_ID}",
           ]
           imagePullPolicy: Always
           securityContext:

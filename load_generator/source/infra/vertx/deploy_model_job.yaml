@@ -16,12 +16,12 @@ spec:
             "--project", "bolcom-pro-reco-analytics-fcc",
             "models",
             "deploy",
-            "--display-name", "etude-${VERTX_MODEL}",
-            "--container-image-url", "eu.gcr.io/bolcom-pro-reco-analytics-fcc/${VERTX_MODEL}:latest",
+            "--display-name", "etude-${VERTEX_MODEL}",
+            "--container-image-url", "eu.gcr.io/bolcom-pro-reco-analytics-fcc/${VERTEX_MODEL}:latest",
             "--container-port", "7080",
-            "--predict-route", "/predictions/${VERTX_MODEL}",
+            "--predict-route", "/predictions/${VERTEX_MODEL}",
             "--health-check-route", "/ping",
-            "--description", "etude-${VERTX_MODEL}",
+            "--description", "etude-${VERTEX_MODEL}",
             "--is-default",
           ]
           imagePullPolicy: Always

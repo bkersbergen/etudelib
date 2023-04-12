@@ -15,7 +15,7 @@ spec:
 #          env:
 #            - name: CATALOG_SIZE
 #              value: "100"
-#            - name: VERTX_ENDPOINT
+#            - name: VERTEX_ENDPOINT
 #              value: ""
           imagePullPolicy: Always
           securityContext:
