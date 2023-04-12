@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: vertex-link-endpoint-model
+  name: "vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}"
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
@@ -10,7 +10,7 @@ spec:
       serviceAccountName: reco-analytics
       restartPolicy: Never
       containers:
-        - name: vertex-link-endpoint-model
+        - name: "vertex-link-endpoint-model-${VERTEX_ENDPOINT}-${VERTEX_MODEL}"
           image: "eu.gcr.io/bolcom-stg-pyxle-images-043/vertexai-utilities:latest"
           args: [
             "--environment", "pro",
@@ -19,8 +19,8 @@ spec:
             "deploy",
             "--traffic-split", "0=100",
             "--undeploy-inactive",
-            "--endpoint", "noop_cpu",
-            "--model", "noop",
+            "--endpoint", "${VERTEX_ENDPOINT}",
+            "--model", "${VERTEX_MODEL}",
             "--machine-type", "n1-highmem-4",
             "--min-replica-count=1",
             "--max-replica-count=1",

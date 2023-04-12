@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: loadgen
+  name: "${LOADGEN_JOB_NAME}"
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
@@ -20,3 +20,5 @@ spec:
           imagePullPolicy: Always
           securityContext:
             runAsUser: 1001
+
+
