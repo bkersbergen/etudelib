@@ -34,7 +34,7 @@ done
 ENDPOINT_MODELS=$(echo "$ENDPOINTS_STATE" | jq "[.[] | select(.display == \"${VERTEX_ENDPOINT_NAME}\").models[]]")
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].models(length = $(echo "${ENDPOINT_MODELS}" | jq length))"
 
-for VERTEX_MODEL_NAME in $(echo "$ENDPOINT_MODELS" | jq -r '.[].id'); do
+for VERTEX_MODEL_NAME in $(echo "$ENDPOINT_MODELS" | jq -r '.[].display'); do
   "$DIR"/undeploy_endpoint_model.sh "${VERTEX_ENDPOINT_NAME}" "${VERTEX_MODEL_NAME}"
 done
 
