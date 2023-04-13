@@ -20,7 +20,6 @@ ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     if [ "$ENDPOINT" = "$VERTEX_ENDPOINT_NAME" ]; then
       ENDPOINT_EXISTS=true
-      echo "endpoint(name = '${VERTEX_ENDPOINT_NAME}').exist"
       break
     fi
 done
