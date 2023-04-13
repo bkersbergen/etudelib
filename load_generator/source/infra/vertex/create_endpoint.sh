@@ -8,8 +8,6 @@ fi
 DIR="$(dirname "$0")"
 export VERTEX_ENDPOINT_NAME="${1}"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create()"
-echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create()"
-
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
 export JOB_NAME="vertex-create-endpoint-${HASH}-$(date +%s)"
