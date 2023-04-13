@@ -9,8 +9,23 @@ export VERTEX_MODEL_NAME_OR_ID="${1}"
 
 echo "models['${VERTEX_MODEL_NAME_OR_ID}'].delete()"
 
+MODELS_STATE=$(./gcloud/models_state.sh)
+MODEL_EXISTS=false
+
+for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
+    if [ "$MODEL" = "$VERTEX_MODEL_NAME_OR_ID" ]; then
+      MODEL_EXISTS=true
+      break
+    fi
+done
+
+[ "true" != "${MODEL_EXISTS}" ] && {
+   echo "models['${VERTEX_MODEL_NAME_OR_ID}'].404"
+   exit 0
+}
+
 HASH=$(sum <<< "${VERTEX_MODEL_NAME_OR_ID}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-delete-model-${HASH}"
+export JOB_NAME="etude-vertex-delete-model-${HASH}-$(date +%s)"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 

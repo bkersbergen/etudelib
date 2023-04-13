@@ -11,7 +11,7 @@ export VERTEX_MODEL_NAME_OR_ID="${1}"
 echo "models['${VERTEX_MODEL_NAME_OR_ID}'].purge()"
 
 HASH=$(sum <<< "${VERTEX_MODEL_NAME_OR_ID}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-delete-model-${HASH}"
+export JOB_NAME="etude-vertex-delete-model-${HASH}-$(date +%s)"
 
 MODELS_STATE=$(./gcloud/models_state.sh)
 MODEL_EXISTS=false

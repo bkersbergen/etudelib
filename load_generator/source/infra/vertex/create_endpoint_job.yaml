@@ -17,8 +17,8 @@ spec:
             "--project", "bolcom-pro-reco-analytics-fcc",
             "endpoints",
             "create",
-            "--display-name", "etude-${VERTEX_ENDPOINT_NAME}",
-            "--description", "etude-${VERTEX_ENDPOINT_NAME}",
+            "--display-name", "${VERTEX_ENDPOINT_NAME}",
+            "--description", "${VERTEX_ENDPOINT_NAME}",
           ]
           imagePullPolicy: Always
           securityContext:

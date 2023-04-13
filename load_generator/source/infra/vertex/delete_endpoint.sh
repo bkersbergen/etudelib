@@ -9,9 +9,22 @@ export VERTEX_ENDPOINT_NAME_OR_ID="${1}"
 
 echo "endpoints['${VERTEX_ENDPOINT_NAME_OR_ID}'].delete()"
 
+ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
+
+for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
+    if [ "$ENDPOINT" = "$VERTEX_ENDPOINT_NAME_OR_ID" ]; then
+      ENDPOINT_EXISTS=true
+      break
+    fi
+done
+
+[ "true" != "${ENDPOINT_EXISTS}" ] && {
+   echo "endpoints['${VERTEX_ENDPOINT_NAME_OR_ID}'].404"
+   exit 0
+}
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME_OR_ID}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-delete-endpoint-${HASH}"
+export JOB_NAME="etude-vertex-delete-endpoint-${HASH}-$(date +%s)"
 
 envsubst < ./delete_endpoint_job.yaml > "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME_OR_ID}.yaml"
 
@@ -22,7 +35,7 @@ POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"Endpoint deleted.".* ]] && {
-  echo echo "endpoints['${VERTEX_ENDPOINT_NAME_OR_ID}'].delete().ok"
+  echo "endpoints['${VERTEX_ENDPOINT_NAME_OR_ID}'].delete().ok"
   exit 0
 }
 

@@ -8,7 +8,7 @@ fi
 export VERTEX_ENDPOINT_NAME="${1}"
 export VERTEX_MODEL_NAME="${2}"
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-link-endpoint-model-${HASH}"
+export JOB_NAME="etude-vertex-link-endpoint-model-${HASH}-$(date +%s)"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
