@@ -17,7 +17,7 @@ spec:
             "endpoints",
             "delete",
             "--endpoint",
-            "${VERTEX_ENDPOINT_NAME_OR_ID}"
+            "${VERTEX_ENDPOINT_NAME}"
           ]
           imagePullPolicy: Always
           securityContext:

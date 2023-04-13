@@ -16,7 +16,7 @@ spec:
             "--project", "bolcom-pro-reco-analytics-fcc",
             "endpoints",
             "undeploy",
-            "--endpoint",  "${VERTEX_ENDPOINT_NAME_OR_ID}",
+            "--endpoint",  "${VERTEX_ENDPOINT_NAME}",
             "--model-id", "${VERTEX_MODEL_ID}"
           ]
           imagePullPolicy: Always

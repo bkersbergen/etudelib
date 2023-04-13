@@ -19,8 +19,8 @@ spec:
             "deploy",
             "--traffic-split", "0=100",
             "--undeploy-inactive",
-            "--endpoint", "etude-${VERTEX_ENDPOINT_NAME}",
-            "--model", "etude-${VERTEX_MODEL_NAME}",
+            "--endpoint", "${VERTEX_ENDPOINT_NAME}",
+            "--model", "${VERTEX_MODEL_NAME}",
             "--machine-type", "n1-highmem-4",
             "--min-replica-count=1",
             "--max-replica-count=1",
@@ -34,5 +34,8 @@ spec:
                 - ALL
             runAsNonRoot: true
             runAsUser: 1001
+            seccompProfile:
+              type: "RuntimeDefault"
+
 
 

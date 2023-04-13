@@ -14,8 +14,8 @@ export JOB_NAME="etude-vertex-deploy-model-${HASH}-$(date +%s)"
 MODELS_STATE=$(./gcloud/models_state.sh)
 
 for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
-    if [ "$MODEL" = "$VERTEX_MODEL_NAME_OR_ID" ]; then
-      echo "models['${VERTEX_MODEL_NAME_OR_ID}'].exists"
+    if [ "$MODEL" = "${VERTEX_MODEL_NAME}" ]; then
+      echo "models['${VERTEX_MODEL_NAME}'].exists"
       exit 0
     fi
 done
@@ -30,7 +30,7 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"Model deployed.".* ]] && {
+[[ "$LOGS" =~ .*"Model created.".* ]] && {
   echo echo "models['${VERTEX_MODEL_NAME}'].deploy().ok"
   exit 0
 }
