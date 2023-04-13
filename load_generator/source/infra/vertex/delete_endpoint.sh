@@ -24,7 +24,7 @@ done
 }
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-delete-endpoint-${HASH}-$(date +%s)"
+export JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
 
 envsubst < ./delete_endpoint_job.yaml > "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 

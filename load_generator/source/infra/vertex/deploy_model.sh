@@ -9,7 +9,7 @@ export VERTEX_MODEL_NAME="${1}"
 echo "models['${VERTEX_MODEL_NAME}'].deploy()"
 
 HASH=$(sum <<< "${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-deploy-model-${HASH}-$(date +%s)"
+export JOB_NAME="vertex-deploy-model-${HASH}-$(date +%s)"
 
 MODELS_STATE=$(./gcloud/models_state.sh)
 
@@ -31,7 +31,7 @@ POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"Model created.".* ]] && {
-  echo echo "models['${VERTEX_MODEL_NAME}'].deploy().ok"
+  echo "models['${VERTEX_MODEL_NAME}'].deploy().ok"
   exit 0
 }
 

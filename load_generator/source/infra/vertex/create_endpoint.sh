@@ -10,7 +10,7 @@ echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create()"
 
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-create-endpoint-${HASH}-$(date +%s)"
+export JOB_NAME="vertex-create-endpoint-${HASH}-$(date +%s)"
 
 ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
 

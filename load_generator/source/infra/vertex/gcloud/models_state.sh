@@ -7,4 +7,4 @@ gcloud ai models list \
   --format='json' 2>/dev/null
 )
 
-echo "$OUTPUT" | jq '[.[] | {name:.name,display: .displayName, id: .id, version: .versionId, image: .containerSpec.imageUri}]'
+echo "$OUTPUT" | jq '[.[] | {name:.name,display: .displayName, version: .versionId, image: .containerSpec.imageUri}]'

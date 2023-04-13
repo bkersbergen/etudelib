@@ -12,7 +12,7 @@ export VERTEX_MODEL_NAME="${2}"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].undeploy(model = '${VERTEX_MODEL_NAME}')"
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="etude-vertex-undeploy-endpoint-model-${HASH}-$(date +%s)"
+export JOB_NAME="vertex-undeploy-endpoint-model-${HASH}-$(date +%s)"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=60s
 
