@@ -15,7 +15,7 @@ MODELS_STATE=$(./gcloud/models_state.sh)
 
 for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
     if [ "$MODEL" = "${VERTEX_MODEL_NAME}" ]; then
-      echo "models['${VERTEX_MODEL_NAME}'].exists"
+      echo "models['${VERTEX_MODEL_NAME}'].200"
       exit 0
     fi
 done
@@ -27,7 +27,7 @@ envsubst < ./deploy_model_job.yaml > "/tmp/deploy_model_job.${VERTEX_MODEL_NAME}
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/deploy_model_job.${VERTEX_MODEL_NAME}.yaml"
 
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
-POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
+POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=15m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"Model created.".* ]] && {
