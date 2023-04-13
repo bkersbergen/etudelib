@@ -37,7 +37,7 @@ POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"Model deleted.".* ]] && {
-  echo echo "models['${VERTEX_MODEL_NAME}'].delete().ok"
+  echo "models['${VERTEX_MODEL_NAME}'].delete().ok"
   exit 0
 }
 
