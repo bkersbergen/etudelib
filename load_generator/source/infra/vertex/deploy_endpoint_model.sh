@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 if [ $# -lt 2 ]; then
     echo "requires args 'VERTEX_ENDPOINT_NAME', 'VERTEX_MODEL_NAME'"

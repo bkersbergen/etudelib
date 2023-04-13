@@ -1,3 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
 ./mvnw package -DskipTests
 
 docker build . \

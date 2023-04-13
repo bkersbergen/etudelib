@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 if [ $# -lt 1 ]; then
     echo "requires arg 'VERTEX_ENDPOINT_NAME'"
@@ -42,6 +43,6 @@ LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/
 }
 
 
-echo $LOGS
+echo "${LOGS}"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].delete().err"
 exit 1

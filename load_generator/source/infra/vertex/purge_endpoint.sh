@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 if [ $# -lt 1 ]; then
     echo "requires arg 'VERTEX_ENDPOINT_NAME'"
@@ -46,4 +47,3 @@ done
 
 echo "endpoint['${VERTEX_ENDPOINT_NAME}'].purge().err"
 exit 1
-
