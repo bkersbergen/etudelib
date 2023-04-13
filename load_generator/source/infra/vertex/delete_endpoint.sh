@@ -6,10 +6,11 @@ if [ $# -lt 1 ]; then
 fi
 
 export VERTEX_ENDPOINT_NAME="${1}"
+DIR="$(dirname "$0")"
 
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].delete()"
 
-ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
+ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 
 for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     if [ "$ENDPOINT" = "$VERTEX_ENDPOINT_NAME" ]; then
@@ -26,7 +27,7 @@ done
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
 export JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
 
-envsubst < ./delete_endpoint_job.yaml > "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
+envsubst < "$DIR"/delete_endpoint_job.yaml > "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 

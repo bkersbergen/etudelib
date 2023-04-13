@@ -7,13 +7,14 @@ fi
 
 export VERTEX_ENDPOINT_NAME="${1}"
 export VERTEX_MODEL_NAME="${2}"
+DIR="$(dirname "$0")"
 
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}')"
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
 export JOB_NAME="vertex-deploy-endpoint-model-${HASH}-$(date +%s)"
 
-ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
+ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 ENDPOINT_EXISTS=false
 
 for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
@@ -28,7 +29,7 @@ done
    exit 1
 }
 
-MODELS_STATE=$(./gcloud/models_state.sh)
+MODELS_STATE=$("$DIR"/gcloud/models_state.sh)
 MODEL_EXISTS=false
 
 for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
@@ -52,7 +53,7 @@ MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].dis
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-envsubst < ./deploy_endpoint_model_job.yaml > "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
+envsubst < "$DIR"/deploy_endpoint_model_job.yaml > "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
 

@@ -5,14 +5,16 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+DIR="$(dirname "$0")"
 export VERTEX_ENDPOINT_NAME="${1}"
+echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create()"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create()"
 
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
 export JOB_NAME="vertex-create-endpoint-${HASH}-$(date +%s)"
 
-ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
+ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 
 for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     if [ "$ENDPOINT" = "${VERTEX_ENDPOINT_NAME}" ]; then
@@ -23,7 +25,7 @@ done
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-envsubst < ./create_endpoint_job.yaml > "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
+envsubst < "$DIR"/create_endpoint_job.yaml > "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 
