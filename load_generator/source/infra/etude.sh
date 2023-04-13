@@ -10,5 +10,5 @@ set -e
 # ...
 
 # cleanup resources
-./vertex/purge_endpoint.sh etude-noop
-./vertex/purge_model.sh etude-noop
+#./vertex/purge_endpoint.sh etude-noop
+#./vertex/purge_model.sh etude-noop
