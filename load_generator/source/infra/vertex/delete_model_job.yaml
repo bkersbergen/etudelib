@@ -16,8 +16,7 @@ spec:
             "--project", "bolcom-pro-reco-analytics-fcc",
             "models",
             "delete",
-            "--model-id",
-            "${VERTEX_MODEL_NAME}",
+            "--model-id", "${VERTEX_MODEL_NAME}",
           ]
           imagePullPolicy: Always
           securityContext:
