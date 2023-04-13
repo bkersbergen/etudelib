@@ -5,15 +5,15 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-export VERTEX_ENDPOINT_NAME="$1"
+VERTEX_ENDPOINT_NAME="$1"
 DIR="$(dirname "$0")"
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
+JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-export VERTEX_ENDPOINT_NAME="${1}"
+VERTEX_ENDPOINT_NAME="${1}"
 ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 
 for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do

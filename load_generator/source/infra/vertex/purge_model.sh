@@ -6,13 +6,13 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
-export VERTEX_MODEL_NAME="${1}"
+VERTEX_MODEL_NAME="${1}"
 DIR="$(dirname "$0")"
 
 echo "models['${VERTEX_MODEL_NAME}'].purge()"
 
 HASH=$(sum <<< "${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
-export JOB_NAME="vertex-delete-model-${HASH}-$(date +%s)"
+JOB_NAME="vertex-delete-model-${HASH}-$(date +%s)"
 
 MODELS_STATE=$("$DIR"/gcloud/models_state.sh)
 MODEL_EXISTS=false
