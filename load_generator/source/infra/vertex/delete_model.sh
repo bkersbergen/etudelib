@@ -41,5 +41,6 @@ LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/
   exit 0
 }
 
+echo "$LOGS"
 echo "models['${VERTEX_MODEL_NAME}'].delete().err"
 exit 1

@@ -36,7 +36,7 @@ done
 
 ./delete_endpoint.sh "${VERTEX_ENDPOINT_NAME_OR_ID}"
 
-(( $? == 0 )) && {
+[[ "$?" == "0" ]] && {
   echo "endpoint['${VERTEX_ENDPOINT_NAME_OR_ID}'].purge().ok"
   exit 0
 }
