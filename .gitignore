@@ -22,3 +22,4 @@ projects/
 .bash_history
 target/
 /.docker/requirements.txt
+/logs/

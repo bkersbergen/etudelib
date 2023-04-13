@@ -36,7 +36,7 @@ class TorchInferencer(BaseHandler):
         logger.info("properties: {}".format(properties))
         model_dir = properties.get("model_dir")
         # Read torch serialized file
-        serialized_file = self.manifest['model']['serializedFile']
+        serialized_file = context.manifest['model']['serializedFile']
         model_path = os.path.join(model_dir, serialized_file)
         self.initialize_from_file(model_path)
 
@@ -91,6 +91,7 @@ class TorchInferencer(BaseHandler):
                                            'inference_ms': inference_time_ms,
                                            'postprocess_ms': postprocess_time_ms,
                                            'runtime': self.runtime,
+                                           'device': self.device_type,
                                            }}]
         return [{
             "predictions": output,
