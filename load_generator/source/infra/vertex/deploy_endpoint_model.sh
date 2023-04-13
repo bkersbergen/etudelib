@@ -60,8 +60,8 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=15m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"deployed to Endpoint.".* ]] && {
- echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').ok"
+[[ "$LOGS" =~ .*"deployed to Endpoint".* ]] && {
+  echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').ok"
   exit 0
 }
 

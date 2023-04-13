@@ -17,7 +17,7 @@ spec:
             "endpoints",
             "undeploy",
             "--endpoint",  "${VERTEX_ENDPOINT_NAME}",
-            "--model-id", "${VERTEX_MODEL_NAME}"
+            "--model-id", "${VERTEX_MODEL_DEPLOYMENT_ID}"
           ]
           imagePullPolicy: Always
           securityContext:
