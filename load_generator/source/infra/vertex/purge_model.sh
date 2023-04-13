@@ -34,12 +34,11 @@ ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 
 MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].display == \"${VERTEX_MODEL_NAME}\")]")
 
-echo "models['${VERTEX_MODEL_NAME}'].deployments(length = $(echo "${ENDPOINT_MODELS}" | jq 'length'))"
+echo "models['${VERTEX_MODEL_NAME}'].deployments(length = $(echo "${MODEL_DEPLOYMENTS}" | jq 'length'))"
 
-for endpoint_model_deployment in $(echo "$MODEL_DEPLOYMENTS" | jq -c '.[] | {endpoint_name: .display, deployment_id: .models[0].id}'); do
-  ENDPOINT_NAME=$(echo "${endpoint_model_deployment}" | jq -r '.endpoint_name')
-  DEPLOYMENT_ID=$(echo "${endpoint_model_deployment}" | jq -r '.deployment_id')
-  "$DIR"/undeploy_endpoint_model.sh "${ENDPOINT_NAME}" "${DEPLOYMENT_ID}"
+for endpoint_model_deployment in $(echo "$MODEL_DEPLOYMENTS" | jq -c '.[] | .display'); do
+  ENDPOINT_NAME=$(echo "${endpoint_model_deployment}" | jq -r .)
+  "$DIR"/undeploy_endpoint_model.sh "${ENDPOINT_NAME}" "${VERTEX_MODEL_NAME}"
 done
 
 "$DIR"/delete_model.sh "${VERTEX_MODEL_NAME}"
