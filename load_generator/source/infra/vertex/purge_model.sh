@@ -20,7 +20,6 @@ MODEL_EXISTS=false
 for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
     if [ "$MODEL" = "$VERTEX_MODEL_NAME" ]; then
       MODEL_EXISTS=true
-      echo "models['${VERTEX_MODEL_NAME}'].200"
       break
     fi
 done
@@ -36,9 +35,9 @@ MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].dis
 
 echo "models['${VERTEX_MODEL_NAME}'].deployments(length = $(echo "${MODEL_DEPLOYMENTS}" | jq 'length'))"
 
-for endpoint_model_deployment in $(echo "$MODEL_DEPLOYMENTS" | jq -c '.[] | .display'); do
-  ENDPOINT_NAME=$(echo "${endpoint_model_deployment}" | jq -r .)
-  "$DIR"/undeploy_endpoint_model.sh "${ENDPOINT_NAME}" "${VERTEX_MODEL_NAME}"
+for DEPLOYMENT in $(echo "$MODEL_DEPLOYMENTS" | jq -c '.[] | .display'); do
+  VERTEX_ENDPOINT_NAME=$(echo "${DEPLOYMENT}" | jq -r .)
+  "$DIR"/undeploy_endpoint_model.sh "${VERTEX_ENDPOINT_NAME}" "${VERTEX_MODEL_NAME}"
 done
 
 "$DIR"/delete_model.sh "${VERTEX_MODEL_NAME}"

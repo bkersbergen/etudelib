@@ -9,6 +9,8 @@ fi
 VERTEX_ENDPOINT_NAME="$1"
 DIR="$(dirname "$0")"
 
+echo "endpoints['${VERTEX_ENDPOINT_NAME}'].purge()"
+
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
 JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
 
@@ -25,16 +27,15 @@ for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
 done
 
 [ "true" != "${ENDPOINT_EXISTS}" ] && {
-   echo "endpoint(name = '${VERTEX_ENDPOINT_NAME}').404"
+   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].404"
    exit 0
 }
 
 ENDPOINT_MODELS=$(echo "$ENDPOINTS_STATE" | jq "[.[] | select(.display == \"${VERTEX_ENDPOINT_NAME}\").models[]]")
-echo "endpoint.models(length = $(echo "${ENDPOINT_MODELS}" | jq length))"
+echo "endpoints['${VERTEX_ENDPOINT_NAME}'].models(length = $(echo "${ENDPOINT_MODELS}" | jq length))"
 
-for model_id in $(echo "$ENDPOINT_MODELS" | jq -r '.[].id'); do
- echo "undeploy(model = ${model_id}, endpoint = ${VERTEX_ENDPOINT_NAME})"
- "$DIR"/undeploy_endpoint_model.sh "${VERTEX_ENDPOINT_NAME}" "${model_id}"
+for VERTEX_MODEL_NAME in $(echo "$ENDPOINT_MODELS" | jq -r '.[].id'); do
+  "$DIR"/undeploy_endpoint_model.sh "${VERTEX_ENDPOINT_NAME}" "${VERTEX_MODEL_NAME}"
 done
 
 "$DIR"/delete_endpoint.sh "${VERTEX_ENDPOINT_NAME}"

@@ -60,7 +60,7 @@ export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
-POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=15m)
+POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"deployed to Endpoint".* ]] && {
