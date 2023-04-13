@@ -71,5 +71,9 @@ This can be solved by pip install special fixed builds
 pip install https://github.com/pietrodn/grpcio-mac-arm-build/releases/download/1.51.1/grpcio-1.51.1-cp39-cp39-macosx_11_0_arm64.whl
 ```
 
+#### Docker
+`
+docker run -u 0 --entrypoint /bin/bash --rm -i -t core
+`
 
 

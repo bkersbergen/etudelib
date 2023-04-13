@@ -15,4 +15,5 @@ lightning_test/
 papers/
 results/
 logs/
+.docker/model_store/
 

@@ -24,6 +24,7 @@ RUN pip install -r /tmp/requirements.txt
 COPY log4j2.xml ./conf/
 COPY torchserve.properties ./conf/
 COPY start.sh ./
+RUN chmod +x ./start.sh
 
 # Setup the local account
 RUN groupadd -r app && useradd -r -g app -u 1001 app --home /app

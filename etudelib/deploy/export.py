@@ -83,6 +83,7 @@ class TorchServeExporter:
 
     @staticmethod
     def export_mar_file(model_name: str, model_path: str, payload_path: str, output_dir: str):
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
         rootdir = Path(__file__).parent.parent
         handler_path = Path(rootdir, 'deploy/inferences/torch_inferencer.py')
         requirements_path = rootdir.parent / 'requirements/base.txt'
