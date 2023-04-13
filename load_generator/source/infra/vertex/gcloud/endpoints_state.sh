@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#gcloud ai models list --project=bolcom-pro-reco-analytics-fcc --region=europe-west4
+
 OUTPUT=$(
 gcloud ai endpoints list \
   --project=bolcom-pro-reco-analytics-fcc \

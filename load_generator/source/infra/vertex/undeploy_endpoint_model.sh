@@ -30,4 +30,3 @@ LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/
 
 echo "endpoints['${VERTEX_ENDPOINT_NAME_OR_ID}'].undeploy(model = '${VERTEX_MODEL_ID}').err"
 exit 1
-
