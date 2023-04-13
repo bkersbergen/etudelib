@@ -10,9 +10,8 @@ HASH=$(sum <<< "${VERTEX_ENDPOINT_NAMNE}" | cut -f 1 -d ' ')
 export JOB_NAME= "etude-vertex-create-endpoint-${HASH}"
 
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=10m
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
 envsubst < ./create_endpoint_job.yaml > "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAMNE}.yaml"
-# cat "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAMNE}.yaml"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/create_endpoint_job.${VERTEX_ENDPOINT_NAMNE}.yaml"

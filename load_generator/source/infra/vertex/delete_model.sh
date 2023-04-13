@@ -12,7 +12,7 @@ echo "models['${VERTEX_MODEL_NAME_OR_ID}'].delete()"
 HASH=$(sum <<< "${VERTEX_MODEL_NAME_OR_ID}" | cut -f 1 -d ' ')
 export JOB_NAME="etude-vertex-delete-model-${HASH}"
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=10m
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
 envsubst < ./delete_model_job.yaml > "/tmp/delete_model_job.${VERTEX_MODEL_NAME_OR_ID}.yaml"
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/delete_model_job.${VERTEX_MODEL_NAME_OR_ID}.yaml"

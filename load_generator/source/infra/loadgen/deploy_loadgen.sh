@@ -8,7 +8,7 @@ fi
 
 export LOADTEST_NAME="${1}"
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "etude-${LOADTEST_NAME}" --ignore-not-found=true --timeout=10m
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "etude-${LOADTEST_NAME}" --ignore-not-found=true --timeout=5m
 
 envsubst < ./deploy_loadgen_job.yaml > "/tmp/deploy_loadgen_job.${LOADTEST_NAME}.yaml"
  cat "/tmp/deploy_loadgen_job.${LOADTEST_NAME}.yaml"

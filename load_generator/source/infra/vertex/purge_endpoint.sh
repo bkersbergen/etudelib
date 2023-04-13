@@ -8,7 +8,7 @@ fi
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME_OR_ID}" | cut -f 1 -d ' ')
 export JOB_NAME="etude-vertex-delete-endpoint-${HASH}-$(date +%s)"
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=10m
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
 export VERTEX_ENDPOINT_NAME_OR_ID="${1}"
 ENDPOINTS_STATE=$(./gcloud/endpoints_state.sh)
