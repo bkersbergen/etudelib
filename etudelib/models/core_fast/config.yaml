@@ -1,0 +1,22 @@
+model:
+  name: CORE_FAST
+  embedding_size: 64
+  dnn_type: "trm"   # The type of DNN. If it set to 'trm', CORE will leverage a Transformer encoder to learn weights. If it set to ave, CORE will simply use mean pooling for session encoding. Defaults to 'trm'. Range in ['trm', 'ave'].
+  sess_dropout: 0.2
+  item_dropout: 0.2
+  temperature: 0.07
+  n_layers: 2
+  n_heads: 2
+  inner_size: 256
+  hidden_dropout_prob: 0.5
+  attn_dropout_prob: 0.5
+  hidden_act: "gelu"  # ['gelu', 'relu', 'swish', 'tanh', 'sigmoid'].
+  layer_norm_eps: 1e-12
+  initializer_range: 0.02
+
+
+optimizer:
+  lr: 0.02
+
+trainer:
+  accelerator: auto # <"cpu", "gpu", "tpu", "ipu", "hpu", "auto">

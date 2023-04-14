@@ -1,0 +1,4 @@
+learning_rate choice [0.001, 0.0001]
+n_layers choice [1, 2]
+hidden_dropout_prob choice [0.2, 0.5]
+attn_dropout_prob choice [0.2, 0.5]

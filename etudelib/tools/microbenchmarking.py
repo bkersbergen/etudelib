@@ -18,13 +18,14 @@ from etudelib.utils.loggers import configure_logger
 from multiprocessing import Process
 
 import onnxruntime as ort
+import gc
 
 logger = logging.getLogger(__name__)
 
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
-    min_duration_secs = 100
+    min_duration_secs = 10
     bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
@@ -127,7 +128,6 @@ def microbenchmark(args):
         seed_everything(config.project.seed)
 
     qty_sessions = args.qty_interactions
-    batch_size = 32
 
     config['dataset'] = {}
     config['dataset']['n_items'] = args.C
@@ -139,19 +139,9 @@ def microbenchmark(args):
                                 qty_sessions=qty_sessions,
                                 n_items=args.C,
                                 max_seq_length=args.t, param_source=args.param_source)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=2, persistent_workers=True)
 
     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
     model = getattr(module, f"{config.model.name}Lightning")(config)
-
-    # trainer = Trainer(
-    #     accelerator='gpu' if device_type == 'cuda' else 'cpu',
-    #     devices=1,
-    #     max_epochs=1,
-    #     callbacks=[TQDMProgressBar(refresh_rate=5)],
-    # )
-
-    # trainer.fit(model, train_loader)
 
     eager_model = model.get_backbone()
 
@@ -178,8 +168,8 @@ def microbenchmark(args):
                }
 
     device_types = ['cpu']
-    if torch.cuda.is_available():
-        device_types.append('cuda')
+    # if torch.cuda.is_available():
+    #     device_types.append('cuda')
 
     for device_type in device_types:
         # Run benchmarks in separate processes to release (CUDA) memory when done
@@ -198,10 +188,10 @@ def microbenchmark(args):
         p.start()
         p.join()
 
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+        # p = Process(target=run_benchmark_process,
+        #             args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
+        # p.start()
+        # p.join()
 
     if args.gcs_project_name:
         print('Start transferring results to google storage bucket')
@@ -210,17 +200,21 @@ def microbenchmark(args):
                       gcs_bucket_name=args.gcs_bucket_name,
                       gcs_dir=args.gcs_dir + '/' + str(date.today()))
         print('End transferring results to google storage bucket')
-
+        
 
 if __name__ == "__main__":
     args = get_args()
     args.qty_interactions = 50_000
-    args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
-    args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
-    args.gcs_dir = 'bkersbergen_etude'
-    for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
-                       'stamp']:
-        for C in [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+    # args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
+    # args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
+    # args.gcs_dir = 'bkersbergen_etude'
+    models = ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn',
+                       'stamp', 'core_fast']
+    # models = ['core_fast']
+    Cs = [100_000, 1_000_000, 10_000_000, 20_000_000]
+    # Cs = [100_000, 1_000_000]
+    for model_name in models:
+        for C in Cs:
             args.C = C
             args.model = model_name
             for t in [50]:

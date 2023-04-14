@@ -76,11 +76,23 @@ class MicroBenchmark:
                 except StopIteration:
                     iterator = iter(dataloader)
                     item_seq, session_length, next_item = next(iterator)
-                start = timer()
-                item_seq = item_seq.to(device)
-                session_length = session_length.to(device)
-                reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
-                duration = timer() - start
+                if device == 'cpu':
+                    start = timer()
+                    item_seq = item_seq.to(device)
+                    session_length = session_length.to(device)
+                    reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
+                    duration = timer() - start
+                else:
+                    torch.cuda.synchronize()
+                    start = torch.cuda.Event(enable_timing=True)
+                    end = torch.cuda.Event(enable_timing=True)
+                    start.record()
+                    item_seq = item_seq.to(device)
+                    session_length = session_length.to(device)
+                    reco_items = MicroBenchmark.get_item_ids(model.forward(item_seq, session_length))
+                    end.record()
+                    torch.cuda.synchronize()
+                    duration = start.elapsed_time(end) / 1000
                 if timer() - last_metric_ts > self.seconds_between_metrics:
                     last_metric_ts = timer()
                     cpu_utilization, used_mem, _ = MicroBenchmark.get_metrics_cpu()
