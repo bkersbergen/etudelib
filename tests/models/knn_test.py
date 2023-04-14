@@ -1,11 +1,18 @@
 #%%
+import os
+os.environ["OMP_NUM_THREADS"] = "1" 
+os.environ["OPENBLAS_NUM_THREADS"] = "1" 
+os.environ["MKL_NUM_THREADS"] = "1" 
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1" 
+os.environ["NUMEXPR_NUM_THREADS"] = "1" 
 import torch
+torch.set_num_threads(1)
 import numpy as np
 import time
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial import KDTree
+import faiss
 import matplotlib.pyplot as plt
-torch.set_num_threads(1)
 #%% Parameters 
 d = 64                       # hidden dimension
 C = 1_000_000               # database size
@@ -26,6 +33,9 @@ xb_t_cuda = xb_t.to(device_cuda)
 # Create NN Trees
 neigh_sklearn = NearestNeighbors(n_neighbors=k, algorithm="kd_tree", n_jobs=1, leaf_size=40).fit(xb)
 neigh_scipy = KDTree(xb, leafsize=40)
+# FAISS
+index = faiss.IndexFlatL2(d)   # build the index
+index.add(xb)                  # add vectors to the index
 #%% Loop - sklearn
 t_sklearn = np.zeros(n_iters)
 for i in range(n_iters):
@@ -91,4 +101,18 @@ for i in range(n_iters):
     t_iter = start.elapsed_time(end)
     t_torch_mmtopk_cuda[i] = t_iter / 1000
 
-print(f"Time torch_cuda_bmm: {t_torch_mmtopk_cuda[n_iters_warmup:].mean() * 1000:.2f} ±{t_torch_mmtopk_cuda[n_iters_warmup:].std() * 1000:.2f} ms")
+print(f"Time torch_cuda: {t_torch_mmtopk_cuda[n_iters_warmup:].mean() * 1000:.2f} ±{t_torch_mmtopk_cuda[n_iters_warmup:].std() * 1000:.2f} ms")
+#%% Loop - FAISS CPU
+t_faiss_cpu = np.zeros(n_iters)
+for i in range(n_iters):
+    # Create query
+    xq = rng.random((nq, d), dtype = np.float32)
+    xq[:, 0] += np.arange(nq) / 1000.
+    xq = xq / np.linalg.norm(xq, axis=-1, keepdims=True)
+
+    t_start_faiss_cpu = time.perf_counter()
+    _, I_faiss = index.search(xq, k)
+    t_end_faiss_cpu  = time.perf_counter()
+    t_faiss_cpu[i] = (t_end_faiss_cpu - t_start_faiss_cpu)
+
+print(f"Time faiss_cpu : {t_faiss_cpu[n_iters_warmup:].mean() * 1000:.2f} ±{t_faiss_cpu[n_iters_warmup:].std() * 1000:.2f} ms")

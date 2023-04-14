@@ -4,6 +4,7 @@ import faiss
 import numpy as np
 import time
 from sklearn.neighbors import NearestNeighbors
+torch.set_num_threads(1)
 #%% Follow online example
 # https://github.com/facebookresearch/faiss/wiki/Getting-started
 d = 64                        # hidden dimension
@@ -18,7 +19,8 @@ rng = np.random.default_rng(1234)             # make reproducible
 xb = rng.random((C, d), dtype = np.float32)
 xb[:, 0] += np.arange(C) / 1000.
 faiss.normalize_L2(xb)
-xb_t = torch.from_numpy(xb).to(device_cuda)
+xb_t = torch.from_numpy(xb)
+xb_t_cuda = xb_t.to(device_cuda)
 # FAISS
 index = faiss.IndexFlatL2(d)   # build the index
 index.add(xb)                  # add vectors to the index
@@ -26,6 +28,7 @@ index.add(xb)                  # add vectors to the index
 neigh = NearestNeighbors(n_neighbors=k, algorithm="kd_tree", n_jobs=1).fit(xb)
 #%% Loop
 t_faiss = 0.0
+t_cpu = 0.0
 t_cuda = 0.0
 t_sklearn = 0.0
 for i in range(n_iters):
@@ -38,12 +41,20 @@ for i in range(n_iters):
     D_faiss, I_faiss = index.search(xq, k)
     t1 = time.perf_counter()
     t_faiss += (t1 - t0) / n_iters
+    # CPU timing
+    xq_t = torch.from_numpy(xq)
+    t0 = time.perf_counter()
+    dot_product = xb_t @ xq_t.T
+    V_cpu, I_cpu = torch.topk(dot_product, k, dim=0)
+    t1 = time.perf_counter()
+    t_cpu += (t1 - t0) / n_iters
+    assert np.all(np.sort(I_cpu.numpy().squeeze(), axis=0) == np.sort(I_faiss.squeeze().T, axis=0))
     # Cuda timing
     start = torch.cuda.Event(enable_timing=True)
     end = torch.cuda.Event(enable_timing=True)
     start.record()
-    xq_t = torch.from_numpy(xq).to(device_cuda)
-    dot_product = xb_t @ xq_t.T
+    xq_t_cuda = xq_t.to(device_cuda)
+    dot_product = xb_t_cuda @ xq_t_cuda.T
     V_cuda, I_cuda = torch.topk(dot_product, k, dim=0)
     I_cpu = I_cuda.to(device_cpu)
     end.record()
@@ -60,5 +71,6 @@ for i in range(n_iters):
 
 
 print(f"Time faiss: {t_faiss * 1000:.2f} ms")
+print(f"Time cpu: {t_cpu:.2f} ms")
 print(f"Time cuda: {t_cuda:.2f} ms")
 print(f"Time sklearn: {t_sklearn * 1000:.2f} ms")
