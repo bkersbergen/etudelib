@@ -26,6 +26,14 @@ pip install -e .
 ```
 
 
+### Load test
+(zie microbenchmarking.py)
+Always use the same machine for models: 
+* model names: 'core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp'
+* catalog size: [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]
+* runtimes: eager, jitopt, onnx
+* device_types: cpu of gpu (impliciet dmv hardware voor endpoint deployment)
+
 
 ## Training 
 
