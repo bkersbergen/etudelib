@@ -1,18 +1,30 @@
 #!/usr/bin/env bash
 set -e
 
-if [ $# -lt 2 ]; then
-    echo "requires args 'VERTEX_ENDPOINT_NAME', 'VERTEX_MODEL_NAME'"
+if [ $# -lt 3 ]; then
+    echo "requires args 'VERTEX_ENDPOINT_NAME', 'VERTEX_MODEL_NAME', 'VERTEX_MACHINE'"
     exit 1
 fi
 
 VERTEX_ENDPOINT_NAME="${1}"
 VERTEX_MODEL_NAME="${2}"
+VERTEX_MACHINE="${3}"
+VERTEX_ACCELERATOR="${4}"
+VERTEX_ACCELERATOR_COUNT="${5}"
+
+if [ $# -gt 3 ]; then
+  if [ $# -lt 5 ]; then
+    echo "requires args 'VERTEX_ENDPOINT_NAME', 'VERTEX_MODEL_NAME', 'VERTEX_MACHINE', 'VERTEX_ACCELERATOR', 'VERTEX_ACCELERATOR_COUNT'"
+    exit 1
+  fi
+fi
+
+
 DIR="$(dirname "$0")"
 
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}')"
 
-HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
+HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}-${VERTEX_MACHINE}-${VERTEX_ACCELERATOR}-${VERTEX_ACCELERATOR_COUNT}" | cut -f 1 -d ' ')
 JOB_NAME="vertex-deploy-endpoint-model-${HASH}-$(date +%s)"
 
 ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
@@ -54,11 +66,15 @@ MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].dis
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-export VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME
-envsubst < "$DIR"/deploy_endpoint_model_job.yaml > "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
-export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME
+export VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME VERTEX_MACHINE VERTEX_ACCELERATOR VERTEX_ACCELERATOR_COUNT
+if [ $# -lt 5 ]; then
+  envsubst < "$DIR"/deploy_endpoint_model_job.yaml > "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${HASH}.yaml"
+else
+  envsubst < "$DIR"/deploy_accelerated_endpoint_model_job.yaml > "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${HASH}.yaml"
+fi
+export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME VERTEX_MACHINE VERTEX_ACCELERATOR VERTEX_ACCELERATOR_COUNT
 
-kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${VERTEX_MODEL_NAME}.yaml"
+kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/vertex-deploy-endpoint-model-${VERTEX_ENDPOINT_NAME}-${HASH}.yaml"
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 

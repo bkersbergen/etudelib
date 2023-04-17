@@ -25,6 +25,8 @@ spec:
             "--min-replica-count=1",
             "--max-replica-count=1",
             "--service-account", "reco-analytics",
+            "--accelerator-type", "${VERTEX_ACCELERATOR}",
+            "--accelerator-count", "${VERTEX_ACCELERATOR_COUNT}"
           ]
           imagePullPolicy: Always
           securityContext:
