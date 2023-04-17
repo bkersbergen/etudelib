@@ -17,14 +17,21 @@ WORKDIR /app
 RUN pip install torchserve numpy
 
 # Installs python dependencies.
-COPY requirements.txt /tmp/
+COPY .docker/requirements.txt /tmp/
 RUN pip install -r /tmp/requirements.txt
 
 # Install generic configuration
-COPY log4j2.xml ./conf/
-COPY torchserve.properties ./conf/
-COPY start.sh ./
+COPY .docker/log4j2.xml ./conf/
+COPY .docker/torchserve.properties ./conf/
+COPY .docker/start.sh ./
 RUN chmod +x ./start.sh
+
+COPY etudelib/ ./etudelib/
+COPY setup.py ./
+COPY pyproject.toml ./
+COPY README.md ./
+COPY requirements/ ./requirements/
+RUN pip install -e .
 
 # Setup the local account
 RUN groupadd -r app && useradd -r -g app -u 1001 app --home /app

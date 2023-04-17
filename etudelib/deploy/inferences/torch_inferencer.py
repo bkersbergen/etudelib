@@ -44,19 +44,19 @@ class TorchInferencer(BaseHandler):
         logger.info('TorchInferencer.initialize_from_file(): {}'.format(model_path))
         if not os.path.isfile(model_path):
             logger.error("Model serializedFile not found:", model_path)
-        if model_path.endswith('.eager.pth'):
+        if model_path.endswith('_eager.pth'):
             self.runtime = 'eager'
-            filename_without_extension = model_path.split('.eager.pth')[0]
+            filename_without_extension = model_path.split('_eager.pth')[0]
             self.model = torch.load(model_path, map_location=self.device_type).to(self.device_type)
             self.model.eval()
-        elif model_path.endswith('.jitopt.pth'):
+        elif model_path.endswith('_jitopt.pth'):
             self.runtime = 'jitopt'
-            filename_without_extension = model_path.split('.jitopt.pth')[0]
+            filename_without_extension = model_path.split('_jitopt.pth')[0]
             self.model = torch.jit.load(model_path, map_location=self.device_type).to(self.device_type)
             self.model.eval()
-        elif model_path.endswith('.onnx.pth'):
+        elif model_path.endswith('_onnx.pth'):
             self.runtime = 'onnx'
-            filename_without_extension = model_path.split('.onnx.pth')[0]
+            filename_without_extension = model_path.split('_onnx.pth')[0]
             providers = (
                 ["CUDAExecutionProvider", "CPUExecutionProvider"]
                 if self.device_type == "cuda"
@@ -68,7 +68,7 @@ class TorchInferencer(BaseHandler):
                 logger.warning("Onnx ImportError." + str(error))
         logger.info(f'Runtime: {self.runtime}')
         logger.info(f'Device type: {self.device_type}')
-        payload = torch.load(filename_without_extension + '.payload.torch')
+        payload = torch.load(filename_without_extension + '_payload.torch')
 
         self.max_seq_length = payload.get('max_seq_length')
         self.idx2item = payload.get('idx2item')  # list

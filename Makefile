@@ -21,12 +21,19 @@ microbenchmark_run: ## Run the microbenchmark in Google AI platform
 	  --master-machine-type n1-highmem-8 \
 	  --master-accelerator count=1,type=nvidia-tesla-t4
 
-torchserve_baseimage_build: ## Build and push the Docker base image that the deployed models use.
-	@cp requirements/base.txt .docker/requirements.txt && cd .docker && docker build -t $(IMAGE_URI_TORCHSERVE) -f ServingDockerfile .
+model_baseimage: ## Build and push the Docker base image that the deployed models use.
+	@cp requirements/base.txt .docker/requirements.txt && docker build -t $(IMAGE_URI_TORCHSERVE) -f .docker/ServingDockerfile .
 	@docker push $(IMAGE_URI_TORCHSERVE)
 
-torchserve_model_build: ## Build and push the Docker image for the CORE algorithm
-	@cd .docker && docker build -t core -f ModelDockerfile .
+model_build: ## Build and push a marfile Docker image.
+	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make model_build MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
+	@cd .docker && \
+		docker build --build-arg MODELFILE_WO_EXT=$(MARFILE_WO_EXT) -t eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest -f ModelDockerfile . && \
+		docker push eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
+
+model_run:  ## Run marfile Docker image locally
+	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make torchserve_run MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
+	@docker run -p 7080:7080 -p 7081:7081 -p 7082:7082 eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

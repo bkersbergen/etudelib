@@ -13,8 +13,7 @@ from etudelib.models.topkdecorator import TopKDecorator
 class ModelUtil:
 
     @staticmethod
-    def create_model(model_name: str):
-        C = 1000000
+    def create_model(model_name: str, C: int):
         max_seq_length = 50
         dataset_name = 'bolcom'
         device_type = 'cpu'
@@ -43,17 +42,17 @@ class ModelUtil:
         eager_model = TopKDecorator(eager_model, topk=21)
         eager_model.eval()
 
-        base_filename = f'{model_name}_{dataset_name}_{C}_{max_seq_length}'
+        base_filename = f'{model_name}_{dataset_name}_c{C}_t{max_seq_length}'
 
         payload = {'max_seq_length': max_seq_length,
                    'C': C,
                    'idx2item': [i for i in range(C)]
                    }
 
-        payload_path = str(projectdir / f'{base_filename}.payload.torch')
-        eager_model_path = str(projectdir / f'{base_filename}.eager.pth')
-        jitopt_model_path = str(projectdir / f'{base_filename}.jitopt.pth')
-        onnx_model_path = str(projectdir / f'{base_filename}.onnx.pth')
+        payload_path = str(projectdir / f'{base_filename}_payload.torch')
+        eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
+        jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
+        onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
 
         eager_model.to(device_type)
 

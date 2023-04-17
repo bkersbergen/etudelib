@@ -28,5 +28,5 @@ EOF
 curl \
 -X POST \
 -H "Content-Type: application/json" \
-http://localhost:8080/predictions/${MODELNAME}/  \
+http://localhost:7080/predictions/${MODELNAME}/  \
 --data "$(generate_post_data)"

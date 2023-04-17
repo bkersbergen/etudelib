@@ -1,7 +1,10 @@
 FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib_torchserve:latest
 
-# COPY --chown=app:app log4j2-debug.xml ./conf/log4j2.xml
+COPY --chown=app:app log4j2_debug.xml ./conf/log4j2.xml
 
-COPY --chown=app:app model_store/core_bolcom_C1000000_t50.mar ./models/
+ARG MODELFILE_WO_EXT=core_bolcom_C1000000_t50
 
-ENV models {"core_bolcom_C1000000_t50": {"1.0": {"batchSize": 1,"marName": "core_bolcom_C1000000_t50.mar","maxBatchDelay": 1,"responseTimeout": 100}}}
+COPY --chown=app:app model_store/$MODELFILE_WO_EXT.mar ./models/
+
+ENV models {"$MODELFILE_WO_EXT": {"1.0": {"batchSize": 1,"marName": "$MODELFILE_WO_EXT.mar","maxBatchDelay": 1,"responseTimeout": 100}}}
+EXPOSE 7080 7081 7082

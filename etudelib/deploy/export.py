@@ -4,6 +4,8 @@ from pathlib import Path
 import logging
 import sys
 import re
+import os
+import shutil
 import torch
 from pytorch_lightning import LightningModule
 import onnxruntime as ort
@@ -82,14 +84,16 @@ class TorchServeExporter:
         pass
 
     @staticmethod
-    def export_mar_file(model_name: str, model_path: str, payload_path: str, output_dir: str):
+    def export_mar_file(model_path: str, payload_path: str, output_dir: str):
         Path(output_dir).mkdir(parents=True, exist_ok=True)
+        filename_with_ext = os.path.basename(model_path)  # 'myfile.zip'
+        filename_without_ext, file_ext = os.path.splitext(filename_with_ext)  # ('myfile', '.zip')
         rootdir = Path(__file__).parent.parent
         handler_path = Path(rootdir, 'deploy/inferences/torch_inferencer.py')
         requirements_path = rootdir.parent / 'requirements/base.txt'
         sys.argv = [sys.argv[0]]  # clear the command line arguments
         sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-        sys.argv.extend(['--model-name', model_name])
+        sys.argv.extend(['--model-name', filename_without_ext])
         sys.argv.extend(['--version', '1.0'])
         sys.argv.extend(['--serialized-file', model_path])
         sys.argv.extend(['--handler', str(handler_path)])
@@ -101,7 +105,5 @@ class TorchServeExporter:
         exit_code = generate_model_archive()
         if exit_code and exit_code != 0:
             logger.error(exit_code)
-            logger.error('FAILED to create MAR')
             logger.error(sys.argv)
-        else:
-            logger.info('[Saving] {} to {}'.format(model_name, os.path.join(output_dir, model_name + '.mar')))
+            raise RuntimeError('FAILED to create MAR')

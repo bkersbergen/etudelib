@@ -33,7 +33,7 @@ class Context:
 class TestingTorchInferencer(unittest.TestCase):
 
     def test_model_returns_predictions(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core')
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core', C=10000)
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)
@@ -45,7 +45,7 @@ class TestingTorchInferencer(unittest.TestCase):
         self.assertTrue(len(predictions[0]['items']) > 5)
 
     def test_naive_inference_benchmark(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core')
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core', C=10000)
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)
