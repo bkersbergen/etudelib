@@ -33,7 +33,7 @@ model_build: ## Build and push a marfile Docker image.
 
 model_run:  ## Run marfile Docker image locally
 	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make torchserve_run MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
-	@docker run -p 7080:7080 -p 7081:7081 -p 7082:7082 eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
+	@docker run -p 7080:7080 -p 7081:7081 eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

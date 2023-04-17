@@ -1,19 +1,8 @@
-import os
 import sys
-from importlib import import_module
-from pathlib import Path
-
-import torch
-from omegaconf import OmegaConf
-from torch.utils.data import DataLoader
-
-from etudelib.data.synthetic.synthetic import SyntheticDataset
-from etudelib.models.topkdecorator import TopKDecorator
-from etudelib.utils.loggers import configure_logger
 
 from timeit import default_timer as timer
 
-from tests.deploy.modelutil import ModelUtil
+from etudelib.deploy.modelutil import ModelUtil
 
 sys.path.insert(0, '../etudelib/deploy/inferences/')
 
@@ -33,7 +22,7 @@ class Context:
 class TestingTorchInferencer(unittest.TestCase):
 
     def test_model_returns_predictions(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core', C=10000)
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='core', C=100000, max_seq_length=50, param_source='bolcom')
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)
@@ -45,7 +34,7 @@ class TestingTorchInferencer(unittest.TestCase):
         self.assertTrue(len(predictions[0]['items']) > 5)
 
     def test_naive_inference_benchmark(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model('core', C=10000)
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='core', C=100000, max_seq_length=50, param_source='bolcom')
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)
