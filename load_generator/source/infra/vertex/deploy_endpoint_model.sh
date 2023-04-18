@@ -57,7 +57,7 @@ done
    exit 1
 }
 
-MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].display == \"${VERTEX_ENDPOINT_NAME}\")]")
+MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].display == \"${VERTEX_MODEL_NAME}\")]")
 
 [[ "0" != $(echo "${MODEL_DEPLOYMENTS}" | jq 'length') ]] && {
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deployment(model = '${VERTEX_MODEL_NAME}').200"

@@ -18,9 +18,6 @@ HASH=$(sum <<< "${VERTEX_ENDPOINT}" | cut -f 1 -d ' ')
 JOB_NAME="etude-run-loadtest-${HASH}"
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --grace-period=0 --wait=true --ignore-not-found=true --timeout=5m
-echo "sleep(zzz = 15s)"
-sleep 15 # wait for the job to be purged in the k8s event loop
-
 
 export JOB_NAME VERTEX_ENDPOINT CATALOG_SIZE REPORT_URI
 envsubst < "$DIR"/deploy_loadgen_job.yaml > "/tmp/deploy_loadgen_job.${HASH}.yaml"
