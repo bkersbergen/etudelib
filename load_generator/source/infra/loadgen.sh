@@ -24,7 +24,7 @@ for hardware in "${HARDWARES[@]}"; do
           fi
         }
 
-        ENDPOINT_URI=$(./vertex/gcloud/endpoints_state.sh | jq -r ".[] | select(.display == \"${model}\").name" )
+        ENDPOINT_URI="https://europe-west4-aiplatform.googleapis.com/v1/$(./vertex/gcloud/endpoints_state.sh | jq -r ".[] | select(.display == \"${model}\").name" ):predict"
         REPORT_URI="gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/${model}-bolcom-c${size}-t50-${runtime}.avro"
         ./loadgen/deploy_loadgen.sh "${ENDPOINT_URI}" "$size" "${REPORT_URI}"
 

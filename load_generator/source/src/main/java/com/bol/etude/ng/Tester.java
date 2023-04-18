@@ -40,7 +40,7 @@ public class Tester implements Iterable<Integer> {
 
             for (int i = 0; i < rps; i++) {
                 var last = i + 1 == rps;
-                runner.accept(new Tick(last));
+                runner.accept(new Tick(iterations, last));
             }
 
             long next = Duration.ofSeconds(1).toNanos() * iterations;
@@ -56,14 +56,23 @@ public class Tester implements Iterable<Integer> {
     }
 
     static class Tick {
+        private final long iteration;
         private final boolean complete;
 
-        Tick(boolean complete) {
+        Tick(long iteration, boolean complete) {
+            this.iteration = iteration;
             this.complete = complete;
         }
 
         public void doOnComplete(Runnable runnable) {
             if (complete) runnable.run();
+        }
+
+        @Override
+        public String toString() {
+            return "Tick(" +
+                    "iteration = '" + iteration + "'"
+                    + ")";
         }
     }
 

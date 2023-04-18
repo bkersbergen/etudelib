@@ -14,7 +14,7 @@ spec:
           image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen:latest"
           env:
             - name: VERTEX_ENDPOINT
-              value: "${VERTEX_ENDPOINT}/predictions"
+              value: "${VERTEX_ENDPOINT}"
             - name: CATALOG_SIZE
               value: "${CATALOG_SIZE}"
             - name: REPORT_LOCATION
@@ -29,6 +29,7 @@ spec:
             runAsUser: 1001
             seccompProfile:
               type: "RuntimeDefault"
+
 
 
 

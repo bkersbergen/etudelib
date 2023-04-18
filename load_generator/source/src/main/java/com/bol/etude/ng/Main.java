@@ -84,6 +84,7 @@ public class Main {
                 });
 
                 tick.doOnComplete(() -> {
+                    System.out.println(tick);
                     try {
                         persister.flush();
                     } catch (IOException e) {
