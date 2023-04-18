@@ -1,5 +1,6 @@
 package com.bol.etude.dataproducer;
 
+import com.bol.etude.ng.SyntheticJourneySupplier.Row;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;

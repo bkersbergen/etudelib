@@ -1,13 +1,10 @@
 package com.bol.etude.ng;
 
-import com.bol.etude.dataproducer.Row;
 import com.bol.etude.dataproducer.SessionsLoader;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class SyntheticJourneySupplierTest {
 

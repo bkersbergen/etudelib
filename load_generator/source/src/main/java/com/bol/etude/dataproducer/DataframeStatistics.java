@@ -1,11 +1,15 @@
 package com.bol.etude.dataproducer;
 
+
+
+import com.bol.etude.ng.SyntheticJourneySupplier;
+
 import java.time.Instant;
 import java.util.List;
 
 public class DataframeStatistics {
 
-    public static void printDataframeStatistics(String descriptiveName, List<Row> input_df) {
+    public static void printDataframeStatistics(String descriptiveName, List<SyntheticJourneySupplier.Row> input_df) {
         long unique_session_ids = input_df.stream().map(row -> row.getSessionId()).distinct().count();
         long unique_item_ids = input_df.stream().map(row -> row.getItemId()).distinct().count();
         int minTime = input_df.stream().map(row -> row.getTime()).reduce(Integer.MAX_VALUE, Integer::min);
