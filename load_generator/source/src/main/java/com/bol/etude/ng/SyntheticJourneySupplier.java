@@ -20,10 +20,6 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
 
     public SyntheticJourneySupplier(int C) {
         this.C = C;
-        double lambda = 5.597568416279968;
-        double xMin = 8.0E-5;
-        double exponent = 3.650557039874508;
-//        this.fit(lambda, xMin, exponent);
     }
 
     @Override
@@ -114,6 +110,7 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
             input.set(idx, total);
         }
     }
+
 
     public static class Row {
 
