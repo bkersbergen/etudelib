@@ -2,20 +2,23 @@
 set -e
 
 if [ $# -lt 3 ]; then
-    echo "requires args 'LOADTEST_NAME', 'RUNTIME', 'CATALOG_SIZE'"
+    echo "requires args 'VERTEX_ENDPOINT', 'CATALOG_SIZE', 'REPORT_URI'"
     exit 1
 fi
 
-LOADTEST_NAME="${1}"
-RUNTIME="${2}"
+VERTEX_ENDPOINT="${1}"
 CATALOG_SIZE="${2}"
+REPORT_URI="${3}"
 
-kubectl --context bolcom-pro-default --namespace reco-analytics delete job "etude-${LOADTEST_NAME}" --ignore-not-found=true --timeout=5m
+HASH=$(sum <<< "${VERTEX_ENDPOINT}" | cut -f 1 -d ' ')
+JOB_NAME="etude-run-loadtest-${HASH}-$(date +%s)"
 
-export LOADTEST_NAME RUNTIME CATALOG_SIZE
-envsubst < ./deploy_loadgen_job.yaml > "/tmp/deploy_loadgen_job.${LOADTEST_NAME}.yaml"
-export -n LOADTEST_NAME RUNTIME CATALOG_SIZE
+kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/deploy_loadgen_job.${LOADTEST_NAME}.yaml"
+export JOB_NAME VERTEX_ENDPOINT CATALOG_SIZE REPORT_URI
+envsubst < ./deploy_loadgen_job.yaml > "/tmp/deploy_loadgen_job.${HASH}.yaml"
+export -n JOB_NAME VERTEX_ENDPOINT CATALOG_SIZE REPORT_URI
+
+kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/deploy_loadgen_job.${HASH}.yaml"
 
 

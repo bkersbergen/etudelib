@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "etude-loadtest-${LOADTEST_NAME}"
+  name: "${JOB_NAME}"
 spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
@@ -10,17 +10,15 @@ spec:
       serviceAccountName: reco-analytics
       restartPolicy: Never
       containers:
-        - name: "etude-loadtest-${LOADTEST_NAME}"
-          image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen"
+        - name: "${JOB_NAME}"
+          image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen:latest"
           env:
+            - name: VERTEX_ENDPOINT
+              value: "${VERTEX_ENDPOINT}/predictions"
             - name: CATALOG_SIZE
               value: "${CATALOG_SIZE}"
-            - name: RUNTIME
-              value: "${RUNTIME}"
-            - name: LOADTEST_NAME
-              value: "${LOADTEST_NAME}"
-            - name: VERTEX_ENDPOINT
-              value: "/predictions"
+            - name: REPORT_URI
+              value: "${REPORT_URI}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
