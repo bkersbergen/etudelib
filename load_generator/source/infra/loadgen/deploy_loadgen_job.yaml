@@ -12,11 +12,15 @@ spec:
       containers:
         - name: "etude-loadtest-${LOADTEST_NAME}"
           image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen"
-#          env:
-#            - name: CATALOG_SIZE
-#              value: "100"
-#            - name: VERTEX_ENDPOINT
-#              value: ""
+          env:
+            - name: CATALOG_SIZE
+              value: "${CATALOG_SIZE}"
+            - name: RUNTIME
+              value: "${RUNTIME}"
+            - name: LOADTEST_NAME
+              value: "${LOADTEST_NAME}"
+            - name: VERTEX_ENDPOINT
+              value: "/predictions"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

@@ -45,7 +45,7 @@ done
    exit 0
 }
 
-VERTEX_MODEL_DEPLOYMENT_ID=$(echo "$ENDPOINTS_STATE" | jq -r ".[] | select(.display == \"etude-noop\") | select(.models[].display == \"${VERTEX_MODEL_NAME}\") | .models[0].id")
+VERTEX_MODEL_DEPLOYMENT_ID=$(echo "$ENDPOINTS_STATE" | jq -r ".[] | select(.display == \"${VERTEX_ENDPOINT_NAME}\") | select(.models[].display == \"${VERTEX_MODEL_NAME}\") | .models[0].id")
 
 [[ "" ==  "$VERTEX_MODEL_DEPLOYMENT_ID" ]] && {
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').404"

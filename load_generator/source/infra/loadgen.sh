@@ -18,6 +18,8 @@ for hardware in "${HARDWARES[@]}"; do
           ./vertex/deploy_endpoint_model.sh "$model" "$model" 'n1-highmem-4'
         fi
         echo "loadtest.run()"
+        sleep 60
+#        ./loadgen/deploy_loadgen.sh "$model-$size-$runtime-$hardware" "$runtime" "$size"
         ./vertex/purge_endpoint.sh "$model"
         ./vertex/purge_model.sh "$model"
       done
