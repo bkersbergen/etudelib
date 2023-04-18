@@ -47,6 +47,7 @@ public class Tester implements Iterable<Integer> {
             long delta = (start + next) - System.nanoTime();
 
             if (delta < 0) {
+                System.out.println("Ticker.delta(seconds = " + Duration.ofNanos(Math.abs(delta)).toSeconds() + ")");
                 continue;
             }
 

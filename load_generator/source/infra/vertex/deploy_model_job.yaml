@@ -19,7 +19,7 @@ spec:
             "--display-name", "${VERTEX_MODEL_NAME}",
             "--container-image-url", "${VERTEX_MODEL_IMAGE}",
             "--container-port", "7080",
-            "--predict-route", "/predictions",
+            "--predict-route", "/predictions/model",
             "--health-check-route", "/ping",
             "--description", "${VERTEX_MODEL_NAME}",
             "--is-default",

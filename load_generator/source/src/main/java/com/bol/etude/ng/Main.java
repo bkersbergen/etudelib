@@ -65,7 +65,7 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
-            rampThenHold(200, ofSeconds(30), ofSeconds(600), (tick) -> {
+            rampThenHold(200, ofSeconds(300), ofSeconds(600), (tick) -> {
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
