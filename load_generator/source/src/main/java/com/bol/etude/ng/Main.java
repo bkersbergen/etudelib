@@ -128,7 +128,7 @@ public class Main {
     }
 
     private static void writeReportToStorage(File temporary, String permanent) throws IOException {
-        if (permanent.startsWith("gs:")) {
+        if (permanent.startsWith("gs://")) {
             Storage storage = StorageOptions.getDefaultInstance().getService();
             URI uri = URI.create(permanent);
             Bucket bucket = storage.get(uri.getHost());
