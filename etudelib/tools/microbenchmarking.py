@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
-    min_duration_secs = 100
+    min_duration_secs = 10
     bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
@@ -175,6 +175,7 @@ def microbenchmark(args):
                't': args.t,
                'param_source': args.param_source,
                'config': config,
+               'model_architecture': str(eager_model)
                }
 
     device_types = ['cpu']
@@ -218,8 +219,7 @@ if __name__ == "__main__":
     args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
     args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
     args.gcs_dir = 'bkersbergen_etude'
-    for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
-                       'stamp']:
+    for model_name in ['core']:
         for C in [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
             args.C = C
             args.model = model_name
