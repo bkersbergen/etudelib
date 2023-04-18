@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
     Path(projectdir).mkdir(parents=True, exist_ok=True)
-    min_duration_secs = 10
+    min_duration_secs = 60
     bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
     print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
