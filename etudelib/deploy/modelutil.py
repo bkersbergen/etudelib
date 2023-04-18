@@ -35,7 +35,7 @@ class ModelUtil:
 
         payload = {'max_seq_length': max_seq_length,
                    'C': C,
-                   'idx2item': [i for i in range(C)]
+                   'idx2item': [i for i in range(C)],
                    }
 
         payload_path = str(projectdir / f'{base_filename}_payload.torch')
@@ -44,9 +44,6 @@ class ModelUtil:
         onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
 
         eager_model.to(device_type)
-
-        # item_seq, session_length, next_item = next(iter(dataloader))
-        # model_input = (item_seq, session_length)
 
         jit_model = torch.jit.optimize_for_inference(
             torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))

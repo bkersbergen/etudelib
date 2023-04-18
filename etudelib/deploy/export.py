@@ -93,7 +93,7 @@ class TorchServeExporter:
         requirements_path = rootdir.parent / 'requirements/base.txt'
         sys.argv = [sys.argv[0]]  # clear the command line arguments
         sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-        sys.argv.extend(['--model-name', filename_without_ext])
+        sys.argv.extend(['--model-name', 'model'])  # all endpoints are called 'model' to remove complex variables in all intermediate scripts
         sys.argv.extend(['--version', '1.0'])
         sys.argv.extend(['--serialized-file', model_path])
         sys.argv.extend(['--handler', str(handler_path)])
@@ -107,3 +107,10 @@ class TorchServeExporter:
             logger.error(exit_code)
             logger.error(sys.argv)
             raise RuntimeError('FAILED to create MAR')
+
+        # rename model.mar to something like 'noop_bolcom_c1000_t50_eager'
+        current_filename = output_dir + 'model.mar'
+        new_filename = output_dir + filename_without_ext + '.mar'
+        os.rename(current_filename, new_filename)
+
+

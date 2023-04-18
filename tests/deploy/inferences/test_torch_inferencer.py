@@ -2,6 +2,9 @@ import sys
 
 from timeit import default_timer as timer
 
+from torch.utils.data import DataLoader
+
+from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.deploy.modelutil import ModelUtil
 
 sys.path.insert(0, '../etudelib/deploy/inferences/')
@@ -22,7 +25,18 @@ class Context:
 class TestingTorchInferencer(unittest.TestCase):
 
     def test_model_returns_predictions(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='core', C=100000, max_seq_length=50, param_source='bolcom')
+        C = 100000
+        t = 50
+        train_ds = SyntheticDataset(qty_interactions=50_000,
+                                    qty_sessions=50_000,
+                                    n_items=C,
+                                    max_seq_length=t, param_source='bolcom')
+        benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
+        item_seq, session_length, next_item = next(iter(benchmark_loader))
+        model_input = (item_seq, session_length)
+
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='noop',
+                                                                                                    C=C, max_seq_length=t, param_source='bolcom', model_input=model_input)
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)
@@ -34,7 +48,18 @@ class TestingTorchInferencer(unittest.TestCase):
         self.assertTrue(len(predictions[0]['items']) > 5)
 
     def test_naive_inference_benchmark(self):
-        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='core', C=100000, max_seq_length=50, param_source='bolcom')
+        C = 100000
+        t = 50
+        train_ds = SyntheticDataset(qty_interactions=50_000,
+                                    qty_sessions=50_000,
+                                    n_items=C,
+                                    max_seq_length=t, param_source='bolcom')
+        benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
+        item_seq, session_length, next_item = next(iter(benchmark_loader))
+        model_input = (item_seq, session_length)
+
+        payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(model_name='noop',
+                                                                                                    C=C, max_seq_length=t, param_source='bolcom', model_input=model_input)
 
         sut = TorchInferencer()
         sut.initialize_from_file(onnx_model_path)

@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 class TorchInferencer(BaseHandler):
 
     def __init__(self):
+        self.model_filename = None
+        self.C = None
         self.ort_sess = None
         self.max_seq_length = None
         self.device_type = "cuda" if torch.cuda.is_available() else "cpu"
@@ -37,6 +39,7 @@ class TorchInferencer(BaseHandler):
         model_dir = properties.get("model_dir")
         # Read torch serialized file
         serialized_file = context.manifest['model']['serializedFile']
+        self.model_filename = serialized_file
         model_path = os.path.join(model_dir, serialized_file)
         self.initialize_from_file(model_path)
 
@@ -90,7 +93,7 @@ class TorchInferencer(BaseHandler):
         output = [{'items': output, 'nf': {'preprocess_ms': preprocess_time_ms,
                                            'inference_ms': inference_time_ms,
                                            'postprocess_ms': postprocess_time_ms,
-                                           'runtime': self.runtime,
+                                           'model': self.model_filename,
                                            'device': self.device_type,
                                            }}]
         return [{
