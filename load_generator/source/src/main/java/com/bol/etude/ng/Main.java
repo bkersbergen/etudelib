@@ -127,14 +127,18 @@ public class Main {
         return report.build();
     }
 
-    private static void writeReportToStorage(File temporary, String permanent) throws IOException {
-        if (permanent.startsWith("gs://")) {
-            Storage storage = StorageOptions.getDefaultInstance().getService();
-            URI uri = URI.create(permanent);
-            Bucket bucket = storage.get(uri.getHost());
-            bucket.create(uri.getPath(), Files.newInputStream(temporary.toPath()));
-        } else {
-            Files.copy(temporary.toPath(), new File(permanent).toPath());
+    private static void writeReportToStorage(File temporary, String permanent) {
+        try {
+            if (permanent.startsWith("gs://")) {
+                Storage storage = StorageOptions.getDefaultInstance().getService();
+                URI uri = URI.create(permanent);
+                Bucket bucket = storage.get(uri.getHost());
+                bucket.create(uri.getPath(), Files.newInputStream(temporary.toPath()));
+            } else {
+                Files.copy(temporary.toPath(), new File(permanent).toPath());
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 }
