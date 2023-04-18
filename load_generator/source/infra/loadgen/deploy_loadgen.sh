@@ -33,11 +33,11 @@ POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
 [[ "$LOGS" =~ .*"killing loadgen".* ]] && {
   echo "$LOGS"
-  echo "models['${VERTEX_MODEL_NAME}'].deploy().err"
+  echo "loadtest.done().err"
   exit 1
 }
 
-echo "models['${VERTEX_MODEL_NAME}'].deploy().ok"
+echo "loadtest.done().ok"
 exit 0
 
 
