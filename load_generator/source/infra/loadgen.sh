@@ -31,7 +31,7 @@ for hardware in "${HARDWARES[@]}"; do
         ./loadgen/deploy_loadgen.sh "${ENDPOINT_URI}" "${size}" "${REPORT_URI}"
 
         [ "${DESTROY}" = "true" ] && {
-          ./vertex/purge_endpoint.sh "${name}-${hardware}"
+          ./vertex/purge_endpoint.sh "${name}_${hardware}"
           ./vertex/purge_model.sh "${name}"
         }
       done
