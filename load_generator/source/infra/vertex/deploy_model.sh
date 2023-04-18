@@ -10,7 +10,7 @@ VERTEX_MODEL_NAME="${1}"
 VERTEX_MODEL_IMAGE="${2}"
 DIR="$(dirname "$0")"
 
-echo "models['${VERTEX_MODEL_NAME}'].deploy()"
+echo "models['${VERTEX_MODEL_NAME}'].deploy(image = '${VERTEX_MODEL_IMAGE}')"
 
 HASH=$(sum <<< "${VERTEX_MODEL_NAME}-${VERTEX_MODEL_IMAGE}" | cut -f 1 -d ' ')
 JOB_NAME="vertex-deploy-model-${HASH}-$(date +%s)"

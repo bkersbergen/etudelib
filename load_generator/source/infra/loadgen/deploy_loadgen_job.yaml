@@ -17,7 +17,7 @@ spec:
               value: "${VERTEX_ENDPOINT}/predictions"
             - name: CATALOG_SIZE
               value: "${CATALOG_SIZE}"
-            - name: REPORT_URI
+            - name: REPORT_LOCATION
               value: "${REPORT_URI}"
           imagePullPolicy: Always
           securityContext:

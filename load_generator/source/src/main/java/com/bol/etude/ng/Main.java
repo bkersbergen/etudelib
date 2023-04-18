@@ -25,8 +25,8 @@ public class Main {
     private static final Gson gson = new Gson();
 
     public static void main(String[] args) throws InterruptedException, IOException {
-        String endpoint_arg = System.getenv("VERTX_ENDPOINT");
-        System.out.println("ENV_VAR[VERTX_ENDPOINT] = '" + endpoint_arg + "'");
+        String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
+        System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
@@ -35,7 +35,7 @@ public class Main {
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
-            System.out.println("killing loadgen, env variables [VERTX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION] are not all set");
+            System.out.println("killing loadgen, env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION] are not all set");
             Thread.sleep(300_000);
             System.out.println("exit(1)");
             System.exit(1);
