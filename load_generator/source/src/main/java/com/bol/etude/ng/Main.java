@@ -41,9 +41,9 @@ public class Main {
             System.exit(1);
         }
 
-//        String endpoint = "https://europe-west4-aiplatform.googleapis.com/v1/projects/bolcom-pro-reco-analytics-fcc/locations/europe-west4/endpoints/4775442882221834240:predict";
-//        int catalogus = 1000000;
-//        String report = gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/04-18-2023-${model}-bolcom-c${size}-t50-${runtime}
+//        String endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
+//        String catalog_size_arg = "1000000";
+//        String report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
 
         URI endpoint = URI.create(endpoint_arg);
         File temporary = new File("/tmp/etude/report.avro");
@@ -55,7 +55,7 @@ public class Main {
 
     private static Journeys createSyntheticJourneys(int size) {
         SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(size);
-        journeys.fit(5.597568416279968,8.0E-5, 3.650557039874508);
+        journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
         return new Journeys(journeys);
     }
 
@@ -65,7 +65,7 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
-            rampThenHold(200, ofSeconds(300), ofSeconds(600), (tick) -> {
+            rampThenHold(200, ofSeconds(180), ofSeconds(540), (tick) -> {
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
@@ -129,15 +129,18 @@ public class Main {
 
     private static void writeReportToStorage(File temporary, String permanent) {
         try {
+            System.out.println("Storage.write(uri = '" + permanent + "')");
             if (permanent.startsWith("gs://")) {
                 Storage storage = StorageOptions.getDefaultInstance().getService();
                 URI uri = URI.create(permanent);
                 Bucket bucket = storage.get(uri.getHost());
-                bucket.create(uri.getPath(), Files.newInputStream(temporary.toPath()));
+                bucket.create(uri.getPath().substring(1), Files.newInputStream(temporary.toPath()));
             } else {
                 Files.copy(temporary.toPath(), new File(permanent).toPath());
             }
+            System.out.println("Storage.write(uri = '" + permanent + "').ok");
         } catch (Throwable t) {
+            System.out.println("Storage.write(uri = '" + permanent + "').err");
             t.printStackTrace();
         }
     }

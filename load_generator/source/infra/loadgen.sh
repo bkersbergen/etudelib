@@ -4,10 +4,10 @@ set -e
 CREATE=true
 DESTROY=false
 
-HARDWARES=('cpu') # ('cpu' 'gpu')
+HARDWARES=()'cpu'# ('cpu' 'gpu')
 RUNTIMES=('eager') # ('eager' 'jitopt' 'onnx')
 MODELS=('noop') # ('noop' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-CATALOG_SIZES=(100000) # (1000 10000 100000 500000 1000000 5000000 10000000 20000000)
+CATALOG_SIZES=(1000) #(1000 10000 100000 500000 1000000 5000000)
 
 for hardware in "${HARDWARES[@]}"; do
   for runtime in "${RUNTIMES[@]}"; do
