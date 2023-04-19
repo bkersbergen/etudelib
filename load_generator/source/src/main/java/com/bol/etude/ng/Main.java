@@ -72,7 +72,7 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
-            rampThenHold(200, ofSeconds(180), ofSeconds(540), (tick) -> {
+            rampThenHold(1000, ofSeconds(1000), ofSeconds(0), (tick) -> {
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
@@ -90,8 +90,7 @@ public class Main {
                     }
                 });
 
-                tick.doOnComplete(() -> {
-                    System.out.println(tick);
+                tick.doOnTickStart(() -> {
                     try {
                         persister.flush();
                     } catch (IOException e) {

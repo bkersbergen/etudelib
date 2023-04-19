@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-./mvnw package -DskipTests
+./mvnw clean package -DskipTests
 
 docker build . \
   --build-arg PARENT_IMAGE="eu.gcr.io/bolcom-stg-jvm-f30/debian-zulu-jdk-17:latest" \

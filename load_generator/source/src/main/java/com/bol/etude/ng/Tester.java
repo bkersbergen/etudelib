@@ -39,18 +39,24 @@ public class Tester implements Iterable<Integer> {
 
         for (int rps : this) {
             ticks += 1;
+            boolean first = true;
 
             for (int i = 0; i < rps; i++) {
-                if (inflight.get() < rps) {
-                    runner.accept(new Tick(ticks, rps, inflight));
+                if (inflight.get() >= rps) {
+                    System.out.println("Ticker.skip(tick = '" + ticks + "', num = '" + i + "')");
+                    continue;
                 }
+
+                inflight.incrementAndGet();
+                runner.accept(new Tick(ticks, rps, inflight, first));
+                if (first) first = false;
             }
 
             long next = Duration.ofSeconds(1).toNanos() * ticks;
             long delta = (start + next) - System.nanoTime();
 
             if (delta < 0) {
-                System.out.println("Ticker.delta(seconds = " + Duration.ofNanos(delta).toSeconds() + ")");
+                System.out.println("Ticker.delta(tick = '" + ticks + "', 'seconds = " + Duration.ofNanos(delta).toSeconds() + ")");
                 continue;
             }
 
@@ -60,28 +66,25 @@ public class Tester implements Iterable<Integer> {
     }
 
     static class Tick {
-        private final long count;
+        private final long ticks;
         private final long rps;
         private final AtomicInteger inflight;
-        private final int flight;
+        private final boolean start;
 
-        Tick(long count, long rps, AtomicInteger inflight) {
-            this.count = count;
+        Tick(long ticks, long rps, AtomicInteger inflight, boolean start) {
+            this.ticks = ticks;
             this.rps = rps;
             this.inflight = inflight;
-            flight = inflight.incrementAndGet();
+            this.start = start;
         }
 
-        public void doOnComplete(Runnable runnable) {
+        public void doOnTickStart(Runnable runnable) {
             inflight.decrementAndGet();
-            if (count != 0 && count % 100 == 0) {
+
+            if (ticks % 10 == 0 && start) {
+                System.out.println("Tick.onTickStart(num = '" + ticks + "', rps = '" + rps + "', inflight = '" + inflight.get() + "')");
                 runnable.run();
             }
-        }
-
-        @Override
-        public String toString() {
-            return "Tick(count = '" + count + "', rps = '" + rps + "', inflight = '" + flight + "')";
         }
     }
 
