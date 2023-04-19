@@ -25,7 +25,7 @@ def create_mars():
         model_input = (item_seq, session_length)
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
-        for model_name in ['core']:
+        for model_name in ['noop', 'random']:
             output_path = f'{rootdir}/.docker/model_store/'
             print(f'creating model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(

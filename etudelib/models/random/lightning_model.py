@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 from omegaconf import DictConfig, ListConfig
 
-from .torch_model import NOOPModel
+from .torch_model import RANDOMModel
 
 logger = logging.getLogger(__name__)
 __all__ = ["RANDOM", "RANDOMLightning"]

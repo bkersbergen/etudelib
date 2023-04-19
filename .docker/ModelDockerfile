@@ -1,8 +1,8 @@
-FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib_torchserve:latest
+FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/etudelib_torchserve:latest
 
-COPY --chown=app:app log4j2_debug.xml ./conf/log4j2.xml
+# COPY --chown=app:app log4j2_debug.xml ./conf/log4j2.xml
 
-ARG MODELFILE_WO_EXT=core_bolcom_C1000000_t50
+ARG MODELFILE_WO_EXT
 
 COPY --chown=app:app model_store/$MODELFILE_WO_EXT.mar ./models/
 

@@ -5,8 +5,8 @@ PROJECT=bolcom-pro-reco-analytics-fcc
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
-IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT)/etudelib_microbenchmark:latest
-IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT)/etudelib_torchserve:latest
+IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT)/etudelib/etudelib_microbenchmark:latest
+IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT)/etudelib/etudelib_torchserve:latest
 
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
 	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .ci/Dockerfile .
@@ -28,12 +28,12 @@ model_baseimage: ## Build and push the Docker base image that the deployed model
 model_build: ## Build and push a marfile Docker image.
 	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make model_build MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
 	@cd .docker && \
-		docker build --build-arg MODELFILE_WO_EXT=$(MARFILE_WO_EXT) -t eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest -f ModelDockerfile . && \
-		docker push eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
+		docker build --build-arg MODELFILE_WO_EXT=$(MARFILE_WO_EXT) -t eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest -f ModelDockerfile . && \
+		docker push eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest
 
 model_run:  ## Run marfile Docker image locally
 	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make torchserve_run MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
-	@docker run -p 7080:7080 -p 7081:7081 eu.gcr.io/$(PROJECT)/$(MARFILE_WO_EXT):latest
+	@docker run -p 7080:7080 -p 7081:7081 eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
