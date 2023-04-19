@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-DEPLOY=true
+DEPLOY=false
 TEST=false
 DESTROY=false
 
