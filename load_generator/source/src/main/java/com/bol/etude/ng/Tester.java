@@ -3,6 +3,7 @@ package com.bol.etude.ng;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public class Tester implements Iterable<Integer> {
@@ -33,17 +34,19 @@ public class Tester implements Iterable<Integer> {
 
     private void run(Consumer<Tick> runner) throws InterruptedException {
         long start = System.nanoTime();
-        long iterations = 0;
+        long ticks = 0;
+        AtomicInteger inflight = new AtomicInteger(0);
 
         for (int rps : this) {
-            iterations += 1;
+            ticks += 1;
 
             for (int i = 0; i < rps; i++) {
-                var last = i + 1 == rps;
-                runner.accept(new Tick(iterations, rps, last));
+                if (inflight.get() < rps) {
+                    runner.accept(new Tick(ticks, rps, inflight));
+                }
             }
 
-            long next = Duration.ofSeconds(1).toNanos() * iterations;
+            long next = Duration.ofSeconds(1).toNanos() * ticks;
             long delta = (start + next) - System.nanoTime();
 
             if (delta < 0) {
@@ -57,24 +60,28 @@ public class Tester implements Iterable<Integer> {
     }
 
     static class Tick {
-        private final long iteration;
-
+        private final long count;
         private final long rps;
-        private final boolean complete;
+        private final AtomicInteger inflight;
+        private final int flight;
 
-        Tick(long iteration, long rps, boolean complete) {
-            this.iteration = iteration;
+        Tick(long count, long rps, AtomicInteger inflight) {
+            this.count = count;
             this.rps = rps;
-            this.complete = complete;
+            this.inflight = inflight;
+            flight = inflight.incrementAndGet();
         }
 
         public void doOnComplete(Runnable runnable) {
-            if (complete) runnable.run();
+            inflight.decrementAndGet();
+            if (count != 0 && count % 100 == 0) {
+                runnable.run();
+            }
         }
 
         @Override
         public String toString() {
-            return "Tick(iteration = '" + iteration + "', rps = '" + rps + "')";
+            return "Tick(count = '" + count + "', rps = '" + rps + "', inflight = '" + flight + "')";
         }
     }
 
