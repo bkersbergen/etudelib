@@ -12,6 +12,13 @@ spec:
       containers:
         - name: "${JOB_NAME}"
           image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen:latest"
+          resources:
+            limits:
+              cpu: "2"
+              memory: "3Gi"
+            requests:
+              cpu: "2"
+              memory: "3Gi"
           env:
             - name: VERTEX_ENDPOINT
               value: "${VERTEX_ENDPOINT}"

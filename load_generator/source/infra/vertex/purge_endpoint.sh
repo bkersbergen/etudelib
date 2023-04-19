@@ -26,10 +26,10 @@ for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${ENDPOINT_EXISTS}" ] && {
+if [ "true" != "${ENDPOINT_EXISTS}" ]; then
    echo "endpoints['${VERTEX_ENDPOINT_NAME}'].404"
    exit 0
-}
+fi
 
 ENDPOINT_MODELS=$(echo "$ENDPOINTS_STATE" | jq "[.[] | select(.display == \"${VERTEX_ENDPOINT_NAME}\").models[]]")
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].models(length = $(echo "${ENDPOINT_MODELS}" | jq length))"
@@ -40,10 +40,10 @@ done
 
 "$DIR"/delete_endpoint.sh "${VERTEX_ENDPOINT_NAME}"
 
-[[ "$?" == "0" ]] && {
+if [[ "$?" == "0" ]]; then
   echo "endpoint['${VERTEX_ENDPOINT_NAME}'].purge().ok"
   exit 0
-}
+fi
 
 echo "endpoint['${VERTEX_ENDPOINT_NAME}'].purge().err"
 exit 1

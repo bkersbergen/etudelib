@@ -35,10 +35,10 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=15m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"Model created.".* ]] && {
+if [[ "$LOGS" =~ .*"Model created.".* ]]; then
   echo "models['${VERTEX_MODEL_NAME}'].deploy().ok"
   exit 0
-}
+fi
 
 echo "$LOGS"
 echo "models['${VERTEX_MODEL_NAME}'].deploy().err"

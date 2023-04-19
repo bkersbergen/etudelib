@@ -21,10 +21,10 @@ for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${MODEL_EXISTS}" ] && {
+if [ "true" != "${MODEL_EXISTS}" ]; then
    echo "models['${VERTEX_MODEL_NAME}'].404"
    exit 0
-}
+fi
 
 HASH=$(sum <<< "${VERTEX_MODEL_NAME}" | cut -f 1 -d ' ')
 JOB_NAME="vertex-delete-model-${HASH}-$(date +%s)"
@@ -40,10 +40,10 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"Model deleted.".* ]] && {
+if [[ "$LOGS" =~ .*"Model deleted.".* ]]; then
   echo "models['${VERTEX_MODEL_NAME}'].delete().ok"
   exit 0
-}
+fi
 
 echo "$LOGS"
 echo "models['${VERTEX_MODEL_NAME}'].delete().err"

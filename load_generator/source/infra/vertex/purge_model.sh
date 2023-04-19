@@ -24,10 +24,10 @@ for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${MODEL_EXISTS}" ] && {
+if [ "true" != "${MODEL_EXISTS}" ]; then
    echo "models['${VERTEX_MODEL_NAME}'].404"
    exit 0
-}
+fi
 
 ENDPOINTS_STATE=$("$DIR"/gcloud/endpoints_state.sh)
 
@@ -42,10 +42,10 @@ done
 
 "$DIR"/delete_model.sh "${VERTEX_MODEL_NAME}"
 
-[[ "$?" == "0" ]] && {
+if [[ "$?" == "0" ]]; then
   echo "models['${VERTEX_MODEL_NAME}'].purge().ok"
   exit 0
-}
+fi
 
 echo "models['${VERTEX_MODEL_NAME}'].purge().err"
 exit 1

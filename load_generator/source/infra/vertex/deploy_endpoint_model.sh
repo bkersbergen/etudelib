@@ -37,10 +37,10 @@ for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${ENDPOINT_EXISTS}" ] && {
+if [ "true" != "${ENDPOINT_EXISTS}" ]; then
    echo "endpoints['${VERTEX_ENDPOINT_NAME}'].404"
    exit 1
-}
+fi
 
 MODELS_STATE=$("$DIR"/gcloud/models_state.sh)
 MODEL_EXISTS=false
@@ -52,17 +52,17 @@ for MODEL in $(echo "$MODELS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${MODEL_EXISTS}" ] && {
+if [ "true" != "${MODEL_EXISTS}" ]; then
    echo "models['${VERTEX_MODEL_NAME}'].404"
    exit 1
-}
+fi
 
 MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].display == \"${VERTEX_MODEL_NAME}\")]")
 
-[[ "0" != $(echo "${MODEL_DEPLOYMENTS}" | jq 'length') ]] && {
+if [[ "0" != $(echo "${MODEL_DEPLOYMENTS}" | jq 'length') ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deployment(model = '${VERTEX_MODEL_NAME}').200"
   exit 0
-}
+fi
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
@@ -79,10 +79,10 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"deployed to Endpoint".* ]] && {
+if [[ "$LOGS" =~ .*"deployed to Endpoint".* ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').ok"
   exit 0
-}
+fi
 
 echo "$LOGS"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').err"

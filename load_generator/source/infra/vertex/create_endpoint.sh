@@ -33,10 +33,10 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"Endpoint created.".* ]] && {
+if [[ "$LOGS" =~ .*"Endpoint created.".* ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create().ok"
   exit 0
-}
+fi
 
 echo "$LOGS"
 echo "endpoints['${VERTEX_ENDPOINT_NAME}'].create().err"

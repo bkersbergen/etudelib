@@ -20,10 +20,10 @@ for ENDPOINT in $(echo "$ENDPOINTS_STATE" | jq -r '.[].display'); do
     fi
 done
 
-[ "true" != "${ENDPOINT_EXISTS}" ] && {
+if [ "true" != "${ENDPOINT_EXISTS}" ]; then
    echo "endpoints['${VERTEX_ENDPOINT_NAME}'].404"
    exit 0
-}
+fi
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT_NAME}" | cut -f 1 -d ' ')
 JOB_NAME="vertex-delete-endpoint-${HASH}-$(date +%s)"
@@ -37,10 +37,10 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-[[ "$LOGS" =~ .*"Endpoint deleted.".* ]] && {
+if [[ "$LOGS" =~ .*"Endpoint deleted.".* ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].delete().ok"
   exit 0
-}
+fi
 
 
 echo "${LOGS}"
