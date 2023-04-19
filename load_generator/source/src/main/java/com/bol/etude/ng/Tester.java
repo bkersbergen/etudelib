@@ -25,14 +25,14 @@ public class Tester implements Iterable<Integer> {
         return new Iterators(ramper, maintainer);
     }
 
-    public static void rampThenHold(int target, Duration ramp, Duration maintain, Consumer<Tick> runner) throws InterruptedException {
+    public static void rampThenHold(int target, Duration ramp, Duration maintain, Consumer<Request> runner) throws InterruptedException {
         if (target < 0) throw new RuntimeException("target < 0");
         Objects.requireNonNull(ramp, "ramp == null");
         Objects.requireNonNull(ramp, "maintain == null");
         new Tester(target, ramp, maintain).run(runner);
     }
 
-    private void run(Consumer<Tick> runner) throws InterruptedException {
+    private void run(Consumer<Request> runner) throws InterruptedException {
         long start = System.nanoTime();
         long ticks = 0;
         AtomicInteger inflight = new AtomicInteger(0);
@@ -42,13 +42,12 @@ public class Tester implements Iterable<Integer> {
             boolean first = true;
 
             for (int i = 0; i < rps; i++) {
-                if (inflight.get() >= rps) {
-                    System.out.println("Ticker.skip(tick = '" + ticks + "', num = '" + i + "')");
+                if (inflight.get() == rps) {
+//                    System.out.println("Ticker.skip(tick = '" + ticks + "', num = '" + i + "')");
                     continue;
                 }
 
-                inflight.incrementAndGet();
-                runner.accept(new Tick(ticks, rps, inflight, first));
+                runner.accept(new Request(ticks, rps, inflight, first));
                 if (first) first = false;
             }
 
@@ -65,13 +64,13 @@ public class Tester implements Iterable<Integer> {
         }
     }
 
-    static class Tick {
+    static class Request {
         private final long ticks;
         private final long rps;
         private final AtomicInteger inflight;
         private final boolean start;
 
-        Tick(long ticks, long rps, AtomicInteger inflight, boolean start) {
+        Request(long ticks, long rps, AtomicInteger inflight, boolean start) {
             this.ticks = ticks;
             this.rps = rps;
             this.inflight = inflight;
@@ -79,12 +78,18 @@ public class Tester implements Iterable<Integer> {
         }
 
         public void doOnTickStart(Runnable runnable) {
-            inflight.decrementAndGet();
-
             if (ticks % 10 == 0 && start) {
-                System.out.println("Tick.onTickStart(num = '" + ticks + "', rps = '" + rps + "', inflight = '" + inflight.get() + "')");
+                System.out.println("Ticker.onTickStart(tick = '" + ticks + "', rps = '" + rps + "', inflight = '" + inflight.get() + "')");
                 runnable.run();
             }
+        }
+
+        public void start() {
+            inflight.incrementAndGet();
+        }
+
+        public void complete() {
+            inflight.decrementAndGet();
         }
     }
 

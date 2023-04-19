@@ -26,15 +26,15 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
-//        String endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
+//        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
-//        String catalog_size_arg = "1000000";
+//        catalog_size_arg = "1000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
-//        String report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+//        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
@@ -72,10 +72,13 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
-            rampThenHold(1000, ofSeconds(1000), ofSeconds(0), (tick) -> {
+            rampThenHold(1000, ofSeconds(300), ofSeconds(300), (request) -> {
+                request.start();
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
+                    request.complete();
+
                     if (success == null) {
                         collector.remove(journey);
                     } else {
@@ -90,7 +93,7 @@ public class Main {
                     }
                 });
 
-                tick.doOnTickStart(() -> {
+                request.doOnTickStart(() -> {
                     try {
                         persister.flush();
                     } catch (IOException e) {
