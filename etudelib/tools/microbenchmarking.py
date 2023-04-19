@@ -95,6 +95,7 @@ def get_args() -> Namespace:
     parser.add_argument("--t", type=int, default=50,
                         help="Synthetic dataset: Number of timesteps or sequence length of a session as input for a "
                              "model")
+    parser.add_argument('--topk', type=str, default="y", help="Decorate recommender model with Top-k logic")
     parser.add_argument("--param_source", type=str, default="bolcom",
                         help="Synthetic dataset: using fit parameters from this datasource")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
@@ -155,7 +156,9 @@ def microbenchmark(args):
 
     eager_model = model.get_backbone()
 
-    eager_model = TopKDecorator(eager_model, topk=21)
+    if args.topk == 'y':
+        eager_model = TopKDecorator(eager_model, topk=21)
+
     eager_model.eval()
     params = []
     for name, parameter in eager_model.named_parameters():
@@ -209,7 +212,7 @@ def microbenchmark(args):
         upload_to_gcs(local_dir=projectdir,
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
-                      gcs_dir=args.gcs_dir + '/' + str(date.today()))
+                      gcs_dir=args.gcs_dir + '/topk_' + args.topk + '_' + str(date.today()))
         print('End transferring results to google storage bucket')
 
 
@@ -219,7 +222,7 @@ if __name__ == "__main__":
     args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
     args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
     args.gcs_dir = 'bkersbergen_etude'
-    for C in [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+    for C in [100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
         for model_name in ['noop', 'random']:
             args.C = C
             args.model = model_name
@@ -227,5 +230,7 @@ if __name__ == "__main__":
                 args.t = t
                 # for param_source in ['bolcom', 'rsc15']:
                 for param_source in ['bolcom']:
-                    args.param_source = param_source
-                    microbenchmark(args)
+                    for do_top_k in ['y', 'n']:
+                        args.topk = do_top_k
+                        args.param_source = param_source
+                        microbenchmark(args)
