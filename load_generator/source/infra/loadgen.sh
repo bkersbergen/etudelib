@@ -6,7 +6,7 @@ TEST=false
 DESTROY=false
 
 HARDWARES=('cpu' 'gpu')
-RUNTIMES=('eager') # ('eager' 'jitopt' 'onnx')
+RUNTIMES=('eager' 'jitopt' 'onnx')
 MODELS=('noop') # ('noop' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
 CATALOG_SIZES=(1000 10000 100000 500000 1000000 5000000)
 
