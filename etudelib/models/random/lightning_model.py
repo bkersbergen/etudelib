@@ -10,13 +10,13 @@ from omegaconf import DictConfig, ListConfig
 from .torch_model import NOOPModel
 
 logger = logging.getLogger(__name__)
-__all__ = ["NOOP", "NOOPLightning"]
+__all__ = ["RANDOM", "RANDOMLightning"]
 
 
-class NOOP(pl.LightningModule, ABC):
-    def __init__(self, ):
+class RANDOM(pl.LightningModule, ABC):
+    def __init__(self, n_items: int):
         super().__init__()
-        self.model = NOOPModel()
+        self.model = RANDOMModel(n_items)
 
     def forward(self, x):
         return self.model(x)
@@ -48,13 +48,15 @@ class NOOP(pl.LightningModule, ABC):
         return self.model
 
 
-class NOOPLightning(NOOP):
-    """Torch Lightning Module for the NOOP model.
+class RANDOMLightning(RANDOM):
+    """Torch Lightning Module for the RANDOM model.
         Args:
             hparams (Union[DictConfig, ListConfig]): Model params
         """
 
     def __init__(self, hparams: Union[DictConfig, ListConfig]) -> None:
-        super().__init__()
+        super().__init__(
+            n_items=hparams.dataset.n_items,
+        )
         self.hparams: Union[DictConfig, ListConfig]  # type: ignore
         self.save_hyperparameters(hparams)

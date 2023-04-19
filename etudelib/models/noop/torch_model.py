@@ -10,23 +10,17 @@ A No-Operations model. Used as a zero measurement
 
 import torch
 from torch import nn
-from torch.nn.init import xavier_normal_, constant_
 
 
 class NOOPModel(nn.Module):
-    r"""Allways return a list of random numbers of size n_items.
+    r"""Allways return a fixed list of numbers.
     """
 
-    def __init__(self,
-                 n_items: int,
-                 ):
+    def __init__(self,):
         super(NOOPModel, self).__init__()
 
-        generator = torch.Generator()
-        generator.manual_seed(n_items)
-        # # load parameters info
-        self.result = torch.rand(n_items, generator=generator)
+        self.result = torch.arange(0, 21)
 
-    def forward(self, item_seq, item_seq_len):
+    def forward(self, item_seq, _item_seq_len):
         batch_size = item_seq.shape[0]
         return self.result.repeat(batch_size, 1)
