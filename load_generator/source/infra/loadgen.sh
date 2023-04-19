@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-DEPLOY=false
+DEPLOY=true
 TEST=false
 DESTROY=false
 
 MACHINES=('n1-highmem-4')
 ACCELERATIONS=(false 'NVIDIA_TESLA_T4')
-RUNTIMES=('eager') # 'jitopt' 'onnx')
-NETWORKS=('noop') # ('noop' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-CATALOG_SIZES=(1000) # 10000 100000 500000 1000000 5000000)
+RUNTIMES=('eager' 'jitopt' 'onnx')
+NETWORKS=('noop' 'random') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
+CATALOG_SIZES=(1000 5000000) # (1000 10000 100000 500000 1000000 5000000)
 
 function normalize() {
   echo "$1" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
@@ -25,7 +25,7 @@ for machine in "${MACHINES[@]}"; do
 
           if [ "${DEPLOY}" = "true" ]; then
             ./vertex/create_endpoint.sh "${model}_${hardware}"
-            ./vertex/deploy_model.sh "${model}" "eu.gcr.io/bolcom-pro-reco-analytics-fcc/${model}:latest"
+            ./vertex/deploy_model.sh "${model}" "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/${model}:latest"
 
             if [ "${acceleration}" != "false" ]; then
               ./vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}" "${acceleration}" '1'
