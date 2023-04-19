@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-DEPLOY=false
+DEPLOY=true
 TEST=false
-DESTROY=true
+DESTROY=false
 
 MACHINES=('n1-highmem-4')
 ACCELERATIONS=(false 'NVIDIA_TESLA_T4')
-RUNTIMES=('eager' 'jitopt' 'onnx')
+RUNTIMES=('eager') # 'jitopt' 'onnx')
 NETWORKS=('noop') # ('noop' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-CATALOG_SIZES=(1000 10000 100000 500000 1000000 5000000)
+CATALOG_SIZES=(1000) # 10000 100000 500000 1000000 5000000)
 
 function normalize() {
   echo "$1" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
@@ -44,8 +44,6 @@ for machine in "${MACHINES[@]}"; do
             ./vertex/purge_endpoint.sh "${model}_${hardware}"
             ./vertex/purge_model.sh "${model}"
           fi
-
-          exit 0
         done
       done
     done

@@ -57,9 +57,9 @@ if [ "true" != "${MODEL_EXISTS}" ]; then
    exit 1
 fi
 
-MODEL_DEPLOYMENTS=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.models[].display == \"${VERTEX_MODEL_NAME}\")]")
+MODEL_DEPLOYMENT=$(echo "$ENDPOINTS_STATE" | jq -c "[.[] | select(.display == \"${VERTEX_ENDPOINT_NAME}\") | select(.models[].display == \"${VERTEX_MODEL_NAME}\")]")
 
-if [[ "0" != $(echo "${MODEL_DEPLOYMENTS}" | jq 'length') ]]; then
+if [[ "0" != $(echo "${MODEL_DEPLOYMENT}" | jq 'length') ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deployment(model = '${VERTEX_MODEL_NAME}').200"
   exit 0
 fi

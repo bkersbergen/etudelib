@@ -26,31 +26,38 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
+//        String endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
+//        String catalog_size_arg = "1000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
+//        String report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
-            System.out.println("killing loadgen, env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION] are not all set");
+            System.out.println("env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION] are required.");
             Thread.sleep(300_000);
-            System.out.println("exit(1)");
             System.exit(1);
         }
 
-//        String endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
-//        String catalog_size_arg = "1000000";
-//        String report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+        try {
+            URI endpoint = URI.create(endpoint_arg);
+            File temporary = new File("/tmp/etude/report.avro");
+            Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
 
-        URI endpoint = URI.create(endpoint_arg);
-        File temporary = new File("/tmp/etude/report.avro");
-        Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+            executeTestScenario(endpoint, temporary, journeys);
+            writeReportToStorage(temporary, report_location_arg);
 
-        executeTestScenario(endpoint, temporary, journeys);
-        writeReportToStorage(temporary, report_location_arg);
+            System.out.println("Test.done().ok");
+            System.exit(0);
+        } catch (Throwable t) {
+            System.out.println("Test.done().err");
+            Thread.sleep(300_000);
+            System.exit(1);
+        }
     }
 
     private static Journeys createSyntheticJourneys(int size) {

@@ -31,7 +31,7 @@ public class Tester implements Iterable<Integer> {
         new Tester(target, ramp, maintain).run(runner);
     }
 
-    private void run (Consumer<Tick> runner) throws InterruptedException {
+    private void run(Consumer<Tick> runner) throws InterruptedException {
         long start = System.nanoTime();
         long iterations = 0;
 
@@ -40,14 +40,14 @@ public class Tester implements Iterable<Integer> {
 
             for (int i = 0; i < rps; i++) {
                 var last = i + 1 == rps;
-                runner.accept(new Tick(iterations, last));
+                runner.accept(new Tick(iterations, rps, last));
             }
 
             long next = Duration.ofSeconds(1).toNanos() * iterations;
             long delta = (start + next) - System.nanoTime();
 
             if (delta < 0) {
-                System.out.println("Ticker.delta(seconds = " + Duration.ofNanos(Math.abs(delta)).toSeconds() + ")");
+                System.out.println("Ticker.delta(seconds = " + Duration.ofNanos(delta).toSeconds() + ")");
                 continue;
             }
 
@@ -58,10 +58,13 @@ public class Tester implements Iterable<Integer> {
 
     static class Tick {
         private final long iteration;
+
+        private final long rps;
         private final boolean complete;
 
-        Tick(long iteration, boolean complete) {
+        Tick(long iteration, long rps, boolean complete) {
             this.iteration = iteration;
+            this.rps = rps;
             this.complete = complete;
         }
 
@@ -71,9 +74,7 @@ public class Tester implements Iterable<Integer> {
 
         @Override
         public String toString() {
-            return "Tick(" +
-                    "iteration = '" + iteration + "'"
-                    + ")";
+            return "Tick(iteration = '" + iteration + "', rps = '" + rps + "')";
         }
     }
 
@@ -83,7 +84,7 @@ public class Tester implements Iterable<Integer> {
 
         Ramper(float target, Duration time) {
             this.target = target;
-            this.size =  target / time.toNanos();
+            this.size = target / time.toNanos();
         }
 
         private long start = 0;
