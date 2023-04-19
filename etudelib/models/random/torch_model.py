@@ -13,7 +13,7 @@ from torch import nn
 
 
 class RANDOMModel(nn.Module):
-    r"""Allways return a list of random numbers of size n_items.
+    r"""Allways return a list of numbers of size n_items.
     """
 
     def __init__(self,
@@ -21,10 +21,7 @@ class RANDOMModel(nn.Module):
                  ):
         super(RANDOMModel, self).__init__()
 
-        generator = torch.Generator()
-        generator.manual_seed(n_items)
-        # # load parameters info
-        self.result = torch.rand(n_items, generator=generator)
+        self.result = torch.arange(0, n_items)
 
     def forward(self, item_seq, _item_seq_len):
         batch_size = item_seq.shape[0]
