@@ -35,11 +35,11 @@ public class Main {
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
-        catalog_size_arg = "1000";
+//        catalog_size_arg = "1000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
-        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+//        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
