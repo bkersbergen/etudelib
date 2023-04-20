@@ -8,9 +8,9 @@ TEST=false
 DESTROY=false
 
 MACHINES=('n1-highmem-4')
-ACCELERATIONS=(false 'NVIDIA_TESLA_T4')
-RUNTIMES=('eager' 'jitopt' 'onnx')
-NETWORKS=('noop' 'random') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
+ACCELERATIONS=(false) # (false 'NVIDIA_TESLA_T4')
+RUNTIMES=('eager') # ('eager' 'jitopt' 'onnx')
+NETWORKS=('noop') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
 CATALOG_SIZES=(1000 5000000) # (1000 10000 100000 500000 1000000 5000000)
 
 function normalize() {
