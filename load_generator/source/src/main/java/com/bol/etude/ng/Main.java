@@ -48,6 +48,8 @@ public class Main {
             System.exit(1);
         }
 
+        System.out.println("Runtime.cores('" + Runtime.getRuntime().availableProcessors() + "')");
+
         try {
             System.out.println("Test.start()");
 
