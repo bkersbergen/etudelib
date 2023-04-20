@@ -14,7 +14,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
@@ -67,7 +70,7 @@ public class Main {
     }
 
     private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys) {
-        Requester<GoogleVertxRequest> requester = new Requester<>(endpoint, new GoogleBearerAuthenticator());
+        Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(temporary, Report.class);
         Collector<Journey> collector = new Collector<>();
 
@@ -76,20 +79,19 @@ public class Main {
                 request.start();
                 Journey journey = journeys.pull();
 
-                requester.exec(new GoogleVertxRequest(journey.item()), (success, failure) -> {
+                requester.exec(new GoogleVertexRequest(journey.item()), (success, failure) -> {
                     request.complete();
+                    Requester.Response response = success == null
+                            ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
+                            : success;
 
-                    if (success == null) {
-                        collector.remove(journey);
+                    collector.add(journey, response);
+
+                    if (!journey.last()) {
+                        journeys.push(journey);
                     } else {
-                        collector.add(journey, success);
-
-                        if (!journey.last()) {
-                            journeys.push(journey);
-                        } else {
-                            Report report = buildJourneyReport(journey, collector.remove(journey), gson);
-                            persister.accept(report);
-                        }
+                        Report report = buildJourneyReport(journey, collector.remove(journey), gson);
+                        persister.accept(report);
                     }
                 });
 
@@ -117,16 +119,23 @@ public class Main {
             Interaction.Builder interaction = Interaction.newBuilder();
             interaction.setTimestampEpochMillis(response.start.toEpochMilli());
             interaction.setInput(journey.items().subList(0, index + 1));
-            interaction.setStatus(response.status);
             interaction.setLatencyMillis(response.latency.toMillis());
 
-            GoogleVertxResponse vertx = gson.fromJson(response.body, GoogleVertxResponse.class);
-            GoogleVertxResponse.Prediction prediction = vertx.predictions.get(0);
-
-            interaction.setOutput(prediction.items);
-            interaction.setPreprocessingMillis(prediction.timings.preprocessing);
-            interaction.setInferencingMillis(prediction.timings.inferencing);
-            interaction.setProcessingMillis(prediction.timings.processing);
+            try {
+                GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
+                GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);
+                interaction.setOutput(prediction.items);
+                interaction.setPreprocessingMillis(prediction.timings.preprocessing);
+                interaction.setInferencingMillis(prediction.timings.inferencing);
+                interaction.setProcessingMillis(prediction.timings.processing);
+            } catch (Throwable t) {
+                t.printStackTrace();
+                interaction.setStatus(500);
+                interaction.setOutput(Collections.emptyList());
+                interaction.setPreprocessingMillis(-1);
+                interaction.setInferencingMillis(-1);
+                interaction.setProcessingMillis(-1);
+            }
 
             interactions.add(interaction.build());
         }

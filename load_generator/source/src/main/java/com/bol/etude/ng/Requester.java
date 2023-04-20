@@ -49,7 +49,6 @@ public class Requester<T> implements Closeable {
 
                     callback.callback(new Response(start, status, body, latency), null);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     callback.callback(null, e);
                 } finally {
                     phaser.arriveAndDeregister();
@@ -58,15 +57,14 @@ public class Requester<T> implements Closeable {
 
             @Override
             public void failed(Exception e) {
-//                e.printStackTrace();
-                callback.callback(null, e);
                 phaser.arriveAndDeregister();
+                callback.callback(null, e);
             }
 
             @Override
             public void cancelled() {
-                callback.callback(null, null);
                 phaser.arriveAndDeregister();
+                callback.callback(null, null);
             }
         });
     }

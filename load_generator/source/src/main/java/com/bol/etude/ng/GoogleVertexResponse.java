@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-public class GoogleVertxResponse {
+public class GoogleVertexResponse {
     public List<Prediction> predictions;
 
     static class Prediction {

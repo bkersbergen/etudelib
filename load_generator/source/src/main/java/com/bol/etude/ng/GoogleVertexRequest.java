@@ -3,7 +3,7 @@ package com.bol.etude.ng;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GoogleVertxRequest {
+public class GoogleVertexRequest {
 
     public List<Instance> instances = new ArrayList<>(1);
 
@@ -11,7 +11,7 @@ public class GoogleVertxRequest {
         add(new Parameter());
     }};
 
-    GoogleVertxRequest(List<Long> values) {
+    GoogleVertexRequest(List<Long> values) {
         instances.add(new Instance(values));
     }
 
