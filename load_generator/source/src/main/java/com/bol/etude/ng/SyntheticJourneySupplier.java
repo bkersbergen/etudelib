@@ -77,9 +77,8 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
     }
 
     public void fit(double lambda, double xMin, double exponent) {
-        System.out.println("lambda: " + lambda);
-        System.out.println("xMin: " + xMin);
-        System.out.println("exponent: " + exponent);
+        System.out.println("SyntheticJourneys.fit(xMin ='" + xMin + "', lambda = '" + lambda + "', exponent = '" + exponent + "')");
+
         this.sessionLengthDistribution = new PoissonDistribution(lambda);
 
         Continuous itemDistribution = new Continuous(xMin, exponent);
