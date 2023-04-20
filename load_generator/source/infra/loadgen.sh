@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+DIR="$(dirname "$0")"
+
 DEPLOY=true
 TEST=false
 DESTROY=false
@@ -24,25 +26,25 @@ for machine in "${MACHINES[@]}"; do
           hardware="$(normalize "${machine}")$(if [ "${acceleration}" != "false" ]; then echo "_$(normalize "${acceleration}")"; fi)"
 
           if [ "${DEPLOY}" = "true" ]; then
-            ./vertex/create_endpoint.sh "${model}_${hardware}"
-            ./vertex/deploy_model.sh "${model}" "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/${model}:latest"
+            "${DIR}"/vertex/create_endpoint.sh "${model}_${hardware}"
+            "${DIR}"/vertex/deploy_model.sh "${model}" "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/${model}:latest"
 
             if [ "${acceleration}" != "false" ]; then
-              ./vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}" "${acceleration}" '1'
+              "${DIR}"/vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}" "${acceleration}" '1'
             else
-              ./vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}"
+              "${DIR}"/vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}"
             fi
           fi
 
           if [ "${TEST}" = "true" ]; then
               ENDPOINT_URI="https://europe-west4-aiplatform.googleapis.com/v1/$(./vertex/gcloud/endpoints_state.sh | jq -r ".[] | select(.display == \"${model}_${hardware}\") and select(.models[].display == \"${model}\") | .name"):predict"
               REPORT_URI="gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/${model}_${hardware}.avro"
-              ./loadgen/deploy_loadgen.sh "${ENDPOINT_URI}" "${size}" "${REPORT_URI}"
+              "${DIR}"/loadgen/deploy_loadgen.sh "${ENDPOINT_URI}" "${size}" "${REPORT_URI}"
           fi
 
           if [ "${DESTROY}" = "true" ]; then
-            ./vertex/purge_endpoint.sh "${model}_${hardware}"
-            ./vertex/purge_model.sh "${model}"
+            "${DIR}"/vertex/purge_endpoint.sh "${model}_${hardware}"
+            "${DIR}"/vertex/purge_model.sh "${model}"
           fi
         done
       done
