@@ -27,13 +27,13 @@ public class Requester<T> implements Closeable {
     private final URI uri;
     private final Authenticator authenticator;
 
-    Requester (@Nonnull URI uri, @Nullable Authenticator authenticator) {
+    Requester(@Nonnull URI uri, @Nullable Authenticator authenticator) {
         this.uri = uri;
         this.authenticator = authenticator;
     }
 
-    Requester (URI uri) {
-       this(uri, null);
+    Requester(URI uri) {
+        this(uri, null);
     }
 
     void exec(T payload, Callback callback) {
@@ -46,10 +46,10 @@ public class Requester<T> implements Closeable {
                     String body = response.getBodyText();
                     int status = response.getCode();
                     Duration latency = Duration.between(start, Instant.now());
-
                     callback.callback(new Response(start, status, body, latency), null);
                 } catch (Exception e) {
-                    callback.callback(null, e);
+                    System.out.println("Requester.exec().err['" + e.getClass().getSimpleName() + "']");
+                    e.printStackTrace();
                 } finally {
                     phaser.arriveAndDeregister();
                 }
@@ -111,7 +111,7 @@ public class Requester<T> implements Closeable {
 
         public final int status;
         public final String body;
-        public  final Duration latency;
+        public final Duration latency;
 
         Response(Instant start, int status, String body, Duration latency) {
             this.start = start;

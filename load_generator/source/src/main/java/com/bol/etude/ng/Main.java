@@ -47,23 +47,26 @@ public class Main {
         }
 
         try {
+            System.out.println("Test.start()");
+
             URI endpoint = URI.create(endpoint_arg);
             File temporary = new File("/tmp/etude/report.avro");
             Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
-
             executeTestScenario(endpoint, temporary, journeys);
             writeReportToStorage(temporary, report_location_arg);
 
-            System.out.println("Test.done().ok");
+            System.out.println("Test.ok()");
             System.exit(0);
         } catch (Throwable t) {
-            System.out.println("Test.done().err");
+            t.printStackTrace();
+            System.out.println("Test.err()");
             Thread.sleep(300_000);
             System.exit(1);
         }
     }
 
     private static Journeys createSyntheticJourneys(int size) {
+        System.out.println("SyntheticJourneys.create(" + size + ")");
         SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(size);
         journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
         return new Journeys(journeys);
@@ -75,12 +78,15 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
+            System.out.println("Scenario.run()");
+
             rampWithBackPressure(500, ofSeconds(500), (request) -> {
-                request.open();
+                request.fly();
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertexRequest(journey.item()), (success, failure) -> {
-                    request.close();
+                    request.unfly();
+
                     Requester.Response response = success == null
                             ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
                             : success;
@@ -99,12 +105,14 @@ public class Main {
                     try {
                         persister.flush();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        throw new RuntimeException(e);
+                        // ...
                     }
                 });
             });
+
+            System.out.println("Scenario.ok()");
         } catch (Exception e) {
+            System.out.println("Scenario.err()");
             e.printStackTrace();
             throw new RuntimeException(e);
         }
@@ -120,21 +128,23 @@ public class Main {
             interaction.setTimestampEpochMillis(response.start.toEpochMilli());
             interaction.setInput(journey.items().subList(0, index + 1));
             interaction.setLatencyMillis(response.latency.toMillis());
+            interaction.setStatus(response.status);
 
-            try {
-                GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
-                GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);
-                interaction.setOutput(prediction.items);
-                interaction.setPreprocessingMillis(prediction.timings.preprocessing);
-                interaction.setInferencingMillis(prediction.timings.inferencing);
-                interaction.setProcessingMillis(prediction.timings.processing);
-            } catch (Throwable t) {
-                t.printStackTrace();
-                interaction.setStatus(500);
-                interaction.setOutput(Collections.emptyList());
-                interaction.setPreprocessingMillis(-1);
-                interaction.setInferencingMillis(-1);
-                interaction.setProcessingMillis(-1);
+            if (Strings.isNullOrEmpty(response.body)) {
+                System.out.println("GoogleVertexResponse(status ='" + response.status + "').body().empty");
+                applyInteractionErrorValues(interaction);
+            } else {
+                try {
+                    GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
+                    GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);
+                    interaction.setOutput(prediction.items);
+                    interaction.setPreprocessingMillis(prediction.timings.preprocessing);
+                    interaction.setInferencingMillis(prediction.timings.inferencing);
+                    interaction.setProcessingMillis(prediction.timings.processing);
+                } catch (Throwable t) {
+                    System.out.println("GoogleVertexResponse.parse().err");
+                    applyInteractionErrorValues(interaction);
+                }
             }
 
             interactions.add(interaction.build());
@@ -143,6 +153,14 @@ public class Main {
         Report.Builder report = Report.newBuilder();
         report.setInteractions(interactions);
         return report.build();
+    }
+
+    private static void applyInteractionErrorValues(Interaction.Builder interaction) {
+        interaction.setStatus(500);
+        interaction.setOutput(Collections.emptyList());
+        interaction.setPreprocessingMillis(-1);
+        interaction.setInferencingMillis(-1);
+        interaction.setProcessingMillis(-1);
     }
 
     private static void writeReportToStorage(File temporary, String permanent) {

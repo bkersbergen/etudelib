@@ -82,6 +82,7 @@ public class Tester {
         private final long rps;
         private final AtomicInteger inflight;
         private final boolean start;
+        private boolean flying = false;
 
         Request(long ticks, long rps, AtomicInteger inflight, boolean start) {
             this.ticks = ticks;
@@ -92,16 +93,27 @@ public class Tester {
 
         public void doOnTickStart(Runnable runnable) {
             if (ticks % 10 == 0 && start) {
-                runnable.run();
+                try {
+                    runnable.run();
+                } catch (Throwable t) {
+                    System.out.println("Ticker.doOnTickStart().err['" + t.getClass().getSimpleName() + "']");
+                    t.printStackTrace();
+                }
             }
         }
 
-        public void open() {
-            inflight.incrementAndGet();
+        public void fly() {
+            if (!flying) {
+                inflight.incrementAndGet();
+                flying = true;
+            }
         }
 
-        public void close() {
-            inflight.decrementAndGet();
+        public void unfly() {
+            if (flying) {
+                inflight.decrementAndGet();
+                flying = false;
+            }
         }
     }
 

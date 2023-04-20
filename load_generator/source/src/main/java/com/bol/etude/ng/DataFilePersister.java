@@ -41,8 +41,7 @@ public class DataFilePersister<T> implements Persister<T> {
                 writer.append(obj);
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            System.out.println("DataFilePersister.flush().err");
         }
     }
 
