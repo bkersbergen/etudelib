@@ -17,7 +17,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.bol.etude.ng.Tester.rampThenHold;
+import static com.bol.etude.ng.Tester.rampWithBackPressure;
 import static java.time.Duration.ofSeconds;
 
 public class Main {
@@ -72,7 +72,7 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 
         try (persister; requester) {
-            rampThenHold(1000, ofSeconds(300), ofSeconds(300), (request) -> {
+            rampWithBackPressure(500, ofSeconds(500), (request) -> {
                 request.start();
                 Journey journey = journeys.pull();
 
