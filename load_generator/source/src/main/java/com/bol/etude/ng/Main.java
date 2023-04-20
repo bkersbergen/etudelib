@@ -80,7 +80,7 @@ public class Main {
         try (persister; requester) {
             System.out.println("Scenario.run()");
 
-            rampWithBackPressure(500, ofSeconds(500), (request) -> {
+            rampWithBackPressure(500, ofSeconds(600), (request) -> {
                 request.fly();
                 Journey journey = journeys.pull();
 

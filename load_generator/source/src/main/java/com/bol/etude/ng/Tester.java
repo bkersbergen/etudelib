@@ -28,6 +28,7 @@ public class Tester {
 
             for (int i = 0; i < rps; i++) {
                 if (inflight.get() == rps) {
+                    System.out.println("Tester.skip(tick = '" + ticks + "', iter = '" + i + "')");
                     continue;
                 }
 
@@ -39,6 +40,7 @@ public class Tester {
             long delta = (start + next) - System.nanoTime();
 
             if (delta < 0) {
+                System.out.println("Tester.lag(tick = '" + ticks + "', lag = '" + Duration.ofNanos(delta).toSeconds() + "')");
                 continue;
             }
 

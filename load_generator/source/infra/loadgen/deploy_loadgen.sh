@@ -28,13 +28,13 @@ POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analyt
 POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 
 LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
-if [[ "$LOGS" =~ .*"Test.done().ok".* ]]; then
-  echo "loadtest.done().ok"
+if [[ "$LOGS" =~ .*"Test.ok()".* ]]; then
+  echo "loadtest.ok()"
   exit 1
 fi
 
 echo "$LOGS"
-echo "loadtest.done().err"
+echo "loadtest.err()"
 exit 0
 
 

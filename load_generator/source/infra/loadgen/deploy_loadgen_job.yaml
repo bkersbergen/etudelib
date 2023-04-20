@@ -6,6 +6,12 @@ spec:
   ttlSecondsAfterFinished: 60
   backoffLimit: 0
   template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyCPU: "100m"
+        sidecar.istio.io/proxyCPULimit: "500m"
+        sidecar.istio.io/proxyMemory: "512Mi"
+        sidecar.istio.io/proxyMemoryLimit: "1024Mi"
     spec:
       serviceAccountName: reco-analytics
       restartPolicy: Never
@@ -14,10 +20,10 @@ spec:
           image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen:latest"
           resources:
             limits:
-              cpu: "2"
+              cpu: "4"
               memory: "3Gi"
             requests:
-              cpu: "2"
+              cpu: "1"
               memory: "3Gi"
           env:
             - name: VERTEX_ENDPOINT
