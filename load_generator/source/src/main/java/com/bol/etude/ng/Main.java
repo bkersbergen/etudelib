@@ -76,11 +76,11 @@ public class Main {
 
         try (persister; requester) {
             rampWithBackPressure(500, ofSeconds(500), (request) -> {
-                request.start();
+                request.open();
                 Journey journey = journeys.pull();
 
                 requester.exec(new GoogleVertexRequest(journey.item()), (success, failure) -> {
-                    request.complete();
+                    request.close();
                     Requester.Response response = success == null
                             ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
                             : success;

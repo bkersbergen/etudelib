@@ -96,11 +96,11 @@ public class Tester {
             }
         }
 
-        public void start() {
+        public void open() {
             inflight.incrementAndGet();
         }
 
-        public void complete() {
+        public void close() {
             inflight.decrementAndGet();
         }
     }
