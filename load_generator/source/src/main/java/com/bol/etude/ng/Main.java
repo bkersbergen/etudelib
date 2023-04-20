@@ -29,15 +29,17 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
-//        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/4251142961540104192:predict";
+        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
+//        endpoint_arg = "https://httpbin.org/anything";
+        System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
-//        catalog_size_arg = "1000000";
+        catalog_size_arg = "1000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
-//        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
@@ -82,9 +84,8 @@ public class Main {
 
             rampWithBackPressure(500, ofSeconds(600), (request) -> {
                 request.fly();
-                Journey journey = journeys.pull();
 
-                requester.exec(new GoogleVertexRequest(journey.item()), (success, failure) -> {
+                requester.exec(journeys::pull, (journey, success, failure) -> {
                     request.unfly();
 
                     Requester.Response response = success == null
@@ -111,10 +112,10 @@ public class Main {
             });
 
             System.out.println("Scenario.ok()");
-        } catch (Exception e) {
+        } catch (Exception err) {
             System.out.println("Scenario.err()");
-            e.printStackTrace();
-            throw new RuntimeException(e);
+            err.printStackTrace();
+            throw new RuntimeException(err);
         }
     }
 
@@ -163,7 +164,7 @@ public class Main {
         interaction.setProcessingMillis(-1);
     }
 
-    private static void writeReportToStorage(File temporary, String permanent) {
+    private static void writeReportToStorage(File temporary, String permanent) throws IOException {
         try {
             System.out.println("Storage.write(uri = '" + permanent + "')");
             if (permanent.startsWith("gs://")) {
@@ -175,9 +176,9 @@ public class Main {
                 Files.copy(temporary.toPath(), new File(permanent).toPath());
             }
             System.out.println("Storage.write(uri = '" + permanent + "').ok");
-        } catch (Throwable t) {
+        } catch (Throwable err) {
             System.out.println("Storage.write(uri = '" + permanent + "').err");
-            t.printStackTrace();
+            throw err;
         }
     }
 }

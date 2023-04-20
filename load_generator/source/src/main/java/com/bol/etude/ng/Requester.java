@@ -1,12 +1,16 @@
 package com.bol.etude.ng;
 
 import com.google.gson.Gson;
-import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
-import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
+import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.nio.AsyncEntityProducer;
+import org.apache.hc.core5.http.nio.AsyncRequestProducer;
+import org.apache.hc.core5.http.nio.DataStreamChannel;
+import org.apache.hc.core5.http.nio.entity.BasicAsyncEntityProducer;
+import org.apache.hc.core5.http.nio.support.AsyncRequestBuilder;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,12 +19,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Set;
 import java.util.concurrent.Phaser;
+import java.util.function.Supplier;
 
 import static org.apache.hc.core5.http.ContentType.APPLICATION_JSON;
 
 public class Requester<T> implements Closeable {
-    private final Gson gson = new Gson();
+
+    private static final Gson gson = new Gson();
     private static final String REQUEST_START = "request-start";
     private final CloseableHttpAsyncClient client = client();
     private final Phaser phaser = new Phaser();
@@ -36,9 +43,10 @@ public class Requester<T> implements Closeable {
         this(uri, null);
     }
 
-    void exec(T payload, Callback callback) {
+    void exec(Supplier<Journeys.Journey> factory, Callback callback) {
         phaser.register();
-        client.execute(post(payload), new FutureCallback<>() {
+        Payloader payloader = new Payloader(factory);
+        client.execute(post(payloader), SimpleResponseConsumer.create(), new FutureCallback<>() {
             @Override
             public void completed(SimpleHttpResponse response) {
                 try {
@@ -46,7 +54,7 @@ public class Requester<T> implements Closeable {
                     String body = response.getBodyText();
                     int status = response.getCode();
                     Duration latency = Duration.between(start, Instant.now());
-                    callback.callback(new Response(start, status, body, latency), null);
+                    callback.callback(payloader.journey(), new Response(start, status, body, latency), null);
                 } catch (Exception e) {
                     System.out.println("Requester.exec().err['" + e.getClass().getSimpleName() + "']");
                     e.printStackTrace();
@@ -58,23 +66,20 @@ public class Requester<T> implements Closeable {
             @Override
             public void failed(Exception e) {
                 phaser.arriveAndDeregister();
-                callback.callback(null, e);
+                callback.callback(payloader.journey(), null, e);
             }
 
             @Override
             public void cancelled() {
                 phaser.arriveAndDeregister();
-                callback.callback(null, null);
+                callback.callback(payloader.journey(), null, null);
             }
         });
     }
 
-    private SimpleHttpRequest post(T payload) {
-        String body = gson.toJson(payload);
-        return SimpleRequestBuilder.post()
-                .setHeader("Content-Length", String.valueOf(body.length()))
-                .setBody(body, APPLICATION_JSON)
-                .setUri(uri)
+    private AsyncRequestProducer post(Payloader payload) {
+        return AsyncRequestBuilder.post(uri)
+                .setEntity(payload)
                 .build();
     }
 
@@ -90,6 +95,7 @@ public class Requester<T> implements Closeable {
                     if (authenticator != null) {
                         request.setHeader("Authorization", "Bearer " + authenticator.token());
                     }
+                    request.setHeader("Content-Length", entity.getContentLength());
                     context.setAttribute(REQUEST_START, Instant.now());
                 })
                 .addResponseInterceptorLast((response, entity, context) -> {
@@ -102,7 +108,7 @@ public class Requester<T> implements Closeable {
     }
 
     interface Callback {
-        void callback(Response success, Throwable failure);
+        void callback(Journeys.Journey journey, Response success, Throwable failure);
     }
 
     static class Response {
@@ -118,6 +124,83 @@ public class Requester<T> implements Closeable {
             this.status = status;
             this.body = body;
             this.latency = latency;
+        }
+    }
+
+    static class Payloader implements AsyncEntityProducer {
+
+        private final Supplier<Journeys.Journey> factory;
+
+        private Journeys.Journey journey =  null;
+
+
+        private BasicAsyncEntityProducer delegate = null;
+
+        Payloader(Supplier<Journeys.Journey> factory) {
+            this.factory = factory;
+        }
+
+        public Journeys.Journey journey() {
+            return journey;
+        }
+
+        private BasicAsyncEntityProducer delegate() {
+            if (delegate == null) {
+                journey = factory.get();
+                GoogleVertexRequest request = new GoogleVertexRequest(journey.item());
+                delegate = new BasicAsyncEntityProducer(gson.toJson(request), APPLICATION_JSON);
+            }
+            return delegate;
+        }
+
+        @Override
+        public boolean isRepeatable() {
+            return delegate().isRepeatable();
+        }
+
+        @Override
+        public void failed(Exception cause) {
+            cause.printStackTrace();
+        }
+
+        @Override
+        public long getContentLength() {
+            return delegate().getContentLength();
+        }
+
+        @Override
+        public String getContentType() {
+            return delegate().getContentType();
+        }
+
+        @Override
+        public String getContentEncoding() {
+            return delegate().getContentEncoding();
+        }
+
+        @Override
+        public boolean isChunked() {
+            return delegate().isChunked();
+        }
+
+        @Override
+        public Set<String> getTrailerNames() {
+            return delegate().getTrailerNames();
+        }
+
+        @Override
+        public int available() {
+            return delegate().available();
+        }
+
+        @Override
+        public void produce(DataStreamChannel channel) throws IOException {
+            delegate().produce(channel);
+        }
+
+        @Override
+        public void releaseResources() {
+            delegate().releaseResources();
         }
     }
 }
