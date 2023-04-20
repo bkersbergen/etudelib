@@ -21,8 +21,11 @@ class RANDOMModel(nn.Module):
                  ):
         super(RANDOMModel, self).__init__()
 
-        self.result = torch.arange(0, n_items)
+        # register buffer automatically moved to the same device as the module when it is loaded
+        self.register_buffer('data', torch.arange(n_items, dtype=torch.float32))
 
     def forward(self, item_seq, _item_seq_len):
-        batch_size = item_seq.shape[0]
-        return self.result.repeat(batch_size, 1)
+        shape = (item_seq.size(0),) + self.data.shape
+        result = self.data.unsqueeze(0).expand(shape)
+        return result
+
