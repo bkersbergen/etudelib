@@ -30,17 +30,17 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
-        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
+//        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
 //        endpoint_arg = "https://httpbin.org/anything";
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
-        catalog_size_arg = "5000000";
+//        catalog_size_arg = "5000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
 //        report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
-        report_location_arg = "/tmp/etude.avro";
+//        report_location_arg = "/tmp/etude.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
