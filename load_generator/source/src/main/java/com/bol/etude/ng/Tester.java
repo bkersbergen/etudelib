@@ -1,6 +1,5 @@
 package com.bol.etude.ng;
 
-import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
@@ -21,7 +20,7 @@ public class Tester {
         this.ramp = ramp;
     }
 
-    private void run(Consumer<Request> runner) throws InterruptedException {
+    private void run(Consumer<Request> runner) {
         long firstTickMoment = System.nanoTime();
         long ticks = 0;
         AtomicInteger inflight = new AtomicInteger(0);
@@ -35,16 +34,19 @@ public class Tester {
             long nextTickMoment = nextTickNanos + firstTickMoment;
             long timeToNextTick;
 
-            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "')");
+            System.out.println("Tester.ticks['" + ticks + "'].state(rps = '" + rps + "', inflight = '" + inflight.get() + "')");
+//            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "')");
 
+            inner:
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
-
-                while (inflight.get() == rps) {
+                waiter:
+                while (inflight.get() >= rps) {
                     if (timeToNextTick > milliInNanos) {
-//                        System.out.println("Tester.ticks['" + ticks + "'].park(iteration = '" + i + "')");
-                        LockSupport.parkNanos(1);
+                        System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
+                        LockSupport.parkNanos(milliInNanos);
                         timeToNextTick = timeTillNextTick(nextTickMoment);
+//                        continue inner;
                     }
                 }
 
@@ -68,8 +70,7 @@ public class Tester {
                 continue;
             }
 
-            long millis = Duration.ofNanos(timeToNextTick).toMillis();
-            Thread.sleep(millis);
+            LockSupport.parkNanos(timeToNextTick);
         }
     }
 

@@ -17,7 +17,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import static com.bol.etude.ng.Journeys.randomJourneySupplier;
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
 import static java.time.Duration.ofSeconds;
 
@@ -27,16 +30,17 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
-//        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
+        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
 //        endpoint_arg = "https://httpbin.org/anything";
         System.out.println("ENV_VAR[VERTEX_ENDPOINT] = '" + endpoint_arg + "'");
 
         String catalog_size_arg = System.getenv("CATALOG_SIZE");
-//        catalog_size_arg = "1000";
+        catalog_size_arg = "5000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
         String report_location_arg = System.getenv("REPORT_LOCATION");
-//        report_location_arg = "/tmp/etude.avro"; // "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+//        report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+        report_location_arg = "/tmp/etude.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
         if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
@@ -74,18 +78,21 @@ public class Main {
     }
 
     private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys) {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
         Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(temporary, Report.class);
         Collector<Journey> collector = new Collector<>();
+//        Journeys supplier = new Journeys(randomJourneySupplier());
 
         try (persister; requester) {
             System.out.println("Scenario.run()");
 
             rampWithBackPressure(1000, ofSeconds(600), (request) -> {
-                request.fly();
+                executor.execute(() -> {
+                    request.fly();
 
-                requester.exec(journeys::pull, (journey, success, failure) -> {
-                    request.unfly();
+                    requester.exec(journeys.pull(), (journey, success, failure) -> {
+                        request.unfly();
 
 //                    Requester.Response response = success == null
 //                            ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
@@ -99,14 +106,15 @@ public class Main {
 //                        Report report = buildJourneyReport(journey, collector.remove(journey), gson);
 //                        persister.accept(report);
 //                    }
-                });
+                    });
 
-                request.doOnTickStart(() -> {
+                    request.doOnTickStart(() -> {
 //                    try {
 //                        persister.flush();
 //                    } catch (IOException e) {
 //                        // ...
 //                    }
+                    });
                 });
             });
 

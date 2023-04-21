@@ -21,10 +21,10 @@ spec:
           resources:
             limits:
               cpu: "4"
-              memory: "3Gi"
+              memory: "10Gi"
             requests:
               cpu: "4"
-              memory: "3Gi"
+              memory: "10Gi"
           env:
             - name: VERTEX_ENDPOINT
               value: "${VERTEX_ENDPOINT}"
