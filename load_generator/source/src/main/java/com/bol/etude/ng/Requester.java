@@ -95,6 +95,7 @@ public class Requester<T> implements Closeable {
         connections.setDefaultMaxPerRoute(1000);
 
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
+//                .setVersionPolicy(FORCE_HTTP_1)
                 .addRequestInterceptorFirst((request, entity, context) -> {
                     if (authenticator != null) {
                         request.setHeader("Authorization", "Bearer " + authenticator.token());

@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static com.bol.etude.ng.Journeys.randomJourneySupplier;
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
 import static java.time.Duration.ofSeconds;
 
@@ -80,7 +79,7 @@ public class Main {
     }
 
     private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys) {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
+        ExecutorService executor = Executors.newFixedThreadPool(4);
         Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, new GoogleBearerAuthenticator());
         Persister<Report> persister = new DataFilePersister<>(temporary, Report.class);
         Collector<Journey> collector = new Collector<>();
