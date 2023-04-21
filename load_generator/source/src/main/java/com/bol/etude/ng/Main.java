@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -94,26 +96,26 @@ public class Main {
                     requester.exec(journeys.pull(), (journey, success, failure) -> {
                         request.unfly();
 
-//                    Requester.Response response = success == null
-//                            ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
-//                            : success;
-//
-//                    collector.add(journey, response);
-//
-//                    if (!journey.last()) {
-//                        journeys.push(journey);
-//                    } else {
-//                        Report report = buildJourneyReport(journey, collector.remove(journey), gson);
-//                        persister.accept(report);
-//                    }
+                        Requester.Response response = success == null
+                                ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
+                                : success;
+
+                        collector.add(journey, response);
+
+                        if (!journey.last()) {
+                            journeys.push(journey);
+                        } else {
+                            Report report = buildJourneyReport(journey, collector.remove(journey), gson);
+                            persister.accept(report);
+                        }
                     });
 
                     request.doOnTickStart(() -> {
-//                    try {
-//                        persister.flush();
-//                    } catch (IOException e) {
-//                        // ...
-//                    }
+                        try {
+                            persister.flush();
+                        } catch (IOException e) {
+                            // ...
+                        }
                     });
                 });
             });

@@ -8,8 +8,8 @@ spec:
   template:
     metadata:
       annotations:
-        sidecar.istio.io/proxyCPU: "100m"
-        sidecar.istio.io/proxyCPULimit: "500m"
+        sidecar.istio.io/proxyCPU: "512m"
+        sidecar.istio.io/proxyCPULimit: "1024m"
         sidecar.istio.io/proxyMemory: "512Mi"
         sidecar.istio.io/proxyMemoryLimit: "1024Mi"
     spec:
