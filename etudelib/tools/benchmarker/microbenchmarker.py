@@ -1,5 +1,13 @@
 import gc
 import os
+n_threads = 1
+os.environ["OMP_NUM_THREADS"] = f"{n_threads}"
+os.environ["OPENBLAS_NUM_THREADS"] = f"{n_threads}"
+os.environ["MKL_NUM_THREADS"] = f"{n_threads}"
+os.environ["VECLIB_MAXIMUM_THREADS"] = f"{n_threads}"
+os.environ["NUMEXPR_NUM_THREADS"] = f"{n_threads}"
+import torch
+torch.set_num_threads(n_threads)
 import pickle
 import platform
 from datetime import datetime
@@ -8,7 +16,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import torch
 from cpuinfo import get_cpu_info
 import psutil
 
@@ -27,6 +34,7 @@ class MicroBenchmark:
         logger.info('Platform:' + self.platform)
         logger.info('Python:' + self.python_version)
         logger.info('CPU detected:' + self.cpu_brand)
+        logger.info(f'Qty torch threads configured: {torch.get_num_threads()}')
         if torch.cuda.is_available():
             self.gpu_brand = torch.cuda.get_device_name(0)
             logger.info('GPU detected:' + self.gpu_brand)
@@ -58,6 +66,7 @@ class MicroBenchmark:
         return gpu_utilization, gpu_mem_used, gpu_memory_total
 
     def benchmark_pytorch_predictions(self, model, dataloader, device='cpu'):
+        print(f"torch.get_num_threads(): {torch.get_num_threads()}")
         result = []
         model.to(device)
         model.eval()
