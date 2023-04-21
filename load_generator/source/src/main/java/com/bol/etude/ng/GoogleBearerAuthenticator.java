@@ -11,6 +11,7 @@ public class GoogleBearerAuthenticator implements Authenticator {
     GoogleBearerAuthenticator() {
         try {
             creds = GoogleCredentials.getApplicationDefault();
+            creds.refreshIfExpired();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -18,11 +19,6 @@ public class GoogleBearerAuthenticator implements Authenticator {
 
     @Override
     public String token() {
-        try {
-            creds.refreshIfExpired();
-            return  creds.getAccessToken().getTokenValue();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return  creds.getAccessToken().getTokenValue();
     }
 }

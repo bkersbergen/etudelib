@@ -12,8 +12,8 @@ public class Tester {
     private final Integer target;
     private final Duration ramp;
     private final long milliInNanos = Duration.ofMillis(1).toNanos();
+    private final long parkInNanos = milliInNanos / 10000; // 1 millis = 1_000_000 nanos
     private final long secondInNanos = Duration.ofSeconds(1).toNanos();
-
 
     private Tester(Integer target, Duration ramp) {
         this.target = target;
@@ -21,7 +21,7 @@ public class Tester {
     }
 
     private void run(Consumer<Request> runner) throws InterruptedException {
-        long start = System.nanoTime();
+        long firstTickMoment = System.nanoTime();
         long ticks = 0;
         AtomicInteger inflight = new AtomicInteger(0);
         Ramper ramper = new Ramper(target, ramp);
@@ -30,38 +30,42 @@ public class Tester {
         for (int rps : ramper) {
             ticks += 1;
             boolean first = true;
-            long offset = secondInNanos * ticks;
-            long next = offset + start;
-            long delta = 0;
+            long nextTickNanos = secondInNanos * ticks;
+            long nextTickMoment = nextTickNanos + firstTickMoment;
+            long timeToNextTick;
 
             for (int i = 0; i < rps; i++) {
-               delta = timeTillNextTick(next);
+                timeToNextTick = timeTillNextTick(nextTickMoment);
 
                 while (inflight.get() == rps) {
-                    if (delta > milliInNanos) {
+                    if (timeToNextTick > milliInNanos) {
 //                        System.out.println("Tester.ticks['" + ticks + "'].park(iteration = '" + i + "')");
-                        LockSupport.parkNanos(milliInNanos);
-                        delta = timeTillNextTick(next);
+                        LockSupport.parkNanos(parkInNanos);
+                        timeToNextTick = timeTillNextTick(nextTickMoment);
                     }
                 }
 
-                if (delta <= 0) {
-                    System.out.println("Tester.ticks['" + ticks + "'].skip(iterations = '" + (rps - i) + "')");
+                if (timeToNextTick <= 0) {
+                    long lag = Duration.ofNanos(timeToNextTick).toMillis();
+                    System.out.println("Tester.ticks['" + ticks + "'].break(lag = '" + lag + "', ops = '" + i + "', noops = '" + (rps - i) + "')");
                     continue outer;
                 }
 
+//                long scheduleTaskStart = System.nanoTime();
                 runner.accept(new Request(ticks, rps, inflight, first));
+//                long scheduleTaskNanos = System.nanoTime() - scheduleTaskStart;
+
                 if (first) first = false;
             }
 
-            delta = timeTillNextTick(next);
+            timeToNextTick = timeTillNextTick(nextTickMoment);
 
-            if (delta <= 0) {
-                System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(delta).toSeconds() + "')");
+            if (timeToNextTick <= 0) {
+                System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(timeToNextTick).toSeconds() + "')");
                 continue;
             }
 
-            long millis = Duration.ofNanos(delta).toMillis();
+            long millis = Duration.ofNanos(timeToNextTick).toMillis();
             Thread.sleep(millis);
         }
     }

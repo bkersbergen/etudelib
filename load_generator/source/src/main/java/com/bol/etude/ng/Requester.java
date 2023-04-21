@@ -146,6 +146,7 @@ public class Requester<T> implements Closeable {
 
         private BasicAsyncEntityProducer delegate() {
             if (delegate == null) {
+//                System.out.println("Journey.gen(thread = '" + Thread.currentThread().getName() + "')");
                 journey = factory.get();
                 GoogleVertexRequest request = new GoogleVertexRequest(journey.item());
                 delegate = new BasicAsyncEntityProducer(gson.toJson(request), APPLICATION_JSON);
