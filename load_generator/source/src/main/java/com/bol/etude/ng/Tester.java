@@ -43,7 +43,7 @@ public class Tester {
                 while (inflight.get() == rps) {
                     if (timeToNextTick > milliInNanos) {
 //                        System.out.println("Tester.ticks['" + ticks + "'].park(iteration = '" + i + "')");
-                        LockSupport.parkNanos(parkInNanos);
+                        LockSupport.parkNanos(1);
                         timeToNextTick = timeTillNextTick(nextTickMoment);
                     }
                 }
