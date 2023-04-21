@@ -88,7 +88,7 @@ public class Main {
         try (persister; requester) {
             System.out.println("Scenario.run()");
 
-            rampWithBackPressure(1000, ofSeconds(600), (request) -> {
+            rampWithBackPressure(500, ofSeconds(600), (request) -> {
                 executor.execute(() -> {
                     request.fly();
 
