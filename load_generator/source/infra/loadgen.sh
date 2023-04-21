@@ -52,5 +52,10 @@ for machine in "${MACHINES[@]}"; do
   done
 done
 
+# noop 1k & 5m
 # ./infra/loadgen/deploy_loadgen.sh "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/7748610284658360320:predict" "1000" "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/noop_bolcom_c1000_t50_eager_n1highmem4.avro"
 # ./infra/loadgen/deploy_loadgen.sh "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict" "5000000" "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/noop_bolcom_c5000000_t50_eager_n1highmem4.avro"
+
+# random 1k & 5m
+# ./infra/loadgen/deploy_loadgen.sh "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/2515427517653843968:predict" "1000" "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/random_bolcom_c1000_t50_eager_n1highmem4.avro"
+# ./infra/loadgen/deploy_loadgen.sh "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/5063339006838702080:predict" "5000000" "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/random_bolcom_c5000000_t50_eager_n1highmem4.avro"
