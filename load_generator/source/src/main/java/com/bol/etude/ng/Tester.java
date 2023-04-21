@@ -4,12 +4,16 @@ import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 public class Tester {
 
     private final Integer target;
     private final Duration ramp;
+    private final long milliInNanos = Duration.ofMillis(1).toNanos();
+    private final long secondInNanos = Duration.ofSeconds(1).toNanos();
+
 
     private Tester(Integer target, Duration ramp) {
         this.target = target;
@@ -22,31 +26,48 @@ public class Tester {
         AtomicInteger inflight = new AtomicInteger(0);
         Ramper ramper = new Ramper(target, ramp);
 
+        outer:
         for (int rps : ramper) {
             ticks += 1;
             boolean first = true;
+            long offset = secondInNanos * ticks;
+            long next = offset + start;
+            long delta = 0;
 
             for (int i = 0; i < rps; i++) {
-                if (inflight.get() == rps) {
-//                    System.out.println("Tester.skip(tick = '" + ticks + "', iter = '" + i + "')");
-                    continue;
+               delta = timeTillNextTick(next);
+
+                while (inflight.get() == rps) {
+                    if (delta > milliInNanos) {
+//                        System.out.println("Tester.ticks['" + ticks + "'].park(iteration = '" + i + "')");
+                        LockSupport.parkNanos(milliInNanos);
+                        delta = timeTillNextTick(next);
+                    }
+                }
+
+                if (delta <= 0) {
+                    System.out.println("Tester.ticks['" + ticks + "'].skip(iterations = '" + (rps - i) + "')");
+                    continue outer;
                 }
 
                 runner.accept(new Request(ticks, rps, inflight, first));
                 if (first) first = false;
             }
 
-            long next = Duration.ofSeconds(1).toNanos() * ticks;
-            long delta = (start + next) - System.nanoTime();
+            delta = timeTillNextTick(next);
 
-            if (delta < 0) {
-                System.out.println("Tester.lag(tick = '" + ticks + "', lag = '" + Duration.ofNanos(delta).toSeconds() + "')");
+            if (delta <= 0) {
+                System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(delta).toSeconds() + "')");
                 continue;
             }
 
             long millis = Duration.ofNanos(delta).toMillis();
             Thread.sleep(millis);
         }
+    }
+
+    private static long timeTillNextTick(long next) {
+        return next - System.nanoTime();
     }
 
     private static class Ramper implements Iterable<Integer>, Iterator<Integer> {
