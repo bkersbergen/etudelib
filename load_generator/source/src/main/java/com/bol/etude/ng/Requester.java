@@ -91,8 +91,8 @@ public class Requester<T> implements Closeable {
 
     private CloseableHttpAsyncClient client() {
         PoolingAsyncClientConnectionManager connections = new PoolingAsyncClientConnectionManager();
-        connections.setMaxTotal(1000);
-        connections.setDefaultMaxPerRoute(1000);
+        connections.setMaxTotal(500);
+        connections.setDefaultMaxPerRoute(500);
 
         CloseableHttpAsyncClient client = HttpAsyncClients.custom()
 //                .setVersionPolicy(FORCE_HTTP_1)
