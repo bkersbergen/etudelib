@@ -1,5 +1,6 @@
 package com.bol.etude.ng;
 
+import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Objects;
@@ -34,7 +35,7 @@ public class Tester {
             long nextTickMoment = nextTickNanos + firstTickMoment;
             long timeToNextTick;
 
-            System.out.println("Test.threads(active = '" + Thread.activeCount() + "'");
+            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "'");
 
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
