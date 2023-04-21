@@ -34,6 +34,8 @@ public class Tester {
             long nextTickMoment = nextTickNanos + firstTickMoment;
             long timeToNextTick;
 
+            System.out.println("Test.threads(active = '" + Thread.activeCount() + "'");
+
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
 
