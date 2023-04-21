@@ -13,7 +13,7 @@ public class Tester {
     private final Integer target;
     private final Duration ramp;
     private final long milliInNanos = Duration.ofMillis(1).toNanos();
-    private final long parkInNanos = milliInNanos / 10000; // 1 millis = 1_000_000 nanos
+    private final long parkInNanos = milliInNanos / 100000; // 1 millis = 1_000_000 nanos
     private final long secondInNanos = Duration.ofSeconds(1).toNanos();
 
     private Tester(Integer target, Duration ramp) {
@@ -35,7 +35,7 @@ public class Tester {
             long nextTickMoment = nextTickNanos + firstTickMoment;
             long timeToNextTick;
 
-            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "'");
+            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "')");
 
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
