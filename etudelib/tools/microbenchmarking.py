@@ -222,15 +222,14 @@ if __name__ == "__main__":
     args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
     args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
     args.gcs_dir = 'bkersbergen_etude'
-    for C in [100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
-        for model_name in ['noop', 'random']:
+    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+        for model_name in['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec', 'sine', 'srgnn',
+                          'stamp']:
             args.C = C
             args.model = model_name
             for t in [50]:
                 args.t = t
                 # for param_source in ['bolcom', 'rsc15']:
                 for param_source in ['bolcom']:
-                    for do_top_k in ['y', 'n']:
-                        args.topk = do_top_k
-                        args.param_source = param_source
-                        microbenchmark(args)
+                    args.param_source = param_source
+                    microbenchmark(args)
