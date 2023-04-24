@@ -1,3 +1,4 @@
+import math
 import warnings
 import os
 from argparse import ArgumentParser, Namespace
@@ -27,7 +28,8 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     min_duration_secs = 60
     bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
-    print(f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
+    print(
+        f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
     cpu_utilization, used_mem, total_mem = MicroBenchmark.get_metrics_cpu()
     print(f'CPU utilization : {cpu_utilization} %')
     print(f'used_mem: {used_mem} MB')
@@ -127,6 +129,13 @@ def microbenchmark(args):
     if config.get('project', {}).get("seed") is not None:
         seed_everything(config.project.seed)
 
+    heuristic_embedding_size = 2 ** math.ceil(math.log2(args.C ** 0.25))
+    if config.get('model').get('embedding_size'):
+        config['model']['embedding_size'] = heuristic_embedding_size
+    elif config.get('model').get('hidden_size'):
+        config['model']['hidden_size'] = heuristic_embedding_size
+    logger.info(f'Overwriting item embedding output size to: {heuristic_embedding_size}')
+
     qty_sessions = args.qty_interactions
     batch_size = 32
 
@@ -212,7 +221,7 @@ def microbenchmark(args):
         upload_to_gcs(local_dir=projectdir,
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
-                      gcs_dir=args.gcs_dir + '/topk_' + args.topk + '_' + str(date.today()))
+                      gcs_dir=args.gcs_dir + '/heuristic_embeddingsize_' + str(date.today()))
         print('End transferring results to google storage bucket')
 
 
@@ -223,8 +232,9 @@ if __name__ == "__main__":
     args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
     args.gcs_dir = 'bkersbergen_etude'
     for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
-        for model_name in['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec', 'sine', 'srgnn',
-                          'stamp']:
+        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec',
+                           'sine', 'srgnn',
+                           'stamp']:
             args.C = C
             args.model = model_name
             for t in [50]:
