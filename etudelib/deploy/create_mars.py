@@ -12,7 +12,8 @@ import subprocess
 
 def create_mars():
     rootdir = Path(__file__).parent.parent.parent
-    for C in [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000]:
+    # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
+    for C in [100_000, 1_000_000, 5_000_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -25,7 +26,7 @@ def create_mars():
         model_input = (item_seq, session_length)
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
-        for model_name in ['noop', 'random']:
+        for model_name in ['noop', 'sasrec', 'core']:
             output_path = f'{rootdir}/.docker/model_store/'
             print(f'creating model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(

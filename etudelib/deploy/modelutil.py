@@ -1,3 +1,4 @@
+import math
 import os
 from importlib import import_module
 from pathlib import Path
@@ -18,6 +19,13 @@ class ModelUtil:
 
         config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
         config = OmegaConf.load(config_path)
+
+        heuristic_embedding_size = 2 ** math.ceil(math.log2(C ** 0.25))
+        if config.get('model').get('embedding_size'):
+            config['model']['embedding_size'] = heuristic_embedding_size
+        elif config.get('model').get('hidden_size'):
+            config['model']['hidden_size'] = heuristic_embedding_size
+        print(f'Overwriting item embedding output size to: {heuristic_embedding_size}')
 
         config['dataset'] = {}
         config['dataset']['n_items'] = C
