@@ -231,7 +231,7 @@ if __name__ == "__main__":
     args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
     args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
     args.gcs_dir = 'bkersbergen_etude'
-    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
         for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec',
                            'sine', 'srgnn',
                            'stamp']:
