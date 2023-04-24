@@ -72,9 +72,12 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
 
         if device_type == 'cuda':
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+            sess_options = None
         else:
             providers = ['CPUExecutionProvider']
-        ort_sess = ort.InferenceSession(export_path, providers=providers)
+            sess_options = ort.SessionOptions()
+            sess_options.intra_op_num_threads = 1
+        ort_sess = ort.InferenceSession(export_path, sess_options=sess_options, providers=providers)
         latency_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
 
     results['runtime'] = '_'.join([new_model_mode, device_type])
@@ -221,7 +224,7 @@ def microbenchmark(args):
         upload_to_gcs(local_dir=projectdir,
                       gcs_project_name=args.gcs_project_name,
                       gcs_bucket_name=args.gcs_bucket_name,
-                      gcs_dir=args.gcs_dir + '/heuristic_embeddingsize_' + str(date.today()))
+                      gcs_dir=args.gcs_dir + '/heuristic_embeddingsize_onnx1' + str(date.today()))
         print('End transferring results to google storage bucket')
 
 
