@@ -73,7 +73,7 @@ model_names =  ['core', 'core_fast', 'gru4rec', 'lightsans', 'narm', 'repeatnet'
 for i in range(rows):
     for j in range(cols):
         idx = i*cols+j
-        ax = axs[idx]
+        ax = axs[i, j]
         model_name = model_names[idx]
         for runtime in runtimes:
             for device in devices:
@@ -92,8 +92,8 @@ for i in range(rows):
                     ls = lss[runtimes.index(runtime)]
                     ax.plot(cs, q90s, color=color, marker=marker, label=f'{runtime} {device}', linestyle=ls, alpha=0.7)    
         ax.set_title(f'Inference latency for {model_name}')
-        # ax.set_ylim([0.07, 1e4])
-        ax.set_ylim([0.07, 1e3])
+        ax.set_ylim([0.07, 1e4])
+        # ax.set_ylim([0.07, 1e3])
         threshold=40
         ax.axhline(y = threshold, color = 'r', label = f'{threshold}ms')
         ax.tick_params(axis='both', which='major', labelsize=14)

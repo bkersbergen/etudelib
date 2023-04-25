@@ -21,3 +21,5 @@ results/
 projects/
 .bash_history
 target/
+_old/
+_data/
