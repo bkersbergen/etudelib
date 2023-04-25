@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
+import static java.time.Duration.ofMinutes;
 import static java.time.Duration.ofSeconds;
 
 public class Main {
@@ -88,7 +89,7 @@ public class Main {
         try (persister; requester) {
             System.out.println("Scenario.run()");
 
-            rampWithBackPressure(500, ofSeconds(600), (request) -> {
+            rampWithBackPressure(1000, ofMinutes(20), (request) -> {
                 executor.execute(() -> {
                     request.fly();
 
