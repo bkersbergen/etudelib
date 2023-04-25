@@ -11,7 +11,7 @@ MACHINES=('n1-highmem-4')
 ACCELERATIONS=(false) # (false 'NVIDIA_TESLA_T4')
 RUNTIMES=('eager') # ('eager' 'jitopt' 'onnx')
 NETWORKS=('noop') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-CATALOG_SIZES=(1000000) # (1000 10000 100000 500000 1000000 5000000)
+CATALOG_SIZES=(1000) # (1000 10000 100000 500000 1000000 5000000)
 
 function normalize() {
   echo "$1" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
@@ -37,7 +37,7 @@ for machine in "${MACHINES[@]}"; do
           fi
 
           if [ "${TEST}" = "true" ]; then
-              ENDPOINT_PATH=$(./vertex/gcloud/endpoints_state.sh | jq -r ".[] | select(.display == \"${model}_${hardware}\") | select(.models[].display == \"${model}\") | .models[0].name")
+              ENDPOINT_PATH=$(./vertex/gcloud/endpoints_state.sh | jq -r ".[] | select(.display == \"${model}_${hardware}\") | select(.models[].display == \"${model}\") | .name")
               ENDPOINT_URI="https://europe-west4-aiplatform.googleapis.com/v1/${ENDPOINT_PATH}:predict"
               REPORT_URI="gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/${model}_${hardware}.avro"
               "${DIR}"/loadgen/deploy_loadgen.sh "${ENDPOINT_URI}" "${size}" "${REPORT_URI}"
