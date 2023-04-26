@@ -28,11 +28,11 @@ nq = 1 # number of queries (batch size)
 device_cuda = torch.device(0)
 device_cpu = torch.device('cpu')
 rng = np.random.default_rng(1234)             # make reproducible
-C, d = 10_000_000, 64
+C, d = 1_000_000, 64
 # C, d = 100_000, 64
 xb = rng.random((C, d), dtype = np.float32)
 xb = xb / np.linalg.norm(xb, axis=-1, keepdims=True)
-#%% Create queries
+# Create queries
 xq = rng.random((n_iters, nq, d), dtype = np.float32)
 xq = xq / np.linalg.norm(xq, axis=-1, keepdims=True)
 #%% Helper functions
@@ -171,11 +171,13 @@ results[algorithm] = timer(index_faiss_gpu.search, xq, k, n_iters=n_iters, nq=nq
 algorithm = 'faiss-cpu-approx'
 print(f"Running algorithm {algorithm}")
 faiss.omp_set_num_threads(n_threads_max)
-index_faiss_approximate = faiss.IndexHNSWSQ(d, faiss.ScalarQuantizer.QT_8bit, 32)
-index_faiss_approximate.hnsw.efSearch = 1024
-index_faiss_approximate.hnsw.efConstruction = 80
+index_faiss_approximate = faiss.index_factory(d, "IVF4096_HNSW32,Flat")
+# index_faiss_approximate = faiss.IndexHNSWSQ(d, faiss.ScalarQuantizer.QT_8bit, 32)
+# index_faiss_approximate.hnsw.efSearch = 1024
+# index_faiss_approximate.hnsw.efConstruction = 80
 index_faiss_approximate.train(xb)
-index_faiss_approximate.add(xb)                  # add vectors to the index
+index_faiss_approximate.add(xb)   
+index_faiss_approximate.nprobe = 100              
 faiss.omp_set_num_threads(n_threads)
 results[algorithm] = timer(index_faiss_approximate.search, xq, k, n_iters=n_iters, nq=nq, k=k)
 # FAISS GPU approximate
