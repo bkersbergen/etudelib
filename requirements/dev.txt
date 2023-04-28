@@ -7,3 +7,5 @@ pre-commit==2.21.0
 tox==4.3.4
 jupyter==1.0.0
 pandavro
+bigquery
+db_dtypes
