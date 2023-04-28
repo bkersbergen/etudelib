@@ -16,7 +16,7 @@ generate_post_data()
   "instances": [
     {
   "context": [
-   9300000080086393
+   1, 2, 3
   ]
 }
   ],
@@ -28,6 +28,7 @@ generate_post_data()
 EOF
 }
 
+curl -H "Content-Type: application/json" -X POST http://localhost:7080/predictions/model/1.0/ -d "$(generate_post_data)"
 
 curl \
 -X POST \
@@ -35,3 +36,6 @@ curl \
 -H "Content-Type: application/json" \
 https://europe-west4-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/europe-west4/endpoints/${ENDPOINT_ID}:predict \
 --data "$(generate_post_data)"
+
+
+

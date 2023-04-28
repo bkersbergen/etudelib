@@ -1,6 +1,6 @@
 FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/etudelib_torchserve:latest
 
-# COPY --chown=app:app log4j2_debug.xml ./conf/log4j2.xml
+COPY --chown=app:app log4j2_debug.xml ./conf/log4j2.xml
 
 ARG MODELFILE_WO_EXT
 
