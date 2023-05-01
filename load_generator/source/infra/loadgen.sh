@@ -4,14 +4,14 @@ set -e
 DIR="$(dirname "$0")"
 
 DEPLOY=false
-TEST=true
-DESTROY=false
+TEST=false
+DESTROY=true
 
 MACHINES=('n1-highmem-4')
 ACCELERATIONS=(false) # (false 'NVIDIA_TESLA_T4')
 RUNTIMES=('eager') # ('eager' 'jitopt' 'onnx')
 NETWORKS=('noop') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-CATALOG_SIZES=(1000) # (1000 10000 100000 500000 1000000 5000000)
+CATALOG_SIZES=(100000) # (10000 100000 500000 1000000 5000000)
 
 function normalize() {
   echo "$1" | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]'
