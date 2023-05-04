@@ -152,7 +152,7 @@ public class LoadGenerator {
         public Builder withExperiment(Class<SytheticDataProducer> dataProducerType, String testDataPath) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
             LOGGER.info("preparing experiment");
             this.experimentDataProducerTask = dataProducerType.getDeclaredConstructor().newInstance();
-            this.experimentDataProducerTask.configure(testDataPath, sessionsQueue, true, Duration.ofHours(1));
+            this.experimentDataProducerTask.configure(testDataPath, sessionsQueue, true, Duration.ofMinutes(10));
             return this;
         }
 

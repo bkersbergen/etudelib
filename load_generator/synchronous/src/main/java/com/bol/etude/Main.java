@@ -68,7 +68,7 @@ public class Main {
 
         // latency p99 for vertex endpoint is stable after 6 minutes.
         // latency p99 for torchserve is stable after 3 minutes.
-        Duration duration = Duration.ofMillis((int) ((Math.sqrt(targetPredictionsPerSecond) + 30) * 1000));
+        Duration duration = Duration.ofSeconds((int) (targetPredictionsPerSecond * 0.6));
         LoadGenerator loadGenerator = new LoadGenerator.Builder()
                 .withConfig(config)
                 .withWarmup(SytheticDataProducer.class, trainingDataPath, duration, new RateLimitConfig(minRPS, targetPredictionsPerSecond))
