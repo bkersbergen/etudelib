@@ -14,6 +14,9 @@ from torch import nn
 
 class RANDOMModel(nn.Module):
     r"""Allways return a list of numbers of size n_items.
+    TODO:
+        1) Rename this model to TOPKOnly because this is our baseline that is dependent on the value of C for measuring the latency.
+        2) Randomly arrange the number of items in the initialize step
     """
 
     def __init__(self,
