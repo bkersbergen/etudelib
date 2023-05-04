@@ -2,8 +2,9 @@ extern crate tch;
 use tch::{Device, Kind, Tensor};
 
 fn main() {
+    let device = Device::cuda_if_available();
     // Load the model from the saved JIT script
-    let model = tch::CModule::load("mnist_model.pt").unwrap();
+    let model = tch::CModule::load_on_device("mnist_cuda.pt", device).unwrap();
 
     // Create a random input tensor to demonstrate inference
     let input = Tensor::rand(&[1, 1, 28, 28], (Kind::Float, Device::Cpu));

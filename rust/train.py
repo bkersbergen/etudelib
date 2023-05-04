@@ -26,12 +26,17 @@ class Net(torch.nn.Module):
 
 
 # Set up the device and load the dataset
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+devices = ['cpu']
+if torch.cuda.is_available():
+    devices.append('cuda')
 
-# Initialize the model and optimizer
-model = Net().to(device)
 
-# Convert the model to a JIT format and save it to disk
-example_input = torch.rand(1, 1, 28, 28).to(device)
-traced_model = torch.jit.trace(model, example_input)
-traced_model.save('mnist.pt')
+for device in devices:
+    # Initialize the model and optimizer
+    model = Net().to(device)
+    model.eval()
+
+    # Convert the model to a JIT format and save it to disk
+    example_input = torch.rand(1, 1, 28, 28).to(device)
+    traced_model = torch.jit.trace(model, example_input)
+    traced_model.save(f'mnist_{device}.pt')
