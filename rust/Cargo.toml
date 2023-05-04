@@ -1,0 +1,17 @@
+[package]
+name = "starter"
+version = "0.0.1"
+authors = ["bk <bk@bol.com>"]
+
+#[lib]
+#name = "foo"
+#path = "src/lib.rs"
+
+
+[dependencies]
+tch = "0.11.0"
+
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
