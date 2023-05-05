@@ -39,4 +39,4 @@ for device in devices:
     # Convert the model to a JIT format and save it to disk
     example_input = torch.rand(1, 1, 28, 28).to(device)
     traced_model = torch.jit.trace(model, example_input)
-    traced_model.save(f'mnist_{device}.pt')
+    traced_model.save(f'models/mnist_{device}.pt')
