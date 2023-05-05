@@ -17,6 +17,12 @@ train: ## Train a PyTorch model and persist it to disk
 run: ## Build and run the Rust application in debug mode
 	cargo run -- models/mnist_cpu.pt
 
+example: ## simple post request to endpoint
+	curl -X POST \
+	-H 'Content-Type: application/json' \
+	http://localhost:7080/v1/recommend  \
+	--data '{"item_ids": [1,5,3,1,7,1], "session_id": "abcdefg"}'
+
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 
