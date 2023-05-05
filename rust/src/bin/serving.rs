@@ -2,7 +2,6 @@ extern crate tch;
 
 use std::sync::Arc;
 use tch::{Device, Kind, Tensor};
-
 use actix_web::middleware::{Compress, Logger};
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, web, HttpRequest};
 use actix_web::{web::{
@@ -21,6 +20,7 @@ pub struct V1RequestParams {
     session_id: String,
 }
 
+
 #[post("/v1/recommend")]
 async fn v1_recommend(
     app_data: web::Data<AppData>,
@@ -28,13 +28,16 @@ async fn v1_recommend(
 ) -> impl Responder {
     let session_items: Vec<u64> = query.item_ids.clone();
     let device = app_data.device.as_ref();
-    println!("device.is_cuda(): {}", device.is_cuda());
     let model = app_data.model.as_ref();
     let input = Tensor::rand(&[1, 1, 28, 28], (Kind::Float, *device));
     // Apply the model to the input tensor to perform inference
     let output = model.forward_ts(&[input]).unwrap();
-    println!("{}", output);
-    HttpResponse::Ok().json(vec![1,2,3,4,5,6,7])
+
+    // sort the probabilities in descending order and get their index positions
+    let (_sorted_probs, sorted_indexes) = output.sort(-1, true);
+    let sorted_indexes : Vec<i64> = Vec::from(sorted_indexes);
+
+    HttpResponse::Ok().json(sorted_indexes)
 }
 
 
@@ -104,60 +107,3 @@ async fn main() -> std::io::Result<()> {
         .run()
         .await
 }
-
-//
-// #[actix_web::main]
-// async fn main() -> std::io::Result<()> {
-//
-//     let path = std::env::args().nth(1).expect("no path to a model.pt given");
-//     let device = Device::cuda_if_available();
-//     // Load the model from the saved JIT script
-//     let model = Arc::new(tch::CModule::load_on_device(path, device).unwrap());
-//
-//     let bind_address = format!("{}:{}", "127.0.0.1", "7080");
-//     println!("Done. start httpd at http://{}", &bind_address);
-//     let num_workers = 2;
-//     HttpServer::new(move || {
-//         let handles_and_config = SharedHandlesAndConfig {
-//             session_store: db.clone(),
-//             vmis_index: vmis_index.clone(),
-//             m_most_recent_sessions,
-//             neighborhood_size_k,
-//             num_items_to_recommend,
-//             max_items_in_session,
-//             qty_workers,
-//             db_compaction_ttl_in_secs: session_ttl.as_secs() as usize,
-//             enable_business_logic,
-//             example_item_id,
-//         };
-//
-//         App::new()
-//             .wrap(middleware::Compress::new(ContentEncoding::Identity))
-//             .wrap(prometheus.clone())
-//             .wrap(
-//                 middleware::DefaultHeaders::new()
-//                     .header("Cache-Control", "no-cache, no-store, must-revalidate")
-//                     .header("Pragma", "no-cache")
-//                     .header("Expires", "0"),
-//             )
-//             // .data(handles_and_config)
-//             .service(web::resource("/").route(web::get().to(|_req: HttpRequest| {
-//                 HttpResponse::Found()
-//                     .header(header::LOCATION, "/internal")
-//                     .finish()
-//             })))
-//     })
-//         .workers(num_workers)
-//         .bind(&bind_address)
-//         .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
-//         .run()
-//         .await
-//
-//     // // Create a random input tensor to demonstrate inference
-//     // let input = Tensor::rand(&[1, 1, 28, 28], (Kind::Float, device));
-//     //
-//     // // Apply the model to the input tensor to perform inference
-//     // let output = model.forward_ts(&[input]).unwrap();
-//
-//
-// }
