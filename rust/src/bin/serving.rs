@@ -16,7 +16,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct V1RequestParams {
-    item_ids: Vec<u64>,
+    item_ids: Vec<i64>,
     session_id: String,
 }
 
@@ -26,30 +26,33 @@ async fn v1_recommend(
     app_data: web::Data<AppData>,
     query: Json<V1RequestParams>,
 ) -> impl Responder {
-    let session_items: Vec<u64> = query.item_ids.clone();
+    let session_items: Vec<i64> = query.item_ids.clone();
     let device = app_data.device.as_ref();
     let model = app_data.model.as_ref();
 
-    let const max_seq_len: usize = 50;
+    let max_seq_len: usize = 50;
 
-    let input = if session_items.len() >= max_seq_len {
+    let kind = Kind::Int64;
+
+    let item_seq_len = session_items.len();
+    let input = if item_seq_len >= max_seq_len {
         // Create a new tensor of the desired shape with zeros as the default value.
         let mut tensor = Tensor::zeros(&[1, max_seq_len as i64], (kind, *device));
         // Copy the last `length` values of the input vector into the tensor.
-        let start = if session_items.len() > max_seq_len { session_items.len() - max_seq_len } else { 0 };
+        let start = if item_seq_len > max_seq_len { item_seq_len - max_seq_len } else { 0 };
         tensor.copy_(&Tensor::of_slice(&session_items[start..]));
         tensor
     } else {
         // Create a new tensor of the desired shape with zeros as the default value.
         let tensor = Tensor::zeros(&[1, max_seq_len as i64], (kind, *device));
         // Copy the input values into the first `input.len()` positions of the tensor.
-        tensor.narrow(1, 0, session_items.len() as i64).copy_(&Tensor::of_slice(&session_items));
+        tensor.narrow(1, 0, item_seq_len as i64).copy_(&Tensor::of_slice(&session_items));
         tensor
     };
 
 
     // Apply the model to the input tensor to perform inference
-    let output = model.forward_ts(&[input]).unwrap();
+    let output = model.forward_ts(&[input, Tensor::from(item_seq_len as i64)]).unwrap();
 
     // sort the probabilities in descending order and get their index positions
     let (_sorted_probs, sorted_indexes) = output.sort(-1, true);
