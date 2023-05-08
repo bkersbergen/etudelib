@@ -41,6 +41,7 @@ async fn v1_recommend(
     let model = app_data.model.as_ref();
 
     let max_seq_length = model_payload.max_seq_length.clone() as usize;
+    let class_count = model_payload.idx2item.len() as i64;
 
     println!("{:?}", session_items);
     let kind = Kind::Int64;
@@ -63,13 +64,7 @@ async fn v1_recommend(
     // Apply the model to the input tensor to perform inference
     let model_result = model.forward_ts(&[input, Tensor::from(item_seq_len as i32)]).unwrap();
 
-
-    // // sort the probabilities in descending order and get their index positions
-    // let (_sorted_probs, sorted_indexes) = model_result.sort(-1, true);
-    // let sorted_indexes: Vec<i64> = Vec::from(sorted_indexes);
-
-    println!("{:?}", model_result);
-    let vec:Vec<i64> = Vec::from(model_result);
+    let vec:Vec<f64> = Vec::from(model_result);
     HttpResponse::Ok().json(vec)
 }
 

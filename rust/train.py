@@ -21,7 +21,7 @@ from etudelib.models.topkdecorator import TopKDecorator
 def export_models():
     rootdir = Path(__file__).parent.parent.parent
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-    for C in [10_000]:
+    for C in [10_000, 10_000_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -34,8 +34,8 @@ def export_models():
         model_input = (item_seq, session_length)
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
-        for model_name in ['noop']:
-        # for model_name in ['noop', 'sasrec', 'core']:
+        # for model_name in ['noop']:
+        for model_name in ['noop', 'sasrec', 'core']:
             output_path = f'{rootdir}/rust/model_store/'
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = create_model(
@@ -75,7 +75,7 @@ def create_model(model_name: str, C: int, max_seq_length:int, param_source: str,
 
     eager_model = model.get_backbone()
 
-    eager_model = TopKDecorator(eager_model, topk=21)
+#     eager_model = TopKDecorator(eager_model, topk=21)
     eager_model.eval()
 
     base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}'
