@@ -29,7 +29,25 @@ async fn v1_recommend(
     let session_items: Vec<u64> = query.item_ids.clone();
     let device = app_data.device.as_ref();
     let model = app_data.model.as_ref();
-    let input = Tensor::rand(&[1, 1, 28, 28], (Kind::Float, *device));
+
+    let const max_seq_len: usize = 50;
+
+    let input = if session_items.len() >= max_seq_len {
+        // Create a new tensor of the desired shape with zeros as the default value.
+        let mut tensor = Tensor::zeros(&[1, max_seq_len as i64], (kind, *device));
+        // Copy the last `length` values of the input vector into the tensor.
+        let start = if session_items.len() > max_seq_len { session_items.len() - max_seq_len } else { 0 };
+        tensor.copy_(&Tensor::of_slice(&session_items[start..]));
+        tensor
+    } else {
+        // Create a new tensor of the desired shape with zeros as the default value.
+        let tensor = Tensor::zeros(&[1, max_seq_len as i64], (kind, *device));
+        // Copy the input values into the first `input.len()` positions of the tensor.
+        tensor.narrow(1, 0, session_items.len() as i64).copy_(&Tensor::of_slice(&session_items));
+        tensor
+    };
+
+
     // Apply the model to the input tensor to perform inference
     let output = model.forward_ts(&[input]).unwrap();
 

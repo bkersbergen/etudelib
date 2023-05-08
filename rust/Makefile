@@ -15,7 +15,7 @@ train: ## Train a PyTorch model and persist it to disk
 	python train.py
 
 run: ## Build and run the Rust application in debug mode
-	cargo run -- models/mnist_cpu.pt
+	cargo run -- model_store/noop_bolcom_c10000_t50_jitopt.pth
 
 example: ## simple post request to endpoint
 	curl -X POST \
