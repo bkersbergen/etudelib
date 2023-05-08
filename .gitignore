@@ -24,3 +24,4 @@ target/
 /.docker/requirements.txt
 /logs/
 .docker/model_store/
+.libtorch_path

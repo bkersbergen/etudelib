@@ -3,8 +3,20 @@ SHELL:=/bin/bash
 PWD:=$(shell pwd)
 USER ?= -SA
 
-export LIBTORCH=$(shell python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)')
-export DYLD_LIBRARY_PATH=${LIBTORCH}/lib
+hello:
+	@echo "Hello"
+
+ifeq (,$(filter defined,$(origin LIBTORCH)))
+	@if [ -f .libtorch_path ]; then \
+		LIBTORCH=$$(cat .libtorch_path); \
+	else \
+		LIBTORCH=$$(python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)'); \
+		echo $$LIBTORCH > .libtorch_path; \
+	fi
+	@DYLD_LIBRARY_PATH=$$LIBTORCH/lib
+	@export LIBTORCH
+	@export DYLD_LIBRARY_PATH
+endif
 
 configure: requirements.txt ## configure a virtual environment with pytorch for its c++ libs
 	test -d venv || virtualenv venv
