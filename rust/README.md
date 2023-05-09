@@ -18,6 +18,9 @@ Then update the following environment variables:
 `export LIBTORCH=$(python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)')
 export DYLD_LIBRARY_PATH=${LIBTORCH}/lib`
 
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+This can also be done in the run configuration of Intellij
+
+DYLD_LIBRARY_PATH=/path/to/venv/lib/python3.10/site-packages/torch/lib
+LIBTORCH=/path/to/venv/lib/python3.10/site-packages/torch/lib
 
 

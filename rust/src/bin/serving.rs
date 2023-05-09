@@ -62,9 +62,11 @@ async fn v1_recommend(
         tensor
     };
     // Apply the model to the input tensor to perform inference
-    let model_result = model.forward_ts(&[input, Tensor::from(item_seq_len as i32)]).unwrap();
+    let recos = model.forward_ts(&[input, Tensor::from(item_seq_len as i32)]).unwrap();
 
-    let vec:Vec<f64> = Vec::from(model_result);
+    recos.print();
+    let vec:Vec<i64> = Vec::from(recos);
+
     HttpResponse::Ok().json(vec)
 }
 

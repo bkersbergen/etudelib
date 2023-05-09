@@ -14,4 +14,4 @@ class TopKDecorator(nn.Module):
 
     def forward(self, item_seq, item_seq_len):
         scores = self.recommender_model.forward(item_seq, item_seq_len)
-        return torch.topk(scores, self.topk)
+        return torch.topk(scores, self.topk).indices
