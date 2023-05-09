@@ -1,20 +1,20 @@
 extern crate tch;
 
 use std::sync::Arc;
-use tch::{Device, Kind, TchError, Tensor};
-use actix_web::middleware::{Compress, Logger};
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, web, HttpRequest};
+use tch::{Device, Kind, Tensor};
+use tract_onnx::prelude::*;
+use actix_web::middleware::{Logger};
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware};
 use actix_web::{web::{
     Data,
     Json,
 }};
 use actix_web::http::header;
-use actix_web::http::header::ContentEncoding;
-use actix_web::web::Query;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
 
 
+#[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ModelPayload {
     max_seq_length: u32,
@@ -32,42 +32,38 @@ pub struct V1RequestParams {
 
 #[post("/v1/recommend")]
 async fn v1_recommend(
-    app_data: Data<AppData>,
+    jitmodel: Data<JITModel>,
     model_payload: Data<ModelPayload>,
     query: Json<V1RequestParams>,
 ) -> impl Responder {
     let session_items: Vec<i64> = query.item_ids.clone();
-    let device = app_data.device.as_ref();
-    let model = app_data.model.as_ref();
+    let device = jitmodel.device.as_ref();
+    let model = jitmodel.model.as_ref();
 
     let max_seq_length = model_payload.max_seq_length.clone() as usize;
-    let class_count = model_payload.idx2item.len() as i64;
-
-    println!("{:?}", session_items);
-    let kind = Kind::Int64;
 
     let item_seq_len = session_items.len();
-    let input = if item_seq_len >= max_seq_length {
-        // Create a new tensor of the desired shape with zeros as the default value.
-        let mut tensor = Tensor::zeros(&[1, max_seq_length as i64], (kind, *device));
-        // Copy the last `length` values of the input vector into the tensor.
-        let start = if item_seq_len > max_seq_length { item_seq_len - max_seq_length } else { 0 };
-        tensor.copy_(&Tensor::of_slice(&session_items[start..]));
-        tensor
-    } else {
-        // Create a new tensor of the desired shape with zeros as the default value.
-        let tensor = Tensor::zeros(&[1, max_seq_length as i64], (kind, *device));
-        // Copy the input values into the first `input.len()` positions of the tensor.
-        tensor.narrow(1, 0, item_seq_len as i64).copy_(&Tensor::of_slice(&session_items));
-        tensor
-    };
-    // Apply the model to the input tensor to perform inference
-    let recos = model.forward_ts(&[input, Tensor::from(item_seq_len as i32)]).unwrap();
 
-    recos.print();
-    let vec:Vec<i64> = Vec::from(recos);
+    // Create padding input vector from the session_items
+    let mut zero_vec: Vec<i64> = vec![0; max_seq_length];
+    for (i, &value) in session_items.iter().enumerate() {
+        if i < zero_vec.len() {
+            zero_vec[i] = value;
+        } else {
+            break;
+        }
+    }
+    // Convert to a Tensor and put in on the same device as the model
+    let input = Tensor::of_slice(&zero_vec)
+        .view((1, -1)) // Reshape to have batch size of 1
+        .to_device(*device)
+        ;
+    // Create the mask for the input items on the same device as the model
+    let input_mask = Tensor::from(item_seq_len as i32).to_device(*device);
+    let result_tensor = model.forward_ts(&[input, input_mask]).unwrap();
+    let result_item_ids:Vec<i64> = Vec::from(result_tensor);
 
-    HttpResponse::Ok().json(vec)
+    HttpResponse::Ok().json(result_item_ids)
 }
 
 
@@ -96,10 +92,11 @@ async fn home() -> impl Responder {
         .finish()
 }
 
-pub struct AppData {
+pub struct JITModel {
     pub model: Arc<tch::CModule>,
     pub device: Arc<tch::Device>
 }
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -107,23 +104,26 @@ async fn main() -> std::io::Result<()> {
         std::env::set_var("RUST_LOG", "debug");
     }
     env_logger::init();
-
     println!("Actix Server started successfully");
     let model_path = std::env::args().nth(1).expect("no path to a model.pt given");
-    let payload_path = std::env::args().nth(2).expect("np path to payload.yaml given");
 
+    if model_path.ends_with("_jitopt.pth") {
+        println!("Loading jitopt model");
+    } else if model_path.ends_with("_onnx.pth") {
+        println!("Loading onnx model");
+    }
+
+    let payload_path = std::env::args().nth(2).expect("np path to payload.yaml given");
     let f = std::fs::File::open(payload_path).expect("Could not open payload file.");
     let model_payload : ModelPayload = serde_yaml::from_reader(f).expect("Could not read values.");
 
-
     let device = Device::cuda_if_available();
-
 
     // Load the model from the saved JIT script
     let model = Arc::new(tch::CModule::load_on_device(model_path, device).unwrap());
     let device = Arc::new(device);
     HttpServer::new(move || {
-        let app_data = AppData {
+        let jitmodel = JITModel {
             model: model.clone(),
             device: device.clone(),
         };
@@ -132,7 +132,7 @@ async fn main() -> std::io::Result<()> {
             .service(home)
             .service(ping)
             .service(v1_recommend)
-            .app_data(Data::new(app_data))
+            .app_data(Data::new(jitmodel))
             .app_data(Data::new(model_payload))
             .wrap(Logger::default())
             .wrap(
