@@ -1,26 +1,17 @@
 extern crate tch;
 
 use std::sync::Arc;
-use tch::{Device, Kind, Tensor};
-use tract_onnx::prelude::*;
+use tch::{Device, Tensor};
 use actix_web::middleware::{Logger};
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware};
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, http::header};
 use actix_web::{web::{
     Data,
     Json,
 }};
-use actix_web::http::header;
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
-
-
-#[allow(non_snake_case)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-struct ModelPayload {
-    max_seq_length: u32,
-    C: u32,
-    idx2item: Vec<u64>,
-}
+use serving::modelruntime::jitmodelruntime::JITModelRuntime;
+use serving::modelruntime::ModelEngine;
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -33,37 +24,19 @@ pub struct V1RequestParams {
 #[post("/v1/recommend")]
 async fn v1_recommend(
     jitmodel: Data<JITModel>,
-    model_payload: Data<ModelPayload>,
     query: Json<V1RequestParams>,
 ) -> impl Responder {
     let session_items: Vec<i64> = query.item_ids.clone();
-    let device = jitmodel.device.as_ref();
-    let model = jitmodel.model.as_ref();
 
-    let max_seq_length = model_payload.max_seq_length.clone() as usize;
-
-    let item_seq_len = session_items.len();
-
-    // Create padding input vector from the session_items
-    let mut zero_vec: Vec<i64> = vec![0; max_seq_length];
-    for (i, &value) in session_items.iter().enumerate() {
-        if i < zero_vec.len() {
-            zero_vec[i] = value;
-        } else {
-            break;
+    match &*jitmodel.modelruntime {
+        Some(ref model) => {
+            let result_item_ids = model.recommend(&session_items);
+            HttpResponse::Ok().json(result_item_ids)
+        }
+        None => {
+            HttpResponse::Ok().json(vec![0])
         }
     }
-    // Convert to a Tensor and put in on the same device as the model
-    let input = Tensor::of_slice(&zero_vec)
-        .view((1, -1)) // Reshape to have batch size of 1
-        .to_device(*device)
-        ;
-    // Create the mask for the input items on the same device as the model
-    let input_mask = Tensor::from(item_seq_len as i32).to_device(*device);
-    let result_tensor = model.forward_ts(&[input, input_mask]).unwrap();
-    let result_item_ids:Vec<i64> = Vec::from(result_tensor);
-
-    HttpResponse::Ok().json(result_item_ids)
 }
 
 
@@ -88,15 +61,13 @@ async fn ping() -> impl Responder {
 #[get("/")]
 async fn home() -> impl Responder {
     HttpResponse::Found()
-        .header(header::LOCATION, "/ping")
+        .append_header((header::LOCATION, "/ping"))
         .finish()
 }
 
 pub struct JITModel {
-    pub model: Arc<tch::CModule>,
-    pub device: Arc<tch::Device>
+    pub modelruntime: Arc<Option<JITModelRuntime>>,
 }
-
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -106,40 +77,31 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     println!("Actix Server started successfully");
     let model_path = std::env::args().nth(1).expect("no path to a model.pt given");
+    let payload_path = std::env::args().nth(2).expect("no path to payload.yaml given");
 
-    if model_path.ends_with("_jitopt.pth") {
-        println!("Loading jitopt model");
-    } else if model_path.ends_with("_onnx.pth") {
+    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if model_path.ends_with("_jitopt.pth") {
+        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path)))
+    } else{
+        Arc::new(None)
+    };
+    if model_path.ends_with("_onnx.pth") {
         println!("Loading onnx model");
     }
-
-    let payload_path = std::env::args().nth(2).expect("np path to payload.yaml given");
-    let f = std::fs::File::open(payload_path).expect("Could not open payload file.");
-    let model_payload : ModelPayload = serde_yaml::from_reader(f).expect("Could not read values.");
-
-    let device = Device::cuda_if_available();
-
-    // Load the model from the saved JIT script
-    let model = Arc::new(tch::CModule::load_on_device(model_path, device).unwrap());
-    let device = Arc::new(device);
     HttpServer::new(move || {
         let jitmodel = JITModel {
-            model: model.clone(),
-            device: device.clone(),
+            modelruntime: jitmodelruntime.clone(),
         };
-        let model_payload = model_payload.clone();
         App::new()
             .service(home)
             .service(ping)
             .service(v1_recommend)
             .app_data(Data::new(jitmodel))
-            .app_data(Data::new(model_payload))
             .wrap(Logger::default())
             .wrap(
                 middleware::DefaultHeaders::new()
-                    .header("Cache-Control", "no-cache, no-store, must-revalidate")
-                    .header("Pragma", "no-cache")
-                    .header("Expires", "0"),
+                    .add(("Cache-Control", "no-cache, no-store, must-revalidate"))
+                    .add(("Pragma", "no-cache"))
+                    .add(("Expires", "0")),
             )
     })
         .bind(("127.0.0.1", 7080)).unwrap_or_else(|_| panic!("Could not bind server to address"))

@@ -25,4 +25,5 @@ serde = { version = "1.0.162", features = ["derive"] }
 tch = "0.11.0"
 uuid = { version = "1.3.2", features = ["v4"] }
 serde_yaml = "0.9.21"
-tract-onnx = "0.20.4"
+ort = "1.14.6"
+ndarray = "0.15.6"
