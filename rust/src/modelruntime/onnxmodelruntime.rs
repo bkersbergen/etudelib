@@ -65,19 +65,15 @@ impl ModelEngine for OnnxModelRuntime {
             } else if input.name == "max_seq_length" {
                 mask_tensor = Some(InputTensor::Int64Tensor(Array::from_shape_vec(1, vec![item_seq_len as i64]).unwrap().into_dyn()));
             }
-            println!("{:?} {:?} {:?}", input.name, input.dimensions, input.input_type);
         }
         let combined_tensor: Vec<DynOrtTensor<ndarray::Dim<ndarray::IxDynImpl>>> = match (item_id_tensor, mask_tensor) {
             (Some(item_id), None) => {
-                println!("inference with only session items");
                 self.session.run([item_id]).unwrap()
             }
             (Some(item_id), Some(mask)) => {
-                println!("inference with session items and mask");
                 self.session.run([item_id, mask]).unwrap()
             }
             _ => {
-                println!("inference with no input");
                 self.session.run([]).unwrap()
                 // None None if both tensors are missing
             },

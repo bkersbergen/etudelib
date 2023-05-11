@@ -75,7 +75,7 @@ pub struct Models {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "debug");
+        std::env::set_var("RUST_LOG", "error");
     }
     env_logger::init();
     println!("Actix Server started successfully");
