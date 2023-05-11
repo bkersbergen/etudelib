@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
 use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::ModelEngine;
+use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -23,20 +24,25 @@ pub struct V1RequestParams {
 
 #[post("/v1/recommend")]
 async fn v1_recommend(
-    jitmodel: Data<JITModel>,
+    models: Data<Models>,
     query: Json<V1RequestParams>,
 ) -> impl Responder {
     let session_items: Vec<i64> = query.item_ids.clone();
 
-    match &*jitmodel.modelruntime {
-        Some(ref model) => {
+    let response = match (&*models.jitopt_model, &*models.onnx_model) {
+        (Some(ref model), None) => {
             let result_item_ids = model.recommend(&session_items);
             HttpResponse::Ok().json(result_item_ids)
         }
-        None => {
-            HttpResponse::Ok().json(vec![0])
+        (None, Some(ref model)) => {
+            let result_item_ids = model.recommend(&session_items);
+            HttpResponse::Ok().json(result_item_ids)
         }
-    }
+        _ => {
+            HttpResponse::Ok().json(vec![-1])
+        },
+    };
+    return response;
 }
 
 
@@ -65,8 +71,9 @@ async fn home() -> impl Responder {
         .finish()
 }
 
-pub struct JITModel {
-    pub modelruntime: Arc<Option<JITModelRuntime>>,
+pub struct Models {
+    pub jitopt_model: Arc<Option<JITModelRuntime>>,
+    pub onnx_model: Arc<Option<OnnxModelRuntime>>,
 }
 
 #[actix_web::main]
@@ -84,18 +91,21 @@ async fn main() -> std::io::Result<()> {
     } else{
         Arc::new(None)
     };
-    if model_path.ends_with("_onnx.pth") {
-        println!("Loading onnx model");
-    }
+    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if model_path.ends_with("_onnx.pth") {
+        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path)))
+    } else{
+        Arc::new(None)
+    };
     HttpServer::new(move || {
-        let jitmodel = JITModel {
-            modelruntime: jitmodelruntime.clone(),
+        let models = Models {
+            jitopt_model: jitmodelruntime.clone(),
+            onnx_model: onnxruntime.clone(),
         };
         App::new()
             .service(home)
             .service(ping)
             .service(v1_recommend)
-            .app_data(Data::new(jitmodel))
+            .app_data(Data::new(models))
             .wrap(Logger::default())
             .wrap(
                 middleware::DefaultHeaders::new()

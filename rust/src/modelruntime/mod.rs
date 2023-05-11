@@ -1,4 +1,5 @@
 pub mod jitmodelruntime;
+pub mod onnxmodelruntime;
 
 use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
