@@ -1,6 +1,5 @@
 use tch::{CModule, Device, Tensor};
 use crate::modelruntime::{ModelEngine, ModelPayload};
-use serde::{Deserialize, Serialize};
 use serde_yaml::{self};
 
 pub struct JITModelRuntime {

@@ -1,13 +1,7 @@
 use crate::modelruntime::{ModelEngine, ModelPayload};
-use serde::{Deserialize, Serialize};
 
-use std::path::Path;
-use std::process::id;
-use std::sync::Arc;
-
-use std::slice;
-use ndarray::{array, concatenate, s, Array1, Axis, Array, Dimension, ViewRepr, IxDyn, ArrayBase};
-use ort::{tensor::{DynOrtTensor, FromArray, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, GraphOptimizationLevel, OrtResult, SessionBuilder, LoggingLevel, AllocatorType, Session};
+use ndarray::{Array, ViewRepr, IxDyn, ArrayBase};
+use ort::{tensor::{DynOrtTensor, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, SessionBuilder, LoggingLevel, Session};
 use core::option::Option;
 use tch::Device;
 
@@ -69,7 +63,7 @@ impl ModelEngine for OnnxModelRuntime {
                 }
                 item_id_tensor = Some(InputTensor::Int64Tensor(Array::from_shape_vec((1, max_seq_length), zero_vec).unwrap().into_dyn()));
             } else if input.name == "max_seq_length" {
-                mask_tensor = Some(InputTensor::Int64Tensor(Array::from_shape_vec((1), vec![item_seq_len as i64]).unwrap().into_dyn()));
+                mask_tensor = Some(InputTensor::Int64Tensor(Array::from_shape_vec(1, vec![item_seq_len as i64]).unwrap().into_dyn()));
             }
             println!("{:?} {:?} {:?}", input.name, input.dimensions, input.input_type);
         }

@@ -1,7 +1,4 @@
-extern crate tch;
-
 use std::sync::Arc;
-use tch::{Device, Tensor};
 use actix_web::middleware::{Logger};
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, http::header};
 use actix_web::{web::{
@@ -9,7 +6,6 @@ use actix_web::{web::{
     Json,
 }};
 use serde::{Deserialize, Serialize};
-use serde_yaml::{self};
 use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::ModelEngine;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
