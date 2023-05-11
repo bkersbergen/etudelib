@@ -14,6 +14,9 @@ pub struct OnnxModelRuntime {
 
 impl OnnxModelRuntime {
     pub fn new(model_path: &String, payload_path: &String) -> OnnxModelRuntime {
+        let qty_threads = 5;
+        println!("number of onnx threads: {qty_threads}");
+
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
 
@@ -23,6 +26,8 @@ impl OnnxModelRuntime {
 
         let session = if Device::cuda_if_available().is_cuda() {
             SessionBuilder::new(&environment).expect("unable to create a session")
+                .with_intra_threads(qty_threads).unwrap()
+                .with_inter_threads(qty_threads).unwrap()
                 .with_execution_providers([ExecutionProvider::cuda(), ExecutionProvider::cpu()]).unwrap()
                 .with_model_from_file(model_path)
                 .unwrap()

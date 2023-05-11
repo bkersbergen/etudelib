@@ -92,6 +92,11 @@ async fn main() -> std::io::Result<()> {
     } else{
         Arc::new(None)
     };
+
+    let qty_cpus = num_cpus::get();
+    let qty_threads = 5;
+    println!("number of actix threads: {qty_threads}");
+
     HttpServer::new(move || {
         let models = Models {
             jitopt_model: jitmodelruntime.clone(),
@@ -111,6 +116,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
         .bind(("127.0.0.1", 7080)).unwrap_or_else(|_| panic!("Could not bind server to address"))
+        .workers(qty_threads)
         .run()
         .await
 }

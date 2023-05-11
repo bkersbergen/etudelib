@@ -12,6 +12,11 @@ pub struct JITModelRuntime {
 
 impl JITModelRuntime {
     pub fn new(model_path: &String, payload_path: &String) -> JITModelRuntime {
+        let qty_threads = 5;
+        println!("number of jit threads: {qty_threads}");
+
+        tch::set_num_threads(qty_threads);
+        tch::set_num_interop_threads(qty_threads);
         let device = Device::cuda_if_available();
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
