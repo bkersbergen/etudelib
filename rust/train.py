@@ -21,7 +21,7 @@ from etudelib.models.topkdecorator import TopKDecorator
 def export_models():
     rootdir = Path(__file__).parent.parent.parent
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-    for C in [10_000]:
+    for C in [1_000_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.

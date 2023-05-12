@@ -13,9 +13,8 @@ pub struct OnnxModelRuntime {
 
 
 impl OnnxModelRuntime {
-    pub fn new(model_path: &String, payload_path: &String) -> OnnxModelRuntime {
-        let qty_threads = 5;
-        println!("number of onnx threads: {qty_threads}");
+    pub fn new(model_path: &String, payload_path: &String, qty_model_threads: &usize) -> OnnxModelRuntime {
+        println!("number of onnx threads: {qty_model_threads}");
 
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
@@ -25,14 +24,18 @@ impl OnnxModelRuntime {
             .build().unwrap().into_arc();
 
         let session = if Device::cuda_if_available().is_cuda() {
+            print!("Onnx with CUDA and CPU provider");
             SessionBuilder::new(&environment).expect("unable to create a session")
-                .with_intra_threads(qty_threads).unwrap()
-                .with_inter_threads(qty_threads).unwrap()
+                .with_intra_threads(*qty_model_threads as i16).unwrap()
+                .with_inter_threads(*qty_model_threads as i16).unwrap()
                 .with_execution_providers([ExecutionProvider::cuda(), ExecutionProvider::cpu()]).unwrap()
                 .with_model_from_file(model_path)
                 .unwrap()
         } else {
+            print!("Onnx with CPU provider");
             SessionBuilder::new(&environment).expect("unable to create a session")
+                .with_intra_threads(*qty_model_threads as i16).unwrap()
+                .with_inter_threads(*qty_model_threads as i16).unwrap()
                 .with_model_from_file(model_path)
                 .unwrap()
         };
@@ -102,7 +105,7 @@ mod onnxmodelruntime_test {
 
     #[test]
     fn should_happyflow_onnxmodel() {
-        let mut undertest = OnnxModelRuntime::new("../../model_store/sasrec_bolcom_c10000_t50_onnx.pth".parse().unwrap(), "../../model_store/sasrec_bolcom_c10000_t50_payload.yaml".parse().unwrap());
+        let mut undertest = OnnxModelRuntime::new("../../model_store/sasrec_bolcom_c10000_t50_onnx.pth".parse().unwrap(), "../../model_store/sasrec_bolcom_c10000_t50_payload.yaml".parse().unwrap(), );
         let session_items: Vec<i64> = vec![1, 5, 7, 1];
         let actual = undertest.recommend(&session_items);
         assert_eq!(actual.len(), 21);

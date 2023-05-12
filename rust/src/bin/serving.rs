@@ -74,6 +74,24 @@ pub struct Models {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let qty_logical_cores = num_cpus::get();
+    println!("Number of logical cores: {qty_logical_cores}");
+
+    let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
+        (1, 1)
+    } else {
+        let division = qty_logical_cores / 4;
+        let remainder = qty_logical_cores - division;
+        if remainder == 0 {
+            (1, 1)
+        } else {
+            (3, 3)
+        }
+    };
+    println!("Number of actix threads: {qty_actix_threads}");
+    println!("Number of model threads: {qty_model_threads}");
+
+
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "error");
     }
@@ -83,19 +101,16 @@ async fn main() -> std::io::Result<()> {
     let payload_path = std::env::args().nth(2).expect("no path to payload.yaml given");
 
     let jitmodelruntime: Arc<Option<JITModelRuntime>> = if model_path.ends_with("_jitopt.pth") {
-        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path)))
+        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
     let onnxruntime: Arc<Option<OnnxModelRuntime>> = if model_path.ends_with("_onnx.pth") {
-        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path)))
+        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
-
-    let qty_cpus = num_cpus::get();
-    let qty_threads = 5;
-    println!("number of actix threads: {qty_threads}");
+    assert!(jitmodelruntime.is_some() || onnxruntime.is_some(), "Both JITModelRuntime and OnnxModelRuntime are None.");
 
     HttpServer::new(move || {
         let models = Models {
@@ -116,7 +131,7 @@ async fn main() -> std::io::Result<()> {
             )
     })
         .bind(("127.0.0.1", 7080)).unwrap_or_else(|_| panic!("Could not bind server to address"))
-        .workers(qty_threads)
+        .workers(qty_actix_threads)
         .run()
         .await
 }

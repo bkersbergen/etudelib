@@ -35,6 +35,9 @@ example: ## simple post request to endpoint
 	http://localhost:7080/v1/recommend  \
 	--data '{"item_ids": [1,5,3,1,7,1], "session_id": "abcdefg"}'
 
+examplewindows:  # post request to endpoint in windows
+	curl -X POST -H "Content-Type: application/json" http://localhost:7080/v1/recommend --data "{\"item_ids\": [1,5,3,1,7,1], \"session_id\": \"abcdefg\"}"
+
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 

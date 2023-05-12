@@ -7,6 +7,7 @@ use serving::modelruntime::ModelEngine;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
 
 fn main() {
+    let qty_logical_cores = num_cpus::get();
     let jit_model_path = std::env::args().nth(1).expect("no path to a model.jitopt given");
     println!("loading model: {jit_model_path:?}");
 
@@ -16,7 +17,7 @@ fn main() {
     let payload_path = std::env::args().nth(3).expect("no path to a payload.yaml given");
     println!("loading payload meta data: {payload_path:?}");
 
-    let undertest = JITModelRuntime::new(&jit_model_path, &payload_path);
+    let undertest = JITModelRuntime::new(&jit_model_path, &payload_path, &qty_logical_cores);
     let session_items: Vec<i64> = vec![1, 5, 7, 1];
 
     for _warmup in 0..100 {
@@ -32,7 +33,7 @@ fn main() {
     println!("Avg prediction took: {:?}", duration / n);
 
 
-    let undertest = OnnxModelRuntime::new(&onnx_model_path, &payload_path);
+    let undertest = OnnxModelRuntime::new(&onnx_model_path, &payload_path, &qty_logical_cores);
     let session_items: Vec<i64> = vec![1, 5, 7, 1];
 
     for _warmup in 0..100 {

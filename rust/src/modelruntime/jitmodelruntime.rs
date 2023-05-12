@@ -11,15 +11,19 @@ pub struct JITModelRuntime {
 // impl JITModelRuntime {}
 
 impl JITModelRuntime {
-    pub fn new(model_path: &String, payload_path: &String) -> JITModelRuntime {
-        let qty_threads = 5;
-        println!("number of jit threads: {qty_threads}");
+    pub fn new(model_path: &String, payload_path: &String, qty_threads: &usize) -> JITModelRuntime {
+        println!("Number of jit threads: {qty_threads}");
 
-        tch::set_num_threads(qty_threads);
-        tch::set_num_interop_threads(qty_threads);
+        tch::set_num_threads(*qty_threads as i32);
+        tch::set_num_interop_threads(*qty_threads as i32);
         let device = Device::cuda_if_available();
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
+        if device.is_cuda() {
+            println!("JIT using CUDA and CPU")
+        } else {
+            println!("JIT using only CPU")
+        }
         let model = tch::CModule::load_on_device(model_path, device).unwrap();
 
         JITModelRuntime {
