@@ -16,6 +16,15 @@ edition = "2021"
 name = "serving"
 path = "src/bin/serving.rs"
 
+
+# enable rpath to load libraries from the same folder as the binary
+[profile.dev]
+rpath = true
+
+# enable rpath to load libraries from the same folder as the binary
+[profile.release]
+rpath = true
+
 [dependencies]
 actix-cors = "0.6.4"
 actix-web = "4.3.1"
