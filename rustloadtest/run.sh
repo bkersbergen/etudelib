@@ -1,0 +1,1 @@
+cargo run --release --bin rustloadtest -- --host http://127.0.0.1:7080 -u3 -r3 -t1m --report-file=report.html

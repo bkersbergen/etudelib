@@ -3,6 +3,10 @@ use std::env;
 use std::sync::Arc;
 use std::time::Duration;
 use serde_json::json;
+use rand::distributions::Distribution;
+use rand::{Rng, SeedableRng};
+use rand::rngs::StdRng;
+
 
 #[tokio::main]
 async fn main() -> Result<(), GooseError> {
@@ -33,8 +37,12 @@ async fn main() -> Result<(), GooseError> {
 }
 
 async fn recommend(user: &mut GooseUser, synchronous_mode: bool) -> TransactionResult {
+    let mut rng = StdRng::from_entropy();
+    let session_length: i32 = rng.gen_range(1..15);
+    let item_ids = (0..session_length).map(|_| rng.gen_range(1..1000)).collect::<Vec<i64>>();
+
     let payload = json!({
-        "item_ids": [1, 5, 3, 1, 7, 1],
+        "item_ids": item_ids,
         "session_id": "abcdefg"
     });
 
