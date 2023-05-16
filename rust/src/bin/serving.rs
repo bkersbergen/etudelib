@@ -11,6 +11,24 @@ use serving::modelruntime::ModelEngine;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
 
 
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct VertexRequest {
+    instances: Vec<VertexRequestContext>,
+    parameters: Vec<VertexRequestParameter>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct VertexRequestContext {
+    context: Vec<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct VertexRequestParameter {
+    runtime: String,
+}
+
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct V1RequestParams {
     item_ids: Vec<i64>,
@@ -21,9 +39,9 @@ pub struct V1RequestParams {
 #[post("/v1/recommend")]
 async fn v1_recommend(
     models: Data<Models>,
-    query: Json<V1RequestParams>,
+    query: Json<VertexRequest>,
 ) -> impl Responder {
-    let session_items: Vec<i64> = query.item_ids.clone();
+    let session_items: Vec<i64> = query.instances.get(0).unwrap().context.clone();
 
     let response = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
