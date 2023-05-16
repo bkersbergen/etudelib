@@ -94,18 +94,19 @@ pub struct Models {
 async fn main() -> std::io::Result<()> {
     let qty_logical_cores = num_cpus::get();
     println!("Number of logical cores: {qty_logical_cores}");
-
-    let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
-        (1, 1)
-    } else {
-        let division = qty_logical_cores / 4;
-        let remainder = qty_logical_cores - division;
-        if remainder == 0 {
-            (1, 1)
-        } else {
-            (3, 3)
-        }
-    };
+    let qty_actix_threads = 1;
+    let qty_model_threads = 1;
+    // let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
+    //     (1, 1)
+    // } else {
+    //     let division = qty_logical_cores / 4;
+    //     let remainder = qty_logical_cores - division;
+    //     if remainder == 0 {
+    //         (1, 1)
+    //     } else {
+    //         (3, 3)
+    //     }
+    // };
     println!("Number of actix threads: {qty_actix_threads}");
     println!("Number of model threads: {qty_model_threads}");
 

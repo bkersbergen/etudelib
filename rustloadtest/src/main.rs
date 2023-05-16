@@ -40,11 +40,7 @@ async fn recommend(user: &mut GooseUser, synchronous_mode: bool) -> TransactionR
     let mut rng = StdRng::from_entropy();
     let session_length: i32 = rng.gen_range(1..15);
     let item_ids = (0..session_length).map(|_| rng.gen_range(1..1000)).collect::<Vec<i64>>();
-
-    let payload = json!({
-        "item_ids": item_ids,
-        "session_id": "abcdefg"
-    });
+    let payload = json!({"instances": [{"context": item_ids}],"parameters": [{"runtime":  ""}]});
 
     let request_builder = user.get_request_builder(&GooseMethod::Post, "/v1/recommend")?
         // Configure the request to timeout if it takes longer than xxx milliseconds.
