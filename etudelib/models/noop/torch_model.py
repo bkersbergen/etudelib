@@ -24,4 +24,5 @@ class NOOPModel(nn.Module):
     def forward(self, item_seq, _item_seq_len):
         shape = (item_seq.size(0),) + self.data.shape
         result = self.data.unsqueeze(0).expand(shape)
+        result = result + item_seq.unsqueeze(-1)
         return result
