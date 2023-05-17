@@ -1,7 +1,7 @@
 use crate::modelruntime::{ModelEngine, ModelPayload};
 
 use ndarray::{Array, ViewRepr, IxDyn, ArrayBase};
-use ort::{tensor::{DynOrtTensor, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, SessionBuilder, LoggingLevel, Session};
+use ort::{tensor::{DynOrtTensor, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, SessionBuilder, LoggingLevel, Session, GraphOptimizationLevel};
 use core::option::Option;
 use tch::Device;
 
@@ -28,6 +28,7 @@ impl OnnxModelRuntime {
             SessionBuilder::new(&environment).expect("unable to create a session")
                 .with_intra_threads(*qty_model_threads as i16).unwrap()
                 .with_inter_threads(*qty_model_threads as i16).unwrap()
+                .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
                 .with_execution_providers([ExecutionProvider::cuda(), ExecutionProvider::cpu()]).unwrap()
                 .with_model_from_file(model_path)
                 .unwrap()
@@ -36,6 +37,7 @@ impl OnnxModelRuntime {
             SessionBuilder::new(&environment).expect("unable to create a session")
                 .with_intra_threads(*qty_model_threads as i16).unwrap()
                 .with_inter_threads(*qty_model_threads as i16).unwrap()
+                .with_optimization_level(GraphOptimizationLevel::Level3).unwrap()
                 .with_model_from_file(model_path)
                 .unwrap()
         };

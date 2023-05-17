@@ -93,8 +93,10 @@ pub struct Models {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let qty_logical_cores = num_cpus::get();
+    let qty_physical_cores = num_cpus::get_physical();
     println!("Number of logical cores: {qty_logical_cores}");
-    let qty_actix_threads = 1;
+    println!("Number of physical cores: {qty_physical_cores}");
+    let qty_actix_threads = qty_physical_cores;
     let qty_model_threads = 1;
     // let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
     //     (1, 1)
