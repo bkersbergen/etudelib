@@ -35,6 +35,12 @@ example: ## simple post request to endpoint
 	http://localhost:7080/v1/recommend \
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
+dockerbasebuild:  ## build the docker base image for the models
+	docker buildx build --platform linux/amd64 -t base -f docker/BaseDockerfile .
+
+dockerbaseinteractive:  ## run the docker base image interactive
+	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t base /bin/bash
+
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 

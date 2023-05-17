@@ -1,0 +1,32 @@
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS devel
+
+WORKDIR /usr/src/devel
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get upgrade -y; \
+    apt-get install -y --no-install-recommends \
+    libssl-dev \
+    pkg-config \
+    musl-tools \
+    curl \
+	llvm \
+    clang;
+
+COPY ./src src
+COPY ./Cargo.toml ./
+
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo search
+# cargo -j xxxx reduce the number of threads to prevent OOM
+RUN cargo build --release -j 2 --bin serving
+
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS runtime
+RUN set -eux; \
+    apt-get update; \
+    apt-get upgrade -y;
+
+WORKDIR /app
+COPY --from=builder /usr/src/devel/target/release/serving /app
+COPY --from=builder /usr/src/devel/target/release/libonnxruntime* /app
