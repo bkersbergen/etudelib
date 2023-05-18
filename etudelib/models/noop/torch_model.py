@@ -22,6 +22,6 @@ class NOOPModel(nn.Module):
         self.register_buffer('data', torch.arange(21, dtype=torch.float32))
 
     def forward(self, item_seq, _item_seq_len):
-        shape = (item_seq.size(0),) + self.data.shape
-        result = self.data.unsqueeze(0).expand(shape)
+        result = self.data.unsqueeze(0)
+        
         return result

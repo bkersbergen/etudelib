@@ -81,11 +81,8 @@ class GRU4RecModel(nn.Module):
         gru_output = self.dense(gru_output)
         # the embedding of the predicted item, shape of (batch_size, embedding_size)
         seq_output = self.gather_indexes(gru_output, item_seq_len - 1)
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(
-            seq_output, test_items_emb.transpose(0, 1)
-        )  # [B, n_items]
-        return scores
+
+        return seq_output
 
     def gather_indexes(self, output, gather_index):
         """Gathers the vectors at the specific positions over a minibatch"""

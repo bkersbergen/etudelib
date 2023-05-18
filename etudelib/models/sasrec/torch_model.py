@@ -111,9 +111,8 @@ class SASRecModel(nn.Module):
         )
         output = trm_output[-1]
         seq_output = self.gather_indexes(output, item_seq_len - 1)
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(seq_output, test_items_emb.transpose(0, 1))  # [B n_items]
-        return scores
+
+        return seq_output
 
     def get_attention_mask(self, item_seq, bidirectional=False):
         """Generate left-to-right uni-directional or bidirectional attention mask for multi-head attention."""

@@ -10,7 +10,7 @@ from importlib import import_module
 from pytorch_lightning import Trainer, seed_everything
 from torch.utils.data import DataLoader
 
-from etudelib.data.googlefs.googlefs import upload_to_gcs
+# from etudelib.data.googlefs.googlefs import upload_to_gcs
 from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.deploy.export import *
 from etudelib.models.topkdecorator import TopKDecorator
@@ -24,12 +24,15 @@ logger = logging.getLogger(__name__)
 
 
 def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_type, results, projectdir):
+    eager_model = TopKDecorator(eager_model, topk=21, topk_method=results["topk"], faiss_index_dir="")
+    results["topk"] = eager_model.topk_method
+    eager_model.eval()   
     Path(projectdir).mkdir(parents=True, exist_ok=True)
     min_duration_secs = 60
     bench = MicroBenchmark(min_duration_secs=min_duration_secs)
     print('-----------------------------------------------------------------------------------------------')
     print(
-        f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]}')
+        f'BENCHMARK {results["modelname"]} IN {new_model_mode} MODE ON DEVICE: {device_type} {results["param_source"]} USING TOPK METHOD {results["topk"]}')
     cpu_utilization, used_mem, total_mem = MicroBenchmark.get_metrics_cpu()
     print(f'CPU utilization : {cpu_utilization} %')
     print(f'used_mem: {used_mem} MB')
@@ -44,6 +47,10 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
     model_input = (item_seq, session_length)
 
     eager_model.to(device_type)
+    # Make sure to send faiss index to device if we do faiss-topk
+    if 'faiss' in results['topk']:
+        eager_model.index.send_to_device(device_type)
+
     if new_model_mode == 'eager':
         model = eager_model
         latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
@@ -100,7 +107,10 @@ def get_args() -> Namespace:
     parser.add_argument("--t", type=int, default=50,
                         help="Synthetic dataset: Number of timesteps or sequence length of a session as input for a "
                              "model")
-    parser.add_argument('--topk', type=str, default="y", help="Decorate recommender model with Top-k logic")
+    parser.add_argument('--topk', type=str, default="mm+topk", help="Decorate recommender model with Top-k logic.\
+                         Use 'mm+topk' (perform matmul + topk on the output of each model), 'faiss' (use faiss to find \
+                        top-k on the output of each model), 'topk' (only perform top-k on the output, no matrix \
+                        multiplication beforehand), or 'mm' (only perform matrix multiplication, no topk on the output)")
     parser.add_argument("--param_source", type=str, default="bolcom",
                         help="Synthetic dataset: using fit parameters from this datasource")
     parser.add_argument("--config", type=str, required=False, help="Path to a model config file")
@@ -168,18 +178,6 @@ def microbenchmark(args):
 
     eager_model = model.get_backbone()
 
-    if args.topk == 'y':
-        eager_model = TopKDecorator(eager_model, topk=21)
-
-    eager_model.eval()
-    params = []
-    for name, parameter in eager_model.named_parameters():
-        if parameter.requires_grad:
-            # param = parameter.numel()
-            params.append([name, parameter.shape])
-    for idx, layer in enumerate(params):
-        # logger.info(f"{idx} {layer}")
-        pass
 
     print(args)
 
@@ -190,7 +188,8 @@ def microbenchmark(args):
                't': args.t,
                'param_source': args.param_source,
                'config': config,
-               'model_architecture': str(eager_model)
+               'model_architecture': str(eager_model),
+               'topk': args.topk,
                }
 
     device_types = ['cpu']
@@ -199,50 +198,61 @@ def microbenchmark(args):
 
     for device_type in device_types:
         # Run benchmarks in separate processes to release (CUDA) memory when done
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'eager', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+        skip = (args.topk == 'faiss') & (args.C > 10_000_000) & (device_type == 'cuda')
+        if not skip:
+            p = Process(target=run_benchmark_process,
+                        args=(eager_model, 'eager', benchmark_loader, device_type, results, projectdir,))
+            p.start()
+            p.join()
 
-        # p = Process(target=run_benchmark_process,
-        #             args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
-        # p.start()
-        # p.join()
+            if args.topk != 'faiss':
+                # p = Process(target=run_benchmark_process,
+                #             args=(eager_model, 'jit', benchmark_loader, device_type, results, projectdir,))
+                # p.start()
+                # p.join()
 
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+                p = Process(target=run_benchmark_process,
+                            args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
+                p.start()
+                p.join()
 
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+                # p = Process(target=run_benchmark_process,
+                #             args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
+                # p.start()
+                # p.join()
 
-    if args.gcs_project_name:
-        print('Start transferring results to google storage bucket')
-        upload_to_gcs(local_dir=projectdir,
-                      gcs_project_name=args.gcs_project_name,
-                      gcs_bucket_name=args.gcs_bucket_name,
-                      gcs_dir=args.gcs_dir + '/heuristic_embeddingsize_onnx1' + str(date.today()))
-        print('End transferring results to google storage bucket')
+    # if args.gcs_project_name:
+    #     print('Start transferring results to google storage bucket')
+    #     upload_to_gcs(local_dir=projectdir,
+    #                   gcs_project_name=args.gcs_project_name,
+    #                   gcs_bucket_name=args.gcs_bucket_name,
+    #                   gcs_dir=args.gcs_dir + '/heuristic_embeddingsize_onnx1' + str(date.today()))
+    #     print('End transferring results to google storage bucket')
 
 
 if __name__ == "__main__":
     args = get_args()
     args.qty_interactions = 50_000
-    args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
-    args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
-    args.gcs_dir = 'bkersbergen_etude'
-    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec',
-                           'sine', 'srgnn',
-                           'stamp']:
+    # args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
+    # args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
+    # args.gcs_dir = 'bkersbergen_etude'
+    # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+    # for C in [10_000, 100_000]:
+    for C in [20_000_000]:
+    # for C in [1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
+        # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'random', 'repeatnet', 'sasrec',
+        #                    'sine', 'srgnn', 'stamp']:
+        # for model_name in ['gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec',
+        #                    'sine', 'srgnn', 'stamp', 'random', 'core']:
+        for model_name in ['repeatnet']:            
             args.C = C
             args.model = model_name
-            for t in [50]:
-                args.t = t
-                # for param_source in ['bolcom', 'rsc15']:
-                for param_source in ['bolcom']:
-                    args.param_source = param_source
-                    microbenchmark(args)
+            # for topk in ['mm+topk']:
+            for topk in ['faiss', 'mm+topk']:
+                args.topk = topk
+                for t in [50]:
+                    args.t = t
+                    # for param_source in ['bolcom', 'rsc15']:
+                    for param_source in ['bolcom']:
+                        args.param_source = param_source
+                        microbenchmark(args)

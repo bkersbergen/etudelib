@@ -77,9 +77,8 @@ class STAMPModel(nn.Module):
         hs = self.tanh(self.mlp_a(ma))
         ht = self.tanh(self.mlp_b(last_inputs))
         seq_output = hs * ht
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(seq_output, test_items_emb.transpose(0, 1))
-        return scores
+
+        return seq_output
 
     def count_alpha(self, context, aspect, output):
         r"""This is a function that count the attention weights

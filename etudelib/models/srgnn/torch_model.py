@@ -207,11 +207,8 @@ class SRGNNModel(nn.Module):
         alpha = self.linear_three(torch.sigmoid(q1 + q2))
         a = torch.sum(alpha * seq_hidden * mask.view(mask.size(0), -1, 1).float(), 1)
         seq_output = self.linear_transform(torch.cat([a, ht], dim=1))
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(
-            seq_output, test_items_emb.transpose(0, 1)
-        )  # [B, n_items]
-        return scores
+
+        return seq_output
 
     def gather_indexes(self, output, gather_index):
         """Gathers the vectors at the specific positions over a minibatch"""

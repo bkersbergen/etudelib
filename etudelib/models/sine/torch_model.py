@@ -134,8 +134,4 @@ class SINEModel(nn.Module):
         e_k_u = F.softmax(e_k.squeeze(2), dim=1)
         v_u = e_k_u.unsqueeze(2).mul(delta_k).sum(dim=1)
 
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(
-            v_u, test_items_emb.transpose(0, 1)
-        )  # [B, n_items]
-        return scores
+        return v_u

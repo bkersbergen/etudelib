@@ -94,9 +94,8 @@ class NARMModel(nn.Module):
         c_t = torch.cat([c_local, c_global], 1)
         c_t = self.ct_dropout(c_t)
         seq_output = self.b(c_t)
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(seq_output, test_items_emb.transpose(0, 1))
-        return scores
+
+        return seq_output
 
 
     def gather_indexes(self, output, gather_index):

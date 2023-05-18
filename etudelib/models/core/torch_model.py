@@ -197,9 +197,6 @@ class COREModel(nn.Module):
         seq_output = F.normalize(seq_output, dim=-1)
         test_item_emb = self.item_embedding.weight
         test_item_emb = self.item_dropout(test_item_emb)
-        test_item_emb = F.normalize(test_item_emb, dim=-1)
-        scores = (
-                torch.matmul(seq_output, test_item_emb.transpose(0, 1)) / self.temperature
-        )
-        return scores
+        
+        return seq_output
 

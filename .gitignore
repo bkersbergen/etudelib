@@ -24,3 +24,6 @@ target/
 /.docker/requirements.txt
 /logs/
 .docker/model_store/
+_old/
+*.index
+_data/

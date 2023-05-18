@@ -221,11 +221,8 @@ class GCSANModel(nn.Module):
         output = outputs[-1]
         at = self.gather_indexes(output, item_seq_len - 1)
         seq_output = self.weight * at + (1 - self.weight) * ht
-        test_items_emb = self.item_embedding.weight
-        scores = torch.matmul(
-            seq_output, test_items_emb.transpose(0, 1)
-        )  # [B, n_items]
-        return scores
+
+        return seq_output
 
 
     def gather_indexes(self, output, gather_index):

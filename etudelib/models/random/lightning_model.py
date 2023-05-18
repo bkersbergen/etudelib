@@ -14,9 +14,14 @@ __all__ = ["RANDOM", "RANDOMLightning"]
 
 
 class RANDOM(pl.LightningModule, ABC):
-    def __init__(self, n_items: int):
+    def __init__(self, 
+                 n_items: int,
+                 embedding_size: int,
+                ):
         super().__init__()
-        self.model = RANDOMModel(n_items)
+        self.model = RANDOMModel(n_items, 
+                                 embedding_size, 
+                                 )
 
     def forward(self, x):
         return self.model(x)
@@ -57,6 +62,7 @@ class RANDOMLightning(RANDOM):
     def __init__(self, hparams: Union[DictConfig, ListConfig]) -> None:
         super().__init__(
             n_items=hparams.dataset.n_items,
+            embedding_size=hparams.model.embedding_size,
         )
         self.hparams: Union[DictConfig, ListConfig]  # type: ignore
         self.save_hyperparameters(hparams)

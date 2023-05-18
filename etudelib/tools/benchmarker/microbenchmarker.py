@@ -183,12 +183,13 @@ class MicroBenchmark:
                           'dt',
                           'C',
                           't',
+                          'topk',
                           }
         for key in mandatory_keys:
             if key not in results.keys():
                 raise Exception("field: '{}' is missing in results".format(key))
 
-        output_filename = f'{result_path}/{results["modelname"]}_{results["runtime"]}_{results["param_source"]}_C{results["C"]}_t{results["t"]}_results.pickle'.lower()
+        output_filename = f'{result_path}/{results["modelname"]}_{results["runtime"]}_{results["topk"]}_{results["param_source"]}_C{results["C"]}_t{results["t"]}_results.pickle'.lower()
         os.makedirs(result_path, exist_ok=True)
         with open(output_filename, 'wb') as handle:
             pickle.dump(results, handle)
