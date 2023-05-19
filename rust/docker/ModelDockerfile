@@ -1,0 +1,10 @@
+FROM base
+
+ARG path_to_model
+ARG path_to_payload
+
+COPY --chown=app:app ${path_to_model} ./models/
+COPY --chown=app:app ${path_to_payload} ./models/
+
+ENV model_path ./models/$(basename ${path_to_model})
+ENV payload_path ./models/$(basename ${path_to_payload})

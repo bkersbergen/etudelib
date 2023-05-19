@@ -35,11 +35,24 @@ example: ## simple post request to endpoint
 	http://localhost:7080/v1/recommend \
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
-dockerbasebuild:  ## build the docker base image for the models
+buildserving:  ## build the serving application for the models
 	docker buildx build --platform linux/amd64 -t base -f docker/BaseDockerfile .
 
-dockerbaseinteractive:  ## run the docker base image interactive
+interactiveserving:  ## run the docker base image interactive
 	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t base /bin/bash
+
+buildmodel:  ## build a model
+	docker build --platform linux/amd64 \
+		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
+		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
+		-t noop \
+		-f docker/ModelDockerfile .
+
+interactivemodel:  ## run the model interactive
+	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t noop /bin/bash
+
+runmodel:  ## run the model
+	docker run --platform linux/amd64 --expose 7080 -t noop
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

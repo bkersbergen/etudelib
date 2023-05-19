@@ -37,10 +37,16 @@ RUN set -eux; \
 
 WORKDIR /app
 
+# Setup the local account
+RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
+RUN chown -R app:app /app
+USER app
+
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 
-COPY --from=builder /usr/src/devel/target/release/serving /app
+COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
 COPY --from=builder /usr/src/devel/target/release/libonnx* ${LD_LIBRARY_PATH}
 COPY --from=builder /usr/src/devel/target/libtorch/* ${LD_LIBRARY_PATH}
 
-
+ENTRYPOINT [ "/app/serving" , "models/noop_bolcom_c1000000_t50_jitopt.pth", "models/noop_bolcom_c1000000_t50_payload.yaml"]
+EXPOSE 7080/tcp

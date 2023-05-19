@@ -1,3 +1,4 @@
+use std::net::Ipv4Addr;
 use std::sync::Arc;
 use actix_web::middleware::{Logger};
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, http::header};
@@ -9,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::ModelEngine;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
-
 
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -90,8 +90,23 @@ pub struct Models {
     pub onnx_model: Arc<Option<OnnxModelRuntime>>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Config {
+    host: Ipv4Addr,
+    port: u16,
+    model_path: String,
+    payload_path: String,
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let b = "1234";
+
+    let configfile_path = std::env::args().nth(1).expect("no path to a configfile.yaml given");
+    let f = std::fs::File::open(configfile_path).expect("Could not open file.");
+    let config: Config = serde_yaml::from_reader(f).expect("Could not read values.");
+    println!("{:?}", config);
+
     let qty_logical_cores = num_cpus::get();
     let qty_physical_cores = num_cpus::get_physical();
     println!("Number of logical cores: {qty_logical_cores}");
@@ -112,22 +127,19 @@ async fn main() -> std::io::Result<()> {
     println!("Number of actix threads: {qty_actix_threads}");
     println!("Number of model threads: {qty_model_threads}");
 
-
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "error");
     }
     env_logger::init();
     println!("Actix Server started successfully");
-    let model_path = std::env::args().nth(1).expect("no path to a model.pt given");
-    let payload_path = std::env::args().nth(2).expect("no path to payload.yaml given");
 
-    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if model_path.ends_with("_jitopt.pth") {
-        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
+    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_path.ends_with("_jitopt.pth") {
+        Arc::new(Some(JITModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
-    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if model_path.ends_with("_onnx.pth") {
-        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
+    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_path.ends_with("_onnx.pth") {
+        Arc::new(Some(OnnxModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
@@ -151,7 +163,7 @@ async fn main() -> std::io::Result<()> {
                     .add(("Expires", "0")),
             )
     })
-        .bind(("127.0.0.1", 7080)).unwrap_or_else(|_| panic!("Could not bind server to address"))
+        .bind((config.host, config.port)).unwrap_or_else(|_| panic!("Could not bind server to address"))
         .workers(qty_actix_threads)
         .run()
         .await
