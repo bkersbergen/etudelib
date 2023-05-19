@@ -6,8 +6,4 @@ ARG path_to_config
 
 COPY --chown=app:app ${path_to_model} ./model_store/
 COPY --chown=app:app ${path_to_payload} ./model_store/
-COPY --chown=app:app ${path_to_config} ./config/
-
-ENV model_path ./model_store/$(basename ${path_to_model})
-ENV payload_path ./model_store/$(basename ${path_to_payload})
-ENV config_path ./config/$(basename ${path_to_config})
+COPY --chown=app:app ${path_to_config} ./config/serving.yaml

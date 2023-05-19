@@ -48,5 +48,5 @@ COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
 COPY --from=builder /usr/src/devel/target/release/libonnx* ${LD_LIBRARY_PATH}
 COPY --from=builder /usr/src/devel/target/libtorch/* ${LD_LIBRARY_PATH}
 
-ENTRYPOINT [ "/app/serving" , "config/serving.yaml"]
+ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
 EXPOSE 7080/tcp

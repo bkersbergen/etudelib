@@ -45,7 +45,7 @@ buildmodel:  ## build a model
 	docker build --platform linux/amd64 \
 		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
 		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
-		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
+		--build-arg path_to_config="config/serving.yaml" \
 		-t noop \
 		-f docker/ModelDockerfile .
 
