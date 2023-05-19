@@ -36,7 +36,7 @@ example: ## simple post request to endpoint
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
 buildserving:  ## build the serving application for the models
-	docker buildx build --platform linux/amd64 -t base -f docker/BaseDockerfile .
+	docker build --platform linux/amd64 -t base -f docker/BaseDockerfile .
 
 interactiveserving:  ## run the docker base image interactive
 	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t base /bin/bash
@@ -44,6 +44,7 @@ interactiveserving:  ## run the docker base image interactive
 buildmodel:  ## build a model
 	docker build --platform linux/amd64 \
 		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
+		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
 		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
 		-t noop \
 		-f docker/ModelDockerfile .

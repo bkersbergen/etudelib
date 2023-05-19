@@ -94,8 +94,9 @@ pub struct Models {
 struct Config {
     host: Ipv4Addr,
     port: u16,
-    model_path: String,
-    payload_path: String,
+    model_store_path: String,
+    model_filename: String,
+    payload_filename: String,
 }
 
 #[actix_web::main]
@@ -131,13 +132,17 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     println!("Actix Server started successfully");
 
-    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_path.ends_with("_jitopt.pth") {
-        Arc::new(Some(JITModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
+    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_filename.ends_with("_jitopt.pth") {
+        let model_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.model_filename);
+        let payload_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.payload_filename);
+        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
-    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_path.ends_with("_onnx.pth") {
-        Arc::new(Some(OnnxModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
+    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_filename.ends_with("_onnx.pth") {
+        let model_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.model_filename);
+        let payload_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.payload_filename);
+        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
