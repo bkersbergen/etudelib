@@ -21,7 +21,7 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Determine number of jobs based on the available memory (GB) and available CPU's to prevent OOM
-RUN gb_per_job=6 && total_memory=$(free -b | awk '/Mem:/{print $2}') \
+RUN gb_per_job=7 && total_memory=$(free -b | awk '/Mem:/{print $2}') \
     && gb_jobs=$(echo "scale=0; (${total_memory} + 1024^3/2) / 1024^3/${gb_per_job}" | bc) \
     && ncpus=$(nproc) && jobs=$((gb_jobs<ncpus?gb_jobs:ncpus)) \
     && cargo build --release -j "${jobs}" --bin serving
