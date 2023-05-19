@@ -100,10 +100,8 @@ struct Config {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let b = "1234";
-
-    let configfile_path = std::env::args().nth(1).expect("no path to a configfile.yaml given");
-    let f = std::fs::File::open(configfile_path).expect("Could not open file.");
+    let arg_configfile = std::env::args().nth(1).expect("no path to a server configfile.yaml given");
+    let f = std::fs::File::open(arg_configfile).expect("Could not open configfile.");
     let config: Config = serde_yaml::from_reader(f).expect("Could not read values.");
     println!("{:?}", config);
 
