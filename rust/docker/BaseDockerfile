@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS devel
+FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS builder
 
 WORKDIR /usr/src/devel
 
@@ -11,22 +11,28 @@ RUN set -eux; \
     musl-tools \
     curl \
 	llvm \
-    clang;
+    clang \
+    bc;
 
 COPY ./src src
 COPY ./Cargo.toml ./
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-RUN cargo search
-# cargo -j xxxx reduce the number of threads to prevent OOM
-RUN cargo build --release -j 2 --bin serving
+#RUN cargo search
+# We need 5GB for each compile job otherwise we get OOM
 
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS runtime
-RUN set -eux; \
-    apt-get update; \
-    apt-get upgrade -y;
+# Determine number of jobs based on the available memory (GB)
+RUN gb_per_job=4 && total_memory=$(free -b | awk '/Mem:/{print $2}') \
+    && jobs=$(echo "scale=0; (${total_memory} + 1024^3/2) / 1024^3/${gb_per_job}" | bc) \
+    && cargo build -j "${jobs}" --bin serving
 
-WORKDIR /app
-COPY --from=builder /usr/src/devel/target/release/serving /app
-COPY --from=builder /usr/src/devel/target/release/libonnxruntime* /app
+
+#FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS runtime
+#RUN set -eux; \
+#    apt-get update; \
+#    apt-get upgrade -y;
+#
+#WORKDIR /app
+#COPY --from=builder /usr/src/devel/target/release/serving /app
+#COPY --from=builder /usr/src/devel/target/release/libonnxruntime* /app
