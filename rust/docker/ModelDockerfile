@@ -1,4 +1,4 @@
-FROM base
+FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest
 
 ARG path_to_model
 ARG path_to_payload

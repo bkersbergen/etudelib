@@ -36,24 +36,24 @@ example: ## simple post request to endpoint
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
 buildserving:  ## build the serving application for the models
-	docker build --platform linux/amd64 -t base -f docker/BaseDockerfile .
+	docker build --platform linux/amd64 -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest -f docker/BaseDockerfile .
 
 interactiveserving:  ## run the docker base image interactive
-	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t base /bin/bash
+	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest /bin/bash
 
 buildmodel:  ## build a model
 	docker build --platform linux/amd64 \
 		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
 		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
 		--build-arg path_to_config="config/serving.yaml" \
-		-t noop \
+		-t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/noop_bolcom_c1000000_t50_jitopt:latest \
 		-f docker/ModelDockerfile .
 
 interactivemodel:  ## run the model interactive
-	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t noop /bin/bash
+	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/noop_bolcom_c1000000_t50:latest /bin/bash
 
 runmodel:  ## run the model
-	docker run --platform linux/amd64 --expose 7080 -t noop
+	docker run --platform linux/amd64 --expose 7080 -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/noop_bolcom_c1000000_t50:latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

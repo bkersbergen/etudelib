@@ -4,7 +4,6 @@ WORKDIR /usr/src/devel
 
 RUN set -eux; \
     apt-get update; \
-    apt-get upgrade -y; \
     apt-get install -y --no-install-recommends \
     libssl-dev \
     pkg-config \
@@ -19,12 +18,14 @@ COPY ./Cargo.toml ./
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo search
 
-# Determine number of jobs based on the available memory (GB) and available CPU's to prevent OOM
+# 1) Manually set the number of jobs to prevent OOM to xx GB per CPU
+# 2) Fix compile error for crate 'ring' which is a dependency for 'ort' (onnx runtime) https://github.com/briansmith/ring/issues/1605 .
 RUN gb_per_job=8 && total_memory=$(free -b | awk '/Mem:/{print $2}') \
     && gb_jobs=$(echo "scale=0; (${total_memory} + 1024^3/2) / 1024^3/${gb_per_job}" | bc) \
     && ncpus=$(nproc) && jobs=$((gb_jobs<ncpus?gb_jobs:ncpus)) \
-    && cargo build --release -j "${jobs}" --bin serving
+    && RUSTFLAGS="-C link-args=-fstack-protector-all -lssp"; cargo build --release -j "${jobs}" --bin serving
 
 RUN mkdir -p ./target/libtorch
 
