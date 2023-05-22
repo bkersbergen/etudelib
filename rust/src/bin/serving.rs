@@ -36,7 +36,7 @@ pub struct V1RequestParams {
 }
 
 
-#[post("/v1/recommend")]
+#[post("/predictions/model")]
 async fn v1_recommend(
     models: Data<Models>,
     query: Json<VertexRequest>,

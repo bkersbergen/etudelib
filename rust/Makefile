@@ -32,7 +32,7 @@ serving: ## Build and run the Rust application in debug mode
 example: ## simple post request to endpoint
 	curl -X POST -H \
 	"Content-Type: application/json" \
-	http://localhost:7080/v1/recommend \
+	http://localhost:7080/predictions/model \
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
 serve_buildpush:  ## build the serving application for the models
