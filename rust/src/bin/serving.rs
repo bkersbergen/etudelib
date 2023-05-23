@@ -11,7 +11,7 @@ use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::ModelEngine;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
 
-
+// https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#prediction
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VertexRequest {
     instances: Vec<VertexRequestContext>,
@@ -28,13 +28,11 @@ pub struct VertexRequestParameter {
     runtime: String,
 }
 
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct V1RequestParams {
-    item_ids: Vec<i64>,
-    session_id: String,
+// https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#response_requirements
+#[derive(Debug, Serialize)]
+pub struct VertexResponse {
+    pub predictions: Vec<i64>,
 }
-
 
 #[post("/predictions/model")]
 async fn v1_recommend(
@@ -46,14 +44,23 @@ async fn v1_recommend(
     let response = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
             let result_item_ids = model.recommend(&session_items);
-            HttpResponse::Ok().json(result_item_ids)
+            let response = &VertexResponse {
+                predictions: result_item_ids,
+            };
+            HttpResponse::Ok().json(response)
         }
         (None, Some(ref model)) => {
             let result_item_ids = model.recommend(&session_items);
-            HttpResponse::Ok().json(result_item_ids)
+            let response = &VertexResponse {
+                predictions: result_item_ids,
+            };
+            HttpResponse::Ok().json(response)
         }
         _ => {
-            HttpResponse::Ok().json(vec![-1])
+            let response = &VertexResponse {
+                predictions: Vec::with_capacity(0),
+            };
+            HttpResponse::Ok().json(response)
         },
     };
     return response;
@@ -68,7 +75,7 @@ pub struct GenericResponse {
 
 #[get("/ping")]
 async fn ping() -> impl Responder {
-    const MESSAGE: &str = "Actix Web is running";
+    const MESSAGE: &str = "EtudeServing is running";
 
     let response_json = &GenericResponse {
         status: "success".to_string(),
@@ -130,7 +137,7 @@ async fn main() -> std::io::Result<()> {
         std::env::set_var("RUST_LOG", "error");
     }
     env_logger::init();
-    println!("Actix Server started successfully");
+    println!("EtudeServing started successfully");
 
     let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_filename.ends_with("_jitopt.pth") {
         let model_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.model_filename);

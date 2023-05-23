@@ -1,11 +1,15 @@
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS builder
+# pytorch/pytorch (Ubuntu)
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel AS builder
 
 WORKDIR /usr/src/devel
+# https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
+ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Amsterdam"
 
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends \
+    apt-get install -y \
     libssl-dev \
+    libzstd-dev \
     pkg-config \
     musl-tools \
     curl \
@@ -15,26 +19,26 @@ RUN set -eux; \
 
 COPY ./src src
 COPY ./Cargo.toml ./
+COPY ./build_loop.sh ./
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
-RUN cargo search
+RUN rustup default nightly; cargo search
 
-# 1) Manually set the number of jobs to prevent OOM to xx GB per CPU
-# 2) Fix compile error for crate 'ring' which is a dependency for 'ort' (onnx runtime) https://github.com/briansmith/ring/issues/1605 .
-RUN gb_per_job=12 && total_memory=$(free -b | awk '/Mem:/{print $2}') \
-    && gb_jobs=$(echo "scale=0; (${total_memory} + 1024^3/2) / 1024^3/${gb_per_job}" | bc) \
-    && ncpus=$(nproc) && jobs=$((gb_jobs<ncpus?gb_jobs:ncpus)) \
-    && RUSTFLAGS="-C link-args=-fstack-protector-all -lssp"; cargo build --release -j "${jobs}" --bin serving
+# A simple `cargo build` failed over and over again. Randomly producing all kinds of compile- or out of memory- errors
+# I was not able to pin point it. Suggestions from the internet did not help consistently.
+# Perhaps its related by my M1 emulating a x64 on QEMU.
+# The best way to make it work is keep compiling until its successful. This seems to work and works on all platforms.
+RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
 
 RUN mkdir -p ./target/libtorch
 
 RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
 
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-devel AS runtime
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
+
 RUN set -eux; \
-    apt-get update; \
-    apt-get upgrade -y;
+    apt-get update;
 
 WORKDIR /app
 
@@ -43,11 +47,12 @@ RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
 RUN chown -R app:app /app
 USER app
 
-ENV LD_LIBRARY_PATH=/usr/local/lib/
+ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
 
 COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
-COPY --from=builder /usr/src/devel/target/release/libonnx* ${LD_LIBRARY_PATH}
-COPY --from=builder /usr/src/devel/target/libtorch/* ${LD_LIBRARY_PATH}
+COPY --from=builder /usr/src/devel/target/release/libonnx* /usr/local/lib/
+COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
+COPY --from=builder /usr/src/devel/build.log /app
 
 ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
 EXPOSE 7080/tcp

@@ -40,7 +40,7 @@ serve_buildpush:  ## build the serving application for the models
 	docker push eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest
 
 serve_interactive:  ## run the docker base image interactive
-	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest /bin/bash
+	docker run --rm -it --entrypoint /bin/bash --platform linux/amd64 --user root -v $(shell pwd):/local/ -i -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest
 
 model_buildpush:  ## build and push model
 	docker build --platform linux/amd64 \

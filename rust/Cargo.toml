@@ -16,6 +16,8 @@ edition = "2021"
 name = "serving"
 path = "src/bin/serving.rs"
 
+[workspace]
+resolver = "2"
 
 # enable rpath to load libraries from the same folder as the binary
 [profile.dev]
@@ -26,9 +28,8 @@ rpath = true
 rpath = true
 
 [dependencies]
-actix-cors = "0.6.4"
 # not enable ztd-sys in actix-web because it sometimes fails compiling in Docker
-actix-web = {version = "4.3.1", default-features = false, features= ['cookies', 'macros', 'compress-brotli', 'compress-gzip']}
+actix-web = {version = "4.3.1", default-features = false, features= ['cookies', 'macros']}
 chrono = { version = "0.4.24", features = ["serde"] }
 env_logger = "0.10.0"
 serde = { version = "1.0.162", features = ["derive"] }
