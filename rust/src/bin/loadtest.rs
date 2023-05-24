@@ -11,16 +11,28 @@ use rand::rngs::StdRng;
 #[tokio::main]
 async fn main() -> Result<(), GooseError> {
 
-    // Check if the "sync" command line argument is provided
-    let args: Vec<String> = env::args().collect();
-    // let synchronous_mode = args.len() > 1 && args[1] == "sync";
-    let synchronous_mode: bool = true;
-    println!("synchronous_mode: {synchronous_mode}");
+    let endpoint_url_arg = env::var("VERTEX_ENDPOINT_URL").unwrap_or_else(|_| {
+        eprintln!("Error: The 'VERTEX_ENDPOINT_URL' environment variable is not defined.");
+        std::process::exit(1);
+    });
+    println!("ENV_VAR[VERTEX_ENDPOINT_URL] = {endpoint_url_arg}");
+    let catalog_size_arg: i32= env::var("CATALOG_SIZE").unwrap_or_else(|_| {
+        eprintln!("Error: The 'CATALOG_SIZE' environment variable is not defined.");
+        std::process::exit(1);
+    }).parse().unwrap();
+    println!("ENV_VAR[CATALOG_SIZE] = {catalog_size_arg}");
+    let report_location_arg = env::var("REPORT_LOCATION").unwrap_or_else(|_| {
+        eprintln!("Error: The 'REPORT_LOCATION' environment variable is not defined.");
+        std::process::exit(1);
+    });
+    println!("ENV_VAR[REPORT_LOCATION] = {report_location_arg}");
+
+    let dummy_variable: bool = true;
 
     let closure: TransactionFunction = Arc::new(move |user| {
         Box::pin(async move {
             // Call the recommend function with the custom variable.
-            recommend(user, synchronous_mode).await?;
+            recommend(user, dummy_variable).await?;
             Ok(())
         })
     });
@@ -36,7 +48,7 @@ async fn main() -> Result<(), GooseError> {
     Ok(())
 }
 
-async fn recommend(user: &mut GooseUser, synchronous_mode: bool) -> TransactionResult {
+async fn recommend(user: &mut GooseUser, _dummy_variable: bool) -> TransactionResult {
     let mut rng = StdRng::from_entropy();
     let session_length: i32 = rng.gen_range(1..15);
     let item_ids = (0..session_length).map(|_| rng.gen_range(1..1000)).collect::<Vec<i64>>();
@@ -55,12 +67,8 @@ async fn recommend(user: &mut GooseUser, synchronous_mode: bool) -> TransactionR
         // Turn the GooseRequestBuilder object into a GooseRequest.
         .build();
 
-    if synchronous_mode {
-        let response = user.request(goose_request).await?;
-        // let recos = response.response.unwrap().json::<Vec<i64>>().await.unwrap();
-        // println!("{:?}", recos);
-    } else {
-        let future = user.request(goose_request);
-    };
+    let response = user.request(goose_request).await?;
+    // let recos = response.response.unwrap().json::<Vec<i64>>().await.unwrap();
+    // println!("{:?}", recos);
     Ok(())
 }
