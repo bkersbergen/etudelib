@@ -31,7 +31,11 @@ spec:
             - name: CATALOG_SIZE
               value: "${CATALOG_SIZE}"
             - name: REPORT_LOCATION
-              value: "${REPORT_URI}"
+              value: "${REPORT_LOCATION}"
+            - name: TARGET_RPS
+              value: "${TARGET_RPS}"
+            - name: RAMP_DURATION_MINUTES
+              value: "${RAMP_DURATION_MINUTES}"
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false

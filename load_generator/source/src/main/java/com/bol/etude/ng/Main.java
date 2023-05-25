@@ -45,8 +45,22 @@ public class Main {
 //        report_location_arg = "/tmp/etude.avro";
         System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
 
-        if (Strings.isNullOrEmpty(endpoint_arg) || Strings.isNullOrEmpty(catalog_size_arg) || Strings.isNullOrEmpty(report_location_arg)) {
-            System.out.println("env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION] are required.");
+        String target_rps_arg = System.getenv("TARGET_RPS");
+//        target_rps_arg = 1000
+        System.out.println("ENV_VAR[TARGET_RPS] = '" + target_rps_arg + "'");
+
+        String ramp_duration_minutes_arg = System.getenv("RAMP_DURATION_MINUTES");
+//        ramp_duration_minutes_arg = 20
+        System.out.println("ENV_VAR[RAMP_DURATION_MINUTES] = '" + ramp_duration_minutes_arg + "'");
+
+
+        if (Strings.isNullOrEmpty(endpoint_arg) ||
+                Strings.isNullOrEmpty(catalog_size_arg) ||
+                Strings.isNullOrEmpty(report_location_arg) ||
+                Strings.isNullOrEmpty(target_rps_arg) ||
+                Strings.isNullOrEmpty(ramp_duration_minutes_arg)
+        ) {
+            System.out.println("env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION, TARGET_RPS, RAMP_DURATION_MINUTES ] are required.");
             Thread.sleep(300_000);
             System.exit(1);
         }
@@ -59,7 +73,11 @@ public class Main {
             URI endpoint = URI.create(endpoint_arg);
             File temporary = new File("/tmp/etude/report.avro");
             Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
-            executeTestScenario(endpoint, temporary, journeys);
+            executeTestScenario(endpoint,
+                    temporary,
+                    journeys,
+                    Integer.parseInt(target_rps_arg),
+                    ofMinutes(Integer.parseInt(ramp_duration_minutes_arg)));
             writeReportToStorage(temporary, report_location_arg);
 
             System.out.println("Test.ok()");
@@ -79,9 +97,18 @@ public class Main {
         return new Journeys(journeys);
     }
 
-    private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys) {
+    private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys, int targetRps, Duration ramp) {
         ExecutorService executor = Executors.newFixedThreadPool(4);
-        Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, new GoogleBearerAuthenticator());
+
+        GoogleBearerAuthenticator authenticator = null;
+
+        String hostname = endpoint.getHost();
+        if (hostname != null && !hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
+            // add google bearer authentication if endpoint is not localhost
+            authenticator = new GoogleBearerAuthenticator();
+        }
+
+        Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, authenticator);
         Persister<Report> persister = new DataFilePersister<>(temporary, Report.class);
         Collector<Journey> collector = new Collector<>();
 //        Journeys supplier = new Journeys(randomJourneySupplier());
@@ -89,7 +116,7 @@ public class Main {
         try (persister; requester) {
             System.out.println("Scenario.run()");
 
-            rampWithBackPressure(55, ofMinutes(10), (request) -> {
+            rampWithBackPressure(targetRps, ramp, (request) -> {
                 executor.execute(() -> {
                     request.fly();
 
