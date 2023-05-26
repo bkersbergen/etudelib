@@ -11,16 +11,16 @@ use rand::rngs::StdRng;
 #[tokio::main]
 async fn main() -> Result<(), GooseError> {
 
-    let endpoint_url_arg = env::var("VERTEX_ENDPOINT_URL").unwrap_or_else(|_| {
-        eprintln!("Error: The 'VERTEX_ENDPOINT_URL' environment variable is not defined.");
-        std::process::exit(1);
-    });
-    println!("ENV_VAR[VERTEX_ENDPOINT_URL] = {endpoint_url_arg}");
-    let catalog_size_arg: i32= env::var("CATALOG_SIZE").unwrap_or_else(|_| {
-        eprintln!("Error: The 'CATALOG_SIZE' environment variable is not defined.");
-        std::process::exit(1);
-    }).parse().unwrap();
-    println!("ENV_VAR[CATALOG_SIZE] = {catalog_size_arg}");
+    // let endpoint_url_arg = env::var("VERTEX_ENDPOINT_URL").unwrap_or_else(|_| {
+    //     eprintln!("Error: The 'VERTEX_ENDPOINT_URL' environment variable is not defined.");
+    //     std::process::exit(1);
+    // });
+    // println!("ENV_VAR[VERTEX_ENDPOINT_URL] = {endpoint_url_arg}");
+    // let catalog_size_arg: i32= env::var("CATALOG_SIZE").unwrap_or_else(|_| {
+    //     eprintln!("Error: The 'CATALOG_SIZE' environment variable is not defined.");
+    //     std::process::exit(1);
+    // }).parse().unwrap();
+    // println!("ENV_VAR[CATALOG_SIZE] = {catalog_size_arg}");
     let report_location_arg = env::var("REPORT_LOCATION").unwrap_or_else(|_| {
         eprintln!("Error: The 'REPORT_LOCATION' environment variable is not defined.");
         std::process::exit(1);

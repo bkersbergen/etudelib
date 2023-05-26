@@ -12,7 +12,7 @@ ACCELERATIONS=(false) # (false 'NVIDIA_TESLA_T4')
 RUNTIMES=('jitopt') # ('eager' 'jitopt' 'onnx')
 NETWORKS=('noop') # ('noop' 'random' 'core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
 CATALOG_SIZES=(1000000) # (10000 100000 500000 1000000 5000000)
-TARGET_RPS=1000
+TARGET_RPS=100
 RAMP_DURATION_MINUTES=20
 
 function normalize() {
