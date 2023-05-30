@@ -111,7 +111,8 @@ class TorchServeExporter:
         # rename model.mar to something like 'noop_bolcom_c1000_t50_eager'
         current_filename = output_dir + 'model.mar'
         new_filename = output_dir + filename_without_ext + '.mar'
-        os.remove(new_filename)
+        if os.path.exists(new_filename):
+            os.remove(new_filename)
         os.rename(current_filename, new_filename)
 
 

@@ -76,6 +76,7 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
         else:
             providers = ['CPUExecutionProvider']
             sess_options = ort.SessionOptions()
+            sess_options.inter_op_num_threads = 1
             sess_options.intra_op_num_threads = 1
         ort_sess = ort.InferenceSession(export_path, sess_options=sess_options, providers=providers)
         latency_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)

@@ -45,8 +45,6 @@ class TorchInferencer(BaseHandler):
 
     def initialize_from_file(self, model_path):
         logger.info('TorchInferencer.initialize_from_file(): {}'.format(model_path))
-        if not os.path.isfile(model_path):
-            logger.error("Model serializedFile not found:", model_path)
         if model_path.endswith('_eager.pth'):
             self.runtime = 'eager'
             filename_without_extension = model_path.split('_eager.pth')[0]
@@ -60,15 +58,21 @@ class TorchInferencer(BaseHandler):
         elif model_path.endswith('_onnx.pth'):
             self.runtime = 'onnx'
             filename_without_extension = model_path.split('_onnx.pth')[0]
-            providers = (
-                ["CUDAExecutionProvider", "CPUExecutionProvider"]
-                if self.device_type == "cuda"
-                else ["CPUExecutionProvider"]
-            )
+            if self.device_type == "cuda":
+                providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+                sess_options = None
+            else:
+                providers = ['CPUExecutionProvider']
+                sess_options = ort.SessionOptions()
+                sess_options.inter_op_num_threads = 1
+                sess_options.intra_op_num_threads = 1
             try:
-                self.ort_sess = ort.InferenceSession(model_path, providers=providers)
+                self.ort_sess = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
             except ImportError as error:
                 logger.warning("Onnx ImportError." + str(error))
+        else:
+            logger.error("Unknown Model serialization for:", model_path)
+
         logger.info(f'Runtime: {self.runtime}')
         logger.info(f'Device type: {self.device_type}')
         payload = torch.load(filename_without_extension + '_payload.torch')
@@ -182,52 +186,53 @@ class TorchInferencer(BaseHandler):
                 reco_item_ids.append(self.idx2item[idx])
         return reco_item_ids
 
-#
-# if __name__ == '__main__':
-#     model_name = 'core'
-#     C = 1000000
-#     max_seq_length = 50
-#     dataset_name = 'synthetic'
-#     rootdir = Path(__file__).parent.parent.parent.parent
-#
-#     projectdir = Path(rootdir, 'projects/benchmark')
-#     configure_logger(level='INFO')
-#
-#     config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
-#     config = OmegaConf.load(config_path)
-#
-#     config['dataset'] = {}
-#     config['dataset']['n_items'] = C
-#     config['dataset']['max_seq_length'] = max_seq_length
-#
-#     module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
-#     model = getattr(module, f"{config.model.name}Lightning")(config)
-#
-#     eager_model = model.get_backbone()
-#
-#     eager_model = TopKDecorator(eager_model, topk=21)
-#     eager_model.eval()
-#
-#     base_filename = f'{model_name}_{dataset_name}_{C}_{max_seq_length}'
-#
-#     payload = {'max_seq_length': max_seq_length,
-#                'C': C,
-#                'idx2item': [i for i in range(C)]
-#                }
-#     torch.save(payload, str(projectdir / f'{base_filename}.payload.torch'))
-#
-#     torch.save(eager_model, str(projectdir / f'{base_filename}.eager.pth'))
-#
-#     inferencer = TorchInferencer()
-#     inferencer.initialize_from_file(str(projectdir / 'core_synthetic_1000000_50.eager.pth'))
-#     request_data = [{'body':
-#         {
-#             'instances': [{'context': [1, 2, 3]}]
-#         }
-#     }]
-#     preprocessed = inferencer.preprocess(request_data)
-#     inferenced = inferencer.inference(preprocessed)
-#     recos = inferencer.postprocess(inferenced)
-#
-#     recos = inferencer.handle(request_data, context=None)
-#     print(recos)
+
+if __name__ == '__main__':
+    model_name = 'core'
+    C = 1000000
+    max_seq_length = 50
+    dataset_name = 'synthetic'
+    rootdir = Path(__file__).parent.parent.parent.parent
+
+    projectdir = Path(rootdir, 'projects/benchmark')
+    configure_logger(level='INFO')
+
+    config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
+    config = OmegaConf.load(config_path)
+
+    config['dataset'] = {}
+    config['dataset']['n_items'] = C
+    config['dataset']['max_seq_length'] = max_seq_length
+
+    module = import_module(f"etudelib.models.{config.model.name}.lightning_model".lower())
+    model = getattr(module, f"{config.model.name}Lightning")(config)
+
+    eager_model = model.get_backbone()
+
+    eager_model = TopKDecorator(eager_model, topk=21)
+    eager_model.eval()
+
+    base_filename = f'{model_name}_{dataset_name}_{C}_{max_seq_length}'
+
+    payload = {'max_seq_length': max_seq_length,
+               'C': C,
+               'idx2item': [i for i in range(C)]
+               }
+    torch.save(payload, str(projectdir / f'{base_filename}_payload.torch'))
+
+    eager_model_file = str(projectdir / f'{base_filename}_eager.pth')
+    torch.save(eager_model, eager_model_file)
+
+    inferencer = TorchInferencer()
+    inferencer.initialize_from_file(eager_model_file)
+    request_data = [{'body':
+        {
+            'instances': [{'context': [1, 2, 3]}, {'context': [2, 3, 4]}]
+        }
+    }]
+    preprocessed = inferencer.preprocess(request_data)
+    inferenced = inferencer.inference(preprocessed)
+    recos = inferencer.postprocess(inferenced)
+
+    recos = inferencer.handle(request_data, context=None)
+    print(recos)
