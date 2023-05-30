@@ -25,3 +25,5 @@ target/
 /logs/
 .docker/model_store/
 .libtorch_path
+error.log
+

@@ -37,9 +37,10 @@ export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/delete_model_job.${VERTEX_MODEL_NAME}.yaml"
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
-POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m)
+# Ignore any errors that may occur during the execution of the following kubectl (by appending `|| true`).
+POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m 2> error.log || true)
 
-LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow)
+LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow 2> error.log || true)
 if [[ "$LOGS" =~ .*"Model deleted.".* ]]; then
   echo "models['${VERTEX_MODEL_NAME}'].delete().ok"
   exit 0
