@@ -31,6 +31,7 @@ public class Main {
     private static final Gson gson = new Gson();
 
     public static void main(String[] args) throws InterruptedException, IOException {
+//        VERTEX_ENDPOINT=https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/7779079950887288832:predict;CATALOG_SIZE=1000000;REPORT_LOCATION=gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/noop_bolcom_c1000000_t50_jitopt_n1highmem4.avro;TARGET_RPS=500;RAMP_DURATION_MINUTES=5
         String endpoint_arg = System.getenv("VERTEX_ENDPOINT");
 //        endpoint_arg = "https://europe-west4-aiplatform.googleapis.com/v1/projects/1077776595046/locations/europe-west4/endpoints/1677757986962931712:predict";
 //        endpoint_arg = "https://httpbin.org/anything";
@@ -103,7 +104,7 @@ public class Main {
         GoogleBearerAuthenticator authenticator = null;
 
         String hostname = endpoint.getHost();
-        if (hostname != null && !hostname.equals("localhost") && !hostname.equals("127.0.0.1")) {
+        if (hostname != null && hostname.endsWith(".googleapis.com")) {
             // add google bearer authentication if endpoint is not localhost
             authenticator = new GoogleBearerAuthenticator();
         }
@@ -177,7 +178,7 @@ public class Main {
                     interaction.setOutput(prediction.items);
                     interaction.setPreprocessingMillis(prediction.timings.preprocessing);
                     interaction.setInferencingMillis(prediction.timings.inferencing);
-                    interaction.setProcessingMillis(prediction.timings.processing);
+                    interaction.setProcessingMillis(prediction.timings.postprocessing);
                 } catch (Throwable t) {
                     System.out.println("GoogleVertexResponse.parse().err");
                     applyInteractionErrorValues(interaction);

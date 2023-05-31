@@ -10,12 +10,13 @@ public class GoogleVertexResponse {
     static class Prediction {
         @SerializedName("nf")
         Timings timings;
+        @SerializedName("predictions")
         List<Long> items;
     }
 
     static class Timings {
         @SerializedName("postprocess_ms")
-        float processing;
+        float postprocessing;
 
         @SerializedName("preprocess_ms")
         float preprocessing;
