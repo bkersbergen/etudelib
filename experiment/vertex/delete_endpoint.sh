@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+
 
 if [ $# -lt 1 ]; then
     echo "requires arg 'VERTEX_ENDPOINT_NAME'"
@@ -35,9 +35,9 @@ export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/delete_endpoint_job.${VERTEX_ENDPOINT_NAME}.yaml"
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
 # Ignore any errors that may occur during the execution of the following kubectl (by appending `|| true`).
-POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m 2> error.log || true)
+POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=5m )
 
-LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow 2> error.log || true)
+LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow )
 if [[ "$LOGS" =~ .*"Endpoint deleted.".* ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].delete().ok"
   exit 0

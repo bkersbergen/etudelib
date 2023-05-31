@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.Phaser;
 
 import static org.apache.hc.core5.http.ContentType.APPLICATION_JSON;
@@ -75,7 +76,8 @@ public class Requester<T> implements Closeable {
 
 
     private SimpleHttpRequest post(Journeys.Journey journey) {
-        String body = gson.toJson(new GoogleVertexRequest(journey.items()));
+        List<Long> evolvingSession = journey.item();
+        String body = gson.toJson(new GoogleVertexRequest(evolvingSession));
         return SimpleRequestBuilder.post()
                 .setHeader("Content-Length", String.valueOf(body.length()))
                 .setBody(body, APPLICATION_JSON)

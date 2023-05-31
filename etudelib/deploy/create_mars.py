@@ -12,6 +12,7 @@ import subprocess
 
 def create_mars():
     rootdir = Path(__file__).parent.parent.parent
+    BUCKET_BASE_URI='gs://bolcom-pro-reco-analytics-fcc-shared/barrie_etude/trained'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
     for C in [1_000_000]:
         t = 50
@@ -31,12 +32,36 @@ def create_mars():
             print(f'creating model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = ModelUtil.create_model(
                 model_name=model_name, C=C, max_seq_length=t, param_source=param_source, model_input=model_input)
-            TorchServeExporter.export_mar_file(eager_model_path, payload_path, output_path)
-            docker_build_push(eager_model_path)
-            TorchServeExporter.export_mar_file(jitopt_model_path, payload_path, output_path)
-            docker_build_push(jitopt_model_path)
-            TorchServeExporter.export_mar_file(onnx_model_path, payload_path, output_path)
-            docker_build_push(onnx_model_path)
+            directory = f'{model_name}_{param_source}_c{C}_t{t}_eager'
+            location_mar_file = TorchServeExporter.export_mar_file(eager_model_path, payload_path, output_path + '/' + directory)
+            # os.system(f'gsutil rm -r {BUCKET_BASE_URI}/{directory}')
+            os.system(f'gsutil cp -r {location_mar_file} {BUCKET_BASE_URI}/{directory}/')
+
+            directory = f'{model_name}_{param_source}_c{C}_t{t}_jitopt'
+            location_mar_file = TorchServeExporter.export_mar_file(jitopt_model_path, payload_path,
+                                                                   output_path + '/' + directory)
+            # os.system(f'gsutil rm -r {BUCKET_BASE_URI}/{directory}')
+            os.system(f'gsutil cp -r {location_mar_file} {BUCKET_BASE_URI}/{directory}/')
+
+            directory = f'{model_name}_{param_source}_c{C}_t{t}_onnx'
+            location_mar_file = TorchServeExporter.export_mar_file(onnx_model_path, payload_path,
+                                                                   output_path + '/' + directory)
+            # os.system(f'gsutil rm -r {BUCKET_BASE_URI}/{directory}')
+            os.system(f'gsutil cp -r {location_mar_file} {BUCKET_BASE_URI}/{directory}/')
+
+
+            #
+            # # docker_build_push(eager_model_path)
+            # location_mar_file = TorchServeExporter.export_mar_file(jitopt_model_path, payload_path,
+            #                                                        output_path + '/' + f'${model_name}_${param_source}_c${C}_t${t}_jitopt')
+            # # docker_build_push(jitopt_model_path)
+            # location_mar_file = TorchServeExporter.export_mar_file(jitopt_model_path, payload_path,
+            #                                                        output_path + '/' + f'${model_name}_${param_source}_c${C}_t${t}_onnx')
+            # # docker_build_push(onnx_model_path)
+            #
+            # exec(f'gsutil -m  rm -r {MODEL_URI}')
+            # exec(f'gsutil -m cp -r {model_path} {MODEL_URI}')
+            # exec(f'gsutil ls -al {MODEL_URI}')
 
 
 def docker_build_push(model_path):

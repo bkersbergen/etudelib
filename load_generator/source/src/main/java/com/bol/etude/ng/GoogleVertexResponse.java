@@ -11,7 +11,7 @@ public class GoogleVertexResponse {
         @SerializedName("nf")
         Timings timings;
         @SerializedName("predictions")
-        List<Long> items;
+        List<Long> predictions;
     }
 
     static class Timings {

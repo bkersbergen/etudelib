@@ -90,7 +90,7 @@ class TorchServeExporter:
         filename_without_ext, file_ext = os.path.splitext(filename_with_ext)  # ('myfile', '.zip')
         rootdir = Path(__file__).parent.parent
         handler_path = Path(rootdir, 'deploy/inferences/torch_inferencer.py')
-        requirements_path = rootdir.parent / 'requirements/base.txt'
+        requirements_path = Path(rootdir, 'deploy/requirements.txt')
         sys.argv = [sys.argv[0]]  # clear the command line arguments
         sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
         sys.argv.extend(['--model-name', 'model'])  # all endpoints are called 'model' to remove complex variables in all intermediate scripts
@@ -108,11 +108,7 @@ class TorchServeExporter:
             logger.error(sys.argv)
             raise RuntimeError('FAILED to create MAR')
 
-        # rename model.mar to something like 'noop_bolcom_c1000_t50_eager'
-        current_filename = output_dir + 'model.mar'
-        new_filename = output_dir + filename_without_ext + '.mar'
-        if os.path.exists(new_filename):
-            os.remove(new_filename)
-        os.rename(current_filename, new_filename)
+        current_filename = output_dir + '/model.mar'
+        return current_filename
 
 

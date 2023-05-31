@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 
 if [ $# -lt 3 ]; then
     echo "requires args 'VERTEX_ENDPOINT_NAME', 'VERTEX_MODEL_NAME', 'VERTEX_MACHINE'"
@@ -78,8 +77,8 @@ kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespac
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
 
 # Ignore any errors that may occur during the execution of the following kubectl (by appending `|| true`).
-POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m 2> error.log || true)
-LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow 2> error.log || true)
+POD_READY=$(kubectl --context bolcom-pro-default --namespace reco-analytics wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m )
+LOGS=$(kubectl --context bolcom-pro-default --namespace reco-analytics logs pod/"${POD_NAME}" --follow )
 if [[ "$LOGS" =~ .*"deployed to Endpoint".* ]]; then
   echo "endpoints['${VERTEX_ENDPOINT_NAME}'].deploy(model = '${VERTEX_MODEL_NAME}').ok"
   exit 0

@@ -43,6 +43,7 @@ class Journeys {
 
         private int index = 0;
 
+
         public Journey(long uid, List<Long> items) {
             if (items.isEmpty()) throw new RuntimeException("items.isEmpty()");
             this.uid = uid;
@@ -85,6 +86,15 @@ class Journeys {
         @Override
         public int hashCode() {
             return Objects.hash(uid, items);
+        }
+
+        @Override
+        public String toString() {
+            return "Journey{" +
+                    "uid=" + uid +
+                    ", items=" + items +
+                    ", index=" + index +
+                    '}';
         }
     }
 }

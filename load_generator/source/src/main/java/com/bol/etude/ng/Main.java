@@ -132,6 +132,7 @@ public class Main {
 
                         if (!journey.last()) {
                             journeys.push(journey);
+                            System.out.println(journey);
                         } else {
                             Report report = buildJourneyReport(journey, collector.remove(journey), gson);
                             persister.accept(report);
@@ -173,14 +174,16 @@ public class Main {
                 applyInteractionErrorValues(interaction);
             } else {
                 try {
+                    System.out.println(response.body);
                     GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
                     GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);
-                    interaction.setOutput(prediction.items);
+                    interaction.setOutput(prediction.predictions);
                     interaction.setPreprocessingMillis(prediction.timings.preprocessing);
                     interaction.setInferencingMillis(prediction.timings.inferencing);
                     interaction.setProcessingMillis(prediction.timings.postprocessing);
                 } catch (Throwable t) {
-                    System.out.println("GoogleVertexResponse.parse().err");
+                    System.out.println(response.body);
+                    System.out.println("GoogleVertexResponse.parse().err + " + t);
                     applyInteractionErrorValues(interaction);
                 }
             }

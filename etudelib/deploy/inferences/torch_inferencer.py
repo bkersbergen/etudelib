@@ -1,5 +1,14 @@
 import logging
 import os
+n_threads = 1
+os.environ["OMP_NUM_THREADS"] = f"{n_threads}"
+os.environ["OPENBLAS_NUM_THREADS"] = f"{n_threads}"
+os.environ["MKL_NUM_THREADS"] = f"{n_threads}"
+os.environ["VECLIB_MAXIMUM_THREADS"] = f"{n_threads}"
+os.environ["NUMEXPR_NUM_THREADS"] = f"{n_threads}"
+import torch
+torch.set_num_threads(n_threads)
+
 import onnxruntime as ort
 from importlib import import_module
 from pathlib import Path
