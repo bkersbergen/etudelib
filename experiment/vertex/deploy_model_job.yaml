@@ -16,10 +16,10 @@ spec:
             "--project", "bolcom-pro-reco-analytics-fcc",
             "models",
             "deploy",
-            "--display-name", "resnet-18-custom-handler",
+            "--display-name", "${MODEL_NAME}",
             "--container-image-url", "${DEPLOY_IMAGE_URI}",
             "--artifact-uri", "${MODEL_URI}",
-            "--description", "resnet-18-custom-handler",
+            "--description", "${MODEL_NAME}",
             "--is-default",
           ]
           imagePullPolicy: Always

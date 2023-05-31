@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-if [ $# -lt 2 ]; then
-    echo "requires arg 'DEPLOY_IMAGE_URI MODEL_URI'"
+if [ $# -lt 3 ]; then
+    echo "requires arg 'DEPLOY_IMAGE_URI MODEL_URI MODEL_NAME'"
     exit 1
 fi
 
@@ -10,6 +10,7 @@ fi
 
 DEPLOY_IMAGE_URI="${1}"
 MODEL_URI="${2}"
+MODEL_NAME="${3}"
 DIR="$(dirname "$0")"
 
 function normalize() {
@@ -18,7 +19,7 @@ function normalize() {
 
 
 VERTEX_MODEL_IMAGE=$(normalize "${DEPLOY_IMAGE_URI}")
-VERTEX_MODEL_NAME=$(normalize "${MODEL_URI}")
+VERTEX_MODEL_NAME=$(normalize "${MODEL_NAME}")
 
 echo "models['${VERTEX_MODEL_NAME}'].deploy(image = '${VERTEX_MODEL_IMAGE}')"
 
@@ -36,9 +37,9 @@ done
 
 kubectl --context bolcom-pro-default --namespace reco-analytics delete job "${JOB_NAME}" --ignore-not-found=true --timeout=5m
 
-export VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME VERTEX_MODEL_IMAGE DEPLOY_IMAGE_URI MODEL_URI
+export VERTEX_ENDPOINT_NAME MODEL_NAME JOB_NAME VERTEX_MODEL_IMAGE DEPLOY_IMAGE_URI MODEL_URI
 envsubst < "$DIR"/deploy_model_job.yaml > "/tmp/deploy_model_job-${HASH}.yaml"
-export -n VERTEX_ENDPOINT_NAME VERTEX_MODEL_NAME JOB_NAME VERTEX_MODEL_IMAGE DEPLOY_IMAGE_URI MODEL_URI
+export -n VERTEX_ENDPOINT_NAME MODEL_NAME JOB_NAME VERTEX_MODEL_IMAGE DEPLOY_IMAGE_URI MODEL_URI
 
 kubectl --context bolcom-pro-default --namespace reco-analytics apply --namespace reco-analytics -f - < "/tmp/deploy_model_job-${HASH}.yaml"
 POD_NAME=$(kubectl get pods --context bolcom-pro-default --namespace reco-analytics -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
