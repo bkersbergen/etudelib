@@ -58,10 +58,12 @@ if __name__ == '__main__':
     preprocessed = inferencer.preprocess(request_data)
     inferenced = inferencer.inference(preprocessed)
     recos = inferencer.postprocess(inferenced)
+    print('recommendations after preprocess inference postprocess steps')
     print(recos)
-
+    print('handle vertex ai + torchserve compatible format')
     print(inferencer.handle(request_data, context=None))
 
     # 20230601 without vertex 'instances' and torchserve 'data'
     request_data = [{'context': [1, 2, 3]}, {'context': [2, 3, 4]}]
+    print('handle plain input format')
     print(inferencer.handle(request_data, context=None))
