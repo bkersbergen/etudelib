@@ -7,16 +7,13 @@ import torch
 from omegaconf import OmegaConf
 from etudelib.models.topkdecorator import TopKDecorator
 
-
 class ModelUtil:
 
     @staticmethod
-    def create_model(model_name: str, C: int, max_seq_length:int, param_source: str, model_input):
+    def create_model(model_name: str, C: int, max_seq_length:int, param_source: str, model_input, projectdir):
         device_type = 'cpu'
         rootdir = Path(__file__).parent.parent.parent
-
-        projectdir = Path(rootdir, 'projects/benchmark')
-
+        projectdir = Path(projectdir)
         config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
         config = OmegaConf.load(config_path)
 
@@ -45,6 +42,8 @@ class ModelUtil:
                    'C': C,
                    'idx2item': [i for i in range(C)],
                    }
+        if not os.path.exists(projectdir):
+            os.mkdir(projectdir)
 
         payload_path = str(projectdir / f'{base_filename}_payload.torch')
         eager_model_path = str(projectdir / f'{base_filename}_eager.pth')

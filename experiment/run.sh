@@ -41,10 +41,10 @@ for machine in "${MACHINES[@]}"; do
       "${DIR}"/vertex/create_endpoint.sh "${model}_${hardware}"
 
       if [ "${acceleration}" != "false" ]; then
-        "${DIR}"/vertex/deploy_model.sh "europe-docker.pkg.dev/vertex-ai/prediction/pytorch-gpu.2-0:latest" "gs://bolcom-pro-reco-analytics-fcc-shared/barrie_etude/trained/${model}/" ${model}
+        "${DIR}"/vertex/deploy_model.sh "europe-docker.pkg.dev/vertex-ai/prediction/pytorch-cpu.1-13:latest" "gs://bolcom-pro-reco-analytics-fcc-shared/barrie_etude/trained/${model}/" ${model}
         "${DIR}"/vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}" "${acceleration}" '1'
       else
-        "${DIR}"/vertex/deploy_model.sh "europe-docker.pkg.dev/vertex-ai/prediction/pytorch-cpu.2-0:latest" "gs://bolcom-pro-reco-analytics-fcc-shared/barrie_etude/trained/${model}/" ${model}
+        "${DIR}"/vertex/deploy_model.sh "europe-docker.pkg.dev/vertex-ai/prediction/pytorch-cpu.1-13:latest" "gs://bolcom-pro-reco-analytics-fcc-shared/barrie_etude/trained/${model}/" ${model}
         "${DIR}"/vertex/deploy_endpoint_model.sh "${model}_${hardware}" "${model}" "${machine}"
       fi
     fi

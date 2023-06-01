@@ -88,8 +88,8 @@ class TorchServeExporter:
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         filename_with_ext = os.path.basename(model_path)  # 'myfile.zip'
         filename_without_ext, file_ext = os.path.splitext(filename_with_ext)  # ('myfile', '.zip')
-        rootdir = Path(__file__).parent.parent
-        handler_path = Path(rootdir, 'deploy/inferences/torch_inferencer.py')
+        rootdir = Path(__file__).parent
+        handler_path = Path(rootdir, 'deploy/torch_inferencer.py')
         requirements_path = Path(rootdir, 'deploy/requirements.txt')
         sys.argv = [sys.argv[0]]  # clear the command line arguments
         sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
@@ -98,7 +98,7 @@ class TorchServeExporter:
         sys.argv.extend(['--serialized-file', model_path])
         sys.argv.extend(['--handler', str(handler_path)])
         sys.argv.extend(['--requirements-file', str(requirements_path)])
-        sys.argv.extend(['--extra-files', ','.join([payload_path, str(rootdir) + '/etudelib'])])
+        sys.argv.extend(['--extra-files', ','.join([payload_path])])
         sys.argv.extend(['--export-path', output_dir])
         sys.argv.extend(['--force'])
 
