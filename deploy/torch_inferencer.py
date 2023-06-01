@@ -31,6 +31,7 @@ class TorchInferencer(BaseHandler):
         self.idx2item = None  # (list) each position contains an item_id
         self.context = None
         self.runtime = ''
+        self.vectorized_idx2item = None
         self.vectorized_item2idx = None
 
     def initialize(self, context):
@@ -84,7 +85,8 @@ class TorchInferencer(BaseHandler):
         self.idx2item = payload.get('idx2item')  # list
         self.C = payload.get('C')  # catalog size
         self.item2idx = dict(zip(self.idx2item, range(len(self.idx2item))))  # dict
-        self.vectorized_item2idx = np.vectorize(lambda idx: self.item2idx[idx])
+        self.vectorized_idx2item = np.vectorize(lambda idx: self.idx2item[idx])
+        self.vectorized_item2idx = np.vectorize(lambda item_id: self.item2idx.get(item_id, 0))
 
     def handle(self, data, context):
         self.context = context
@@ -120,15 +122,23 @@ class TorchInferencer(BaseHandler):
         # expected input:
         # VertexAI enforces 'instances' and TorchServe adds 'body' to the request
         # data = [{'body': {'instances': [{'context': [8, 5, 12, 300]}], 'parameters': ['string']}}]
-        payload = data[0].get("body")  # body when http POST
-
-        if payload is None:
+        # update: 20230601 the 'body' and 'instances' are not present in the Google Torchserve Vertex Dockerimage
+        # 20230601 data = [{'context': [1, 2, 3]}]
+        if 'body' in data[0]:
+            # we are parsing this: [{'body': {'instances': [{'context': [8, 5, 12, 300]}], 'parameters': ['string']}}]
+            list_of_context_dicts = data[0].get("body")['instances']
+        elif 'context' in data[0]:
+            # we are parsing this:
+            # [{'context': [1, 2, 3]}]
+            list_of_context_dicts = data
+        else:
             error_message = "Preprocess error No Body Payload in request: {}".format(data)
             logger.error(error_message)
             self.context.request_processor[0].report_status(400, error_message)
             return ["{} data: {}".format(error_message, data)]
+
         try:
-            evolving_session_items = payload['instances'][0]['context']
+            evolving_session_items = list_of_context_dicts[0]['context']
         except:
             error_message = "Preprocess error No instances context: {}".format(data)
             logger.error(error_message)
@@ -146,7 +156,7 @@ class TorchInferencer(BaseHandler):
             return ["{} data: {}".format(error_message, data)]
 
         evolving_session_items = evolving_session_items[-self.max_seq_length:]  # use most recent max_seq_length items
-        idx_seq = [self.item2idx.get(item_id, 0) for item_id in evolving_session_items]
+        idx_seq = self.vectorized_item2idx(evolving_session_items)
         padded_tensor = torch.zeros((self.max_seq_length,), dtype=torch.int64, device=self.device_type)
         padded_tensor[:len(idx_seq)] = torch.tensor(idx_seq, dtype=torch.int64, device=self.device_type)
 
@@ -184,7 +194,7 @@ class TorchInferencer(BaseHandler):
         else:
             indices_batch = tensor.detach().cpu().numpy()
 
-        reco_item_ids = self.vectorized_item2idx(indices_batch)
+        reco_item_ids = self.vectorized_idx2item(indices_batch)
         return reco_item_ids.tolist()
 
 #

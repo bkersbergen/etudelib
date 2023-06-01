@@ -38,6 +38,7 @@ def create_mars():
     location_mar_file = TorchServeExporter.export_mar_file(jitopt_model_path, payload_path,
                                                            project_path + '/' + directory)
     os.system(f'gsutil cp -r {location_mar_file} {BUCKET_BASE_URI}/{directory}/')
+    os.system(f'cp {location_mar_file} {rootdir}/.docker/torchserve/models/')
 
 
 

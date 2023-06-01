@@ -1,16 +1,12 @@
-from importlib import import_module
 from pathlib import Path
 
 import os
 
-import torch
-from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 
 from deploy.torch_inferencer import TorchInferencer
 from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.deploy.modelutil import ModelUtil
-from etudelib.models.topkdecorator import TopKDecorator
 from export import TorchServeExporter
 
 if __name__ == '__main__':
@@ -64,5 +60,8 @@ if __name__ == '__main__':
     recos = inferencer.postprocess(inferenced)
     print(recos)
 
-    recos = inferencer.handle(request_data, context=None)
-    print(recos)
+    print(inferencer.handle(request_data, context=None))
+
+    # 20230601 without vertex 'instances' and torchserve 'data'
+    request_data = [{'context': [1, 2, 3]}, {'context': [2, 3, 4]}]
+    print(inferencer.handle(request_data, context=None))
