@@ -31,6 +31,7 @@ class TorchInferencer(BaseHandler):
         self.idx2item = None  # (list) each position contains an item_id
         self.context = None
         self.runtime = ''
+        self.vectorized_item2idx = None
 
     def initialize(self, context):
         #  load the model
@@ -83,6 +84,7 @@ class TorchInferencer(BaseHandler):
         self.idx2item = payload.get('idx2item')  # list
         self.C = payload.get('C')  # catalog size
         self.item2idx = dict(zip(self.idx2item, range(len(self.idx2item))))  # dict
+        self.vectorized_item2idx = np.vectorize(lambda idx: self.item2idx[idx])
 
     def handle(self, data, context):
         self.context = context
@@ -182,11 +184,8 @@ class TorchInferencer(BaseHandler):
         else:
             indices_batch = tensor.detach().cpu().numpy()
 
-        reco_item_ids = []
-        for idx in indices_batch[0]:
-            if idx < len(self.idx2item):
-                reco_item_ids.append(self.idx2item[idx])
-        return reco_item_ids
+        reco_item_ids = self.vectorized_item2idx(indices_batch)
+        return reco_item_ids.tolist()
 
 #
 # if __name__ == '__main__':
