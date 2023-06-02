@@ -106,9 +106,7 @@ class TorchInferencer(BaseHandler):
                                            'model': self.model_filename,
                                            'device': self.device_type,
                                            }}]
-        return [{
-            "predictions": output,
-        }]
+        return output
 
     def inference(self, data, *args, **kwargs):
         if self.runtime == 'onnx':
