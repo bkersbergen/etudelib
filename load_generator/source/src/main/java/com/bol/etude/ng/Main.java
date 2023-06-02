@@ -132,7 +132,6 @@ public class Main {
 
                         if (!journey.last()) {
                             journeys.push(journey);
-                            System.out.println(journey);
                         } else {
                             Report report = buildJourneyReport(journey, collector.remove(journey), gson);
                             persister.accept(report);
@@ -174,7 +173,6 @@ public class Main {
                 applyInteractionErrorValues(interaction);
             } else {
                 try {
-                    System.out.println(response.body);
                     GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
                     // 20230601 another layer of 'predictions' is added by the google vertex ai torchserve image
                     GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);

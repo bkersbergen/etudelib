@@ -9,48 +9,49 @@ class MainTest {
 
     private String getJson() {
         String json = """
-{
-  "predictions": [
-    {
-      "nf": {
-        "preprocess_ms": 0.44839101610705262,
-        "device": "cpu",
-        "postprocess_ms": 0.1220889971591532,
-        "inference_ms": 1.107118994696066,
-        "model": "noop_bolcom_c1000000_t50_jitopt.pth"
-      },
-      "items": [
-        [
-          20,
-          19,
-          18,
-          17,
-          16,
-          15,
-          14,
-          13,
-          12,
-          11,
-          10,
-          9,
-          8,
-          7,
-          6,
-          5,
-          4,
-          3,
-          2,
-          1,
-          0
-        ]
-      ]
-    }
-  ],
-  "deployedModelId": "4913607513368166400",
-  "model": "projects/1077776595046/locations/europe-west4/models/3871644324189962240",
-  "modelDisplayName": "noop_bolcom_c1000000_t50_jitopt",
-  "modelVersionId": "2"
-}        """;
+                         {                                                                                                                                                       │
+                           "predictions": [                                                                                                                                      │
+                             {                                                                                                                                                   │
+                               "nf": {                                                                                                                                           │
+                                 "postprocess_ms": 0.090100016677752137,                                                                                                         │
+                                 "inference_ms": 0.0596430036239326,                                                                                                             │
+                                 "model": "noop_bolcom_c1000000_t50_jitopt.pth",                                                                                                 │
+                                 "device": "cpu",                                                                                                                                │
+                                 "preprocess_ms": 0.16905498341657221                                                                                                            │
+                               },                                                                                                                                                │
+                               "items": [                                                                                                                                        │
+                                 [                                                                                                                                               │
+                                   20,                                                                                                                                           │
+                                   19,                                                                                                                                           │
+                                   18,                                                                                                                                           │
+                                   17,                                                                                                                                           │
+                                   16,                                                                                                                                           │
+                                   15,                                                                                                                                           │
+                                   14,                                                                                                                                           │
+                                   13,                                                                                                                                           │
+                                   12,                                                                                                                                           │
+                                   11,                                                                                                                                           │
+                                   10,                                                                                                                                           │
+                                   9,                                                                                                                                            │
+                                   8,                                                                                                                                            │
+                                   7,                                                                                                                                            │
+                                   6,                                                                                                                                            │
+                                   5,                                                                                                                                            │
+                                   4,                                                                                                                                            │
+                                   3,                                                                                                                                            │
+                                   2,                                                                                                                                            │
+                                   1,                                                                                                                                            │
+                                   0                                                                                                                                             │
+                                 ]                                                                                                                                               │
+                               ]                                                                                                                                                 │
+                             }                                                                                                                                                   │
+                           ],                                                                                                                                                    │
+                           "deployedModelId": "5297539381601501184",                                                                                                             │
+                           "model": "projects/1077776595046/locations/europe-west4/models/3871644324189962240",                                                                  │
+                           "modelDisplayName": "noop_bolcom_c1000000_t50_jitopt",                                                                                                │
+                           "modelVersionId": "4"                                                                                                                                 │
+                         }                                                                                                                                                       │
+                """;
         return json;
     }
 

@@ -32,12 +32,13 @@ function normalize() {
 for machine in "${MACHINES[@]}"; do
   for acceleration in "${ACCELERATIONS[@]}"; do
     size=1000000
-    TARGET_RPS=500
-    RAMP_DURATION_MINUTES=5
+    TARGET_RPS=1000
+    RAMP_DURATION_MINUTES=60
     model=noop_bolcom_c${size}_t50_jitopt
     hardware="$(normalize "${machine}")$(if [ "${acceleration}" != "false" ]; then echo "_$(normalize "${acceleration}")"; fi)"
 
     if [ "${DEPLOY}" = "true" ]; then
+      "${DIR}"/vertex/purge_endpoint.sh "${model}_${hardware}"
       "${DIR}"/vertex/create_endpoint.sh "${model}_${hardware}"
 
       if [ "${acceleration}" != "false" ]; then
