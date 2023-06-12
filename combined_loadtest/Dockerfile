@@ -29,6 +29,9 @@ RUN chmod +x ./start.sh
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
 
+RUN echo Using hardcoded model in the image, not using the storage bucket atm until we fixed read storage bucket permission
+COPY model.mar /app/models/
+
 # Setup the local account
 RUN groupadd -r app && useradd -r -g app -u 1001 app --home /app
 RUN chown -R app:app /app

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: torchserve-noop-cpu
+spec:
+  nodeSelector:
+    cloud.google.com/compute-class: "Scale-Out"
+  containers:
+  - name: etudelib-torchserve
+    image: eu.gcr.io/bk-project-90069/etudelib/etudelib_torchserve:latest
+    args: ["gs://bk-project-90069-shared/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar"]
+    ports:
+      - containerPort: 7080
+    resources:
+      limits:
+        cpu: "4"
+        memory: "32Gi"
+      requests:
+        cpu: "4"
+        memory: "32Gi"
