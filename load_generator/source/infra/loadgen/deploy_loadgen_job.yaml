@@ -13,11 +13,11 @@ spec:
         sidecar.istio.io/proxyMemory: "512Mi"
         sidecar.istio.io/proxyMemoryLimit: "1024Mi"
     spec:
-      serviceAccountName: reco-analytics
+      serviceAccountName: etudelib
       restartPolicy: Never
       containers:
         - name: "${JOB_NAME}"
-          image: "eu.gcr.io/bolcom-pro-reco-analytics-fcc/etude-loadgen:latest"
+          image: "eu.gcr.io/${PROJECT_ID}/etude-loadgen:latest"
           resources:
             limits:
               cpu: "4"
