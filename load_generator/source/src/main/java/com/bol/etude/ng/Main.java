@@ -174,12 +174,10 @@ public class Main {
             } else {
                 try {
                     GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
-                    // 20230601 another layer of 'predictions' is added by the google vertex ai torchserve image
-                    GoogleVertexResponse.Prediction prediction = vertex.predictions.get(0);
-                    interaction.setOutput(prediction.items.get(0));
-                    interaction.setPreprocessingMillis(prediction.timings.preprocessing);
-                    interaction.setInferencingMillis(prediction.timings.inferencing);
-                    interaction.setProcessingMillis(prediction.timings.postprocessing);
+                    interaction.setOutput(vertex.items.get(0));
+                    interaction.setPreprocessingMillis(vertex.timings.preprocessing);
+                    interaction.setInferencingMillis(vertex.timings.inferencing);
+                    interaction.setProcessingMillis(vertex.timings.postprocessing);
                 } catch (Throwable t) {
                     System.out.println("GoogleVertexResponse.parse().err + " + t + "-------" + response.body);
                     applyInteractionErrorValues(interaction);

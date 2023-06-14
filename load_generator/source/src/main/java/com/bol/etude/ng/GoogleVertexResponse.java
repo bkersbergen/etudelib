@@ -5,13 +5,9 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class GoogleVertexResponse {
-    public List<Prediction> predictions;
-
-    static class Prediction {
-        @SerializedName("nf")
-        Timings timings;
-        List<List<Long>> items;
-    }
+    @SerializedName("nf")
+    Timings timings;
+    List<List<Long>> items;
 
     static class Timings {
         @SerializedName("postprocess_ms")

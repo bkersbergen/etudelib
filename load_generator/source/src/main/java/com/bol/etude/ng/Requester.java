@@ -79,7 +79,7 @@ public class Requester<T> implements Closeable {
         List<Long> evolvingSession = journey.item();
         String body = gson.toJson(new GoogleVertexRequest(evolvingSession));
         return SimpleRequestBuilder.post()
-                .setHeader("Content-Length", String.valueOf(body.length()))
+//                .setHeader("Content-Length", String.valueOf(body.length()))
                 .setBody(body, APPLICATION_JSON)
                 .setUri(uri)
                 .build();
