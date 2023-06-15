@@ -21,3 +21,10 @@ spec:
         args: ["gs://bk47475-shared/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar"]
         ports:
         - containerPort: 7080
+        resources:
+          requests:
+            memory: "16Gi"
+            cpu: 8
+          limits:
+            memory: "16Gi"
+            cpu: 8

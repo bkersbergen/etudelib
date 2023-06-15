@@ -36,6 +36,39 @@ metadata:
   name: etudelib
 EOF
 `
+
+5) manually upgrade cluster to >= 1.26
+6) enable gcsfusecsidriver
+gcloud beta container clusters update autopilot-cluster-1 \
+    --update-addons GcsFuseCsiDriver=ENABLED \
+    --region=europe-west4
+For read-write workloads: 
+gcloud storage buckets add-iam-policy-binding gs://bk47475-shared \
+    --member "serviceAccount:etudelib@bk47475.iam.gserviceaccount.com" \
+    --role "roles/storage.insightsCollectorService"
+gcloud storage buckets add-iam-policy-binding gs://bk47475-shared \
+    --member "serviceAccount:etudelib@bk47475.iam.gserviceaccount.com" \
+    --role "roles/storage.objectAdmin"
+
+
+The relationship between kubernetes accounts and google cloud
+https://github.com/GoogleCloudPlatform/gcs-fuse-csi-driver/blob/main/docs/usage.md
+Bind the the Kubernetes Service Account with the GCP Service Account.
+CLUSTER_PROJECT_ID=<cluster-project-id>
+
+Create a Kubernetes Service Account.
+kubectl create serviceaccount etudelib --namespace default
+
+gcloud iam service-accounts add-iam-policy-binding etudelib@bk47475.iam.gserviceaccount.com \
+    --role roles/iam.workloadIdentityUser \
+    --member "serviceAccount:bk47475.svc.id.goog[default/etudelib]"
+
+kubectl annotate serviceaccount etudelib \
+    --namespace default \
+    iam.gke.io/gcp-service-account=etudelib@bk47475.iam.gserviceaccount.com
+
+
+
 kubectl create rolebinding etudelib-rolebinding \
    --clusterrole=view \
    --serviceaccount=default:etudelib \
@@ -44,8 +77,29 @@ kubectl create rolebinding etudelib-rolebinding \
 5) Manually add the following roles in the WebUI AIM
 'storage admin'
 'kubernetes engine service agent'
+'Storage Object Admin' to the service account https://docs.cloudera.com/HDPDocuments/HDP2/HDP-2.6.5/bk_cloud-data-access/content/edit-bucket-permissions.html
+'Storage Legacy Bucket Owner' to the service account https://cloud.google.com/storage/docs/access-control/iam-roles
+kubectl get pods
+kubectl get pod/etude-run-loadtest-34367-khlp4 -o yaml
+  `serviceAccount: etudelib
+  serviceAccountName: etudelib
+  `
+7) errors:
+                                                                                                           │
+│   "code" : 403,                                                                                                                                           │
+│   "errors" : [ {                                                                                                                                          │
+│     "domain" : "global",                                                                                                                                  │
+│     "message" : "Caller does not have storage.buckets.get access to the Google Cloud Storage bucket. Permission 'storage.buckets.get' denied on resource  │
+│     "reason" : "forbidden"                                                                                                                                │
+│   } ],                                                                                                                                                    │
+│   "message" : "Caller does not have storage.buckets.get access to the Google Cloud Storage bucket. Permission 'storage.buckets.get' denied on resource (o │
+│ }                                              
 
-6) deploy POD
+
+7) 
+8) 
+9) 
+10) deploy POD
 ` 
 kubectl apply -f torchserve_spec_t4.yaml
 `
