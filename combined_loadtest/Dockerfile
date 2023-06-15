@@ -22,7 +22,7 @@ WORKDIR /app
 RUN mkdir -p models/
 
 # Install generic configuration
-COPY log4j2.xml ./conf/
+COPY log4j2*.xml ./conf/
 COPY torchserve.properties ./conf/
 COPY start.sh ./
 RUN chmod +x ./start.sh

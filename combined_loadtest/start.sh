@@ -11,11 +11,8 @@ echo your container args are: "$@"
 
 gcloud auth list
 
-echo Using hardcoded model in the image, not using the storage bucket atm until we fixed read storage bucket permission
-ls /app/models/*.mar
-# echo gsutil cp "$1" /app/models
-# TEMP we hardcode the model in the image until we fixed read storage bucket permission
-# gsutil cp "$1" /app/models
+echo gsutil cp "$1" /app/models
+gsutil cp "$1" /app/models
 
 trap 'echo "torchserve.shutdown()"; exit' HUP INT QUIT TERM
 torchserve --ts-config /app/conf/torchserve.properties --model-store /app/models --models all --no-config-snapshots --foreground &

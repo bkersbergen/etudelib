@@ -25,7 +25,8 @@ depoyedbenchmark_run_locally: ## Build and push the microbenchmark image to the 
 		#\
 		#--entrypoint /bin/bash
 
-
+depoyedbenchmark_deploy: ## deploy the torchserve in kubernetes
+	kubectl apply -f etudelibtorchserve-deployment.yaml
 
 
 help:

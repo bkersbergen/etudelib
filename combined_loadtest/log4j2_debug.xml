@@ -72,17 +72,18 @@
 <!--			 <AppenderRef ref="STDOUT"/>-->
 			<AppenderRef ref="ts_log"/>
 		</Logger>
-		<Logger name="TS_METRICS" level="error">
+		<Logger name="TS_METRICS" level="debug">
 			<AppenderRef ref="ts_metrics"/>
 		</Logger>
 		<Logger name="MODEL_LOG" level="info">
-			<!--  -->
+			<!--
 			<AppenderRef ref="STDOUT"/>
+			-->
 			<AppenderRef ref="model_log"/>
 		</Logger>
 		<Root level="error">
-			 <AppenderRef ref="STDOUT"/>
-<!--			<AppenderRef ref="ts_log"/>-->
+<!--			 <AppenderRef ref="STDOUT"/>-->
+			<AppenderRef ref="ts_log"/>
 		</Root>
 	</Loggers>
 </Configuration>
