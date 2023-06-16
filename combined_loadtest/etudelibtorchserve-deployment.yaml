@@ -28,3 +28,7 @@ spec:
           limits:
             memory: "16Gi"
             cpu: 8
+        env:
+          - name: JAVA_TOOL_OPTIONS
+            value: '-XX:InitialRAMPercentage=80.0 -XX:MinRAMPercentage=80.0 -XX:MaxRAMPercentage=80.0'
+
