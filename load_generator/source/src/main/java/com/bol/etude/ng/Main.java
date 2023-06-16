@@ -168,9 +168,9 @@ public class Main {
             interaction.setLatencyMillis(response.latency.toMillis());
             interaction.setStatus(response.status);
 
-            if (Strings.isNullOrEmpty(response.body)) {
-                System.out.println("GoogleVertexResponse(status ='" + response.status + "').body().empty");
-                applyInteractionErrorValues(interaction);
+            if (response.status != 200 || Strings.isNullOrEmpty(response.body)) {
+                System.out.println("GoogleVertexResponse(status ='" + response.status + "').body().err");
+                applyInteractionErrorValues(interaction, response.status);
             } else {
                 try {
                     GoogleVertexResponse vertex = gson.fromJson(response.body, GoogleVertexResponse.class);
@@ -180,7 +180,7 @@ public class Main {
                     interaction.setProcessingMillis(vertex.timings.postprocessing);
                 } catch (Throwable t) {
                     System.out.println("GoogleVertexResponse.parse().err + " + t + "-------" + response.body);
-                    applyInteractionErrorValues(interaction);
+                    applyInteractionErrorValues(interaction, response.status);
                 }
             }
 
@@ -192,8 +192,8 @@ public class Main {
         return report.build();
     }
 
-    private static void applyInteractionErrorValues(Interaction.Builder interaction) {
-        interaction.setStatus(500);
+    private static void applyInteractionErrorValues(Interaction.Builder interaction, int status) {
+        interaction.setStatus(status);
         interaction.setOutput(Collections.emptyList());
         interaction.setPreprocessingMillis(-1);
         interaction.setInferencingMillis(-1);
