@@ -20,7 +20,7 @@ spec:
         image: eu.gcr.io/bk47475/etudelib/etudelib_torchserve:latest
         args: ["gs://bk47475-shared/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar"]
         ports:
-        - containerPort: 7080
+        - containerPort: 8080
         resources:
           requests:
             memory: "16Gi"

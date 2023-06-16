@@ -2,22 +2,22 @@
 # hard failure if any required env var is not set
 set -o nounset
 
-if [[ $# -ne 1 ]]; then
-    echo "Illegal number of parameters"
-    echo "Usage: " $0 gs://my-storage-bucket/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar
-    exit 2
-fi
-echo your container args are: "$@"
+#if [[ $# -ne 1 ]]; then
+#    echo "Illegal number of parameters"
+#    echo "Usage: " $0 gs://my-storage-bucket/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar
+#    exit 2
+#fi
+#echo your container args are: "$@"
 
-gcloud auth list
+#gcloud auth list
 
-echo gsutil cp "$1" /app/models
-gsutil cp "$1" /app/models
+#echo gsutil cp "$1" /home/model-server/model-store
+#gsutil cp "$1" /home/model-server/model-store
 
 trap 'echo "torchserve.shutdown()"; exit' HUP INT QUIT TERM
-torchserve --ts-config /app/conf/torchserve.properties --model-store /app/models --models all --no-config-snapshots --foreground &
+torchserve --ts-config /home/model-server/config.properties --model-store /home/model-server/model-store --models all --no-config-snapshots --foreground &
 
-url="http://127.0.0.1:7080/ping"
+url="http://127.0.0.1:8080/ping"
 status_code=""
 echo "Waiting for torchserve to be started"
 
