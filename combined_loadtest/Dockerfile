@@ -1,4 +1,4 @@
-FROM pytorch/torchserve:0.8.1-gpu
+FROM pytorch/torchserve:0.8.1-cpu
 
 USER 0
 
@@ -18,6 +18,7 @@ WORKDIR /home/model-server
 
 # COPY model.mar /home/model-server/model-store
 
+COPY log4j*.xml /home/model-server
 COPY start.sh /home/model-server
 RUN chmod +x ./start.sh
 

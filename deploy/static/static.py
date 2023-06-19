@@ -21,7 +21,7 @@ class Static(BaseHandler):
         self.context = context
         t0 = timer()
         t1 = timer()
-        items = list(range(1, 21))
+        items = [list(range(1, 21))]
         t2 = timer()
         t3 = timer()
         preprocess_time_ms = (t1 - t0) * 1000

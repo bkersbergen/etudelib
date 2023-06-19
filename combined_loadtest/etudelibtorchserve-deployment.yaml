@@ -23,11 +23,11 @@ spec:
         - containerPort: 8080
         resources:
           requests:
-            memory: "16Gi"
-            cpu: 8
+            memory: "2Gi"
+            cpu: 2
           limits:
-            memory: "16Gi"
-            cpu: 8
+            memory: "2Gi"
+            cpu: 2
         env:
           - name: JAVA_TOOL_OPTIONS
             value: '-XX:InitialRAMPercentage=80.0 -XX:MinRAMPercentage=80.0 -XX:MaxRAMPercentage=80.0'

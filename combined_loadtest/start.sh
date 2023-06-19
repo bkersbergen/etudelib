@@ -20,6 +20,10 @@ metrics_address=http://0.0.0.0:8082
 default_response_timeout=10
 model_store=/home/model-server/model-store
 workflow_store=/home/model-server/wf-store
+disable_system_metrics=true
+enable_metrics_api=false
+vmargs=-Dlog4j.configurationFile=/home/model-server/log4j2.xml
+async_logging=true
 models={\
   "model": {\
     "1.0": {\
@@ -52,3 +56,6 @@ echo "Received HTTP status code $status_code for $url. Continuing..."
 
 sleep infinity &
 wait $!
+
+
+# curl -X POST -H "Content-Type: application/json" http://localhost:8080/predictions/model/1.0/ --data """{"instances": [{"context": [1,2,3]}],"parameters": [{"runtime":  ""}]}"""
