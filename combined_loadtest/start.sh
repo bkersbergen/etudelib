@@ -2,17 +2,35 @@
 # hard failure if any required env var is not set
 set -o nounset
 
-#if [[ $# -ne 1 ]]; then
-#    echo "Illegal number of parameters"
-#    echo "Usage: " $0 gs://my-storage-bucket/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar
-#    exit 2
-#fi
-#echo your container args are: "$@"
+if [[ $# -ne 1 ]]; then
+    echo "Illegal number of parameters"
+    echo "Usage: " $0 gs://my-storage-bucket/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar
+    exit 2
+fi
+echo your container args are: "$@"
+gcloud auth list
 
-#gcloud auth list
+echo gsutil cp "$1" /home/model-server/model-store
+gsutil cp "$1" /home/model-server/model-store
 
-#echo gsutil cp "$1" /home/model-server/model-store
-#gsutil cp "$1" /home/model-server/model-store
+cat << EOF > "/home/model-server/config.properties"
+inference_address=http://0.0.0.0:8080
+management_address=http://0.0.0.0:8081
+metrics_address=http://0.0.0.0:8082
+default_response_timeout=10
+model_store=/home/model-server/model-store
+workflow_store=/home/model-server/wf-store
+models={\
+  "model": {\
+    "1.0": {\
+        "marName": "model.mar",\
+        "batchSize": 1,\
+        "maxBatchDelay": 1,\
+        "responseTimeout": 100\
+    }\
+  }\
+}
+EOF
 
 trap 'echo "torchserve.shutdown()"; exit' HUP INT QUIT TERM
 torchserve --ts-config /home/model-server/config.properties --model-store /home/model-server/model-store --models all --no-config-snapshots --foreground &
@@ -31,8 +49,6 @@ while [[ "$status_code" != "200" ]]; do
 done
 
 echo "Received HTTP status code $status_code for $url. Continuing..."
-
-
 
 sleep infinity &
 wait $!

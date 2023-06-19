@@ -16,11 +16,12 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 
 WORKDIR /home/model-server
 
-COPY model.mar /home/model-server/model-store
-COPY start.sh /home/model-server
+# COPY model.mar /home/model-server/model-store
 
-RUN chown -R model-server:model-server ./start.sh
+COPY start.sh /home/model-server
 RUN chmod +x ./start.sh
+
+RUN chown -R model-server:model-server /home/model-server
 
 USER model-server
 ENTRYPOINT ["./start.sh"]

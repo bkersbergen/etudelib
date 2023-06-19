@@ -55,4 +55,4 @@ COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
 COPY --from=builder /usr/src/devel/build.log /app
 
 ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
-EXPOSE 7080/tcp
+EXPOSE 8080/tcp

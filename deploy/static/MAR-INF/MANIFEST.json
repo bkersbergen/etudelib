@@ -1,0 +1,12 @@
+{
+  "createdOn": "01/06/2023 16:51:22",
+  "runtime": "python",
+  "model": {
+    "modelName": "model",
+    "serializedFile": "noop_bolcom_c1000000_t50_jitopt.pth",
+    "handler": "torch_inferencer.py",
+    "modelVersion": "1.0",
+    "requirementsFile": "requirements.txt"
+  },
+  "archiverVersion": "0.8.0"
+}

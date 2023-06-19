@@ -27,7 +27,7 @@ Fetching cluster endpoint and auth data.
 kubeconfig entry generated for autopilot-cluster-1.
 `
 
-4) Create service account
+4) Create Kubernetes service account
 `
 kubectl apply -f - <<EOF
 apiVersion: v1
@@ -36,36 +36,37 @@ metadata:
   name: etudelib
 EOF
 `
+5) Create GCP service account
+gcloud iam service-accounts create etudelib \
+    --description="etudelib" \
+    --display-name="etudelib"
 
-5) manually upgrade cluster to >= 1.26
-6) enable gcsfusecsidriver
-gcloud beta container clusters update autopilot-cluster-1 \
-    --update-addons GcsFuseCsiDriver=ENABLED \
-    --region=europe-west4
+6) Create a Kubernetes Service Account.
+kubectl create serviceaccount etudelib --namespace default
+
 For read-write workloads: 
-gcloud storage buckets add-iam-policy-binding gs://bk47475-shared \
-    --member "serviceAccount:etudelib@bk47475.iam.gserviceaccount.com" \
+gcloud storage buckets add-iam-policy-binding gs://bk47476-shared \
+    --member "serviceAccount:etudelib@bk47476.iam.gserviceaccount.com" \
     --role "roles/storage.insightsCollectorService"
-gcloud storage buckets add-iam-policy-binding gs://bk47475-shared \
-    --member "serviceAccount:etudelib@bk47475.iam.gserviceaccount.com" \
+gcloud storage buckets add-iam-policy-binding gs://bk47476-shared \
+    --member "serviceAccount:etudelib@bk47476.iam.gserviceaccount.com" \
     --role "roles/storage.objectAdmin"
 
 
 The relationship between kubernetes accounts and google cloud
 https://github.com/GoogleCloudPlatform/gcs-fuse-csi-driver/blob/main/docs/usage.md
 Bind the the Kubernetes Service Account with the GCP Service Account.
-CLUSTER_PROJECT_ID=<cluster-project-id>
+CLUSTER_PROJECT_ID=autopilot-cluster-1
 
-Create a Kubernetes Service Account.
-kubectl create serviceaccount etudelib --namespace default
 
-gcloud iam service-accounts add-iam-policy-binding etudelib@bk47475.iam.gserviceaccount.com \
+
+gcloud iam service-accounts add-iam-policy-binding etudelib@bk47476.iam.gserviceaccount.com \
     --role roles/iam.workloadIdentityUser \
-    --member "serviceAccount:bk47475.svc.id.goog[default/etudelib]"
+    --member "serviceAccount:bk47476.svc.id.goog[default/etudelib]"
 
 kubectl annotate serviceaccount etudelib \
     --namespace default \
-    iam.gke.io/gcp-service-account=etudelib@bk47475.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account=etudelib@bk47476.iam.gserviceaccount.com
 
 
 
