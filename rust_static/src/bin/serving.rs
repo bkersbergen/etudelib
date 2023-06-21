@@ -44,7 +44,7 @@ pub struct VertexResponse {
 
 }
 
-#[post("/predictions/model")]
+#[post("/predictions/model/1.0")]
 async fn v1_recommend(
     models: Data<Models>,
     query: Json<VertexRequest>,

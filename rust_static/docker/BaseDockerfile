@@ -37,9 +37,6 @@ RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./t
 
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
 
-RUN set -eux; \
-    apt-get update;
-
 WORKDIR /app
 
 # Setup the local account
