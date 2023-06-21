@@ -1,0 +1,58 @@
+# pytorch/pytorch (Ubuntu)
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel AS builder
+
+WORKDIR /usr/src/devel
+# https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
+ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Amsterdam"
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y \
+    libssl-dev \
+    libzstd-dev \
+    pkg-config \
+    musl-tools \
+    curl \
+	llvm \
+    clang \
+    bc;
+
+COPY ./src src
+COPY ./Cargo.toml ./
+COPY ./build_loop.sh ./
+
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup default nightly; cargo search
+
+# A simple `cargo build` failed over and over again. Randomly producing all kinds of compile- or out of memory- errors
+# I was not able to pin point it. Suggestions from the internet did not help consistently.
+# Perhaps its related by my M1 emulating a x64 on QEMU.
+# The best way to make it work is keep compiling until its successful. This seems to work and works on all platforms.
+RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
+
+RUN mkdir -p ./target/libtorch
+
+RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
+
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
+
+RUN set -eux; \
+    apt-get update;
+
+WORKDIR /app
+
+# Setup the local account
+RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
+RUN chown -R app:app /app
+USER app
+
+ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
+
+COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
+COPY --from=builder /usr/src/devel/target/release/libonnx* /usr/local/lib/
+COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
+COPY --from=builder /usr/src/devel/build.log /app
+
+ENTRYPOINT ["/app/serving"]
+EXPOSE 8080/tcp

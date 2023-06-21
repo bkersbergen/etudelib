@@ -10,34 +10,25 @@ fi
 echo your container args are: "$@"
 gcloud auth list
 
-echo gsutil cp "$1" /home/model-server/model-store
-gsutil cp "$1" /home/model-server/model-store
+echo gsutil cp "$1" /home/pytorch/models
+gsutil cp "$1" /home/pytorch/models
 
-cat << EOF > "/home/model-server/config.properties"
+cat << EOF > "/home/pytorch/config.properties"
 inference_address=http://0.0.0.0:8080
 management_address=http://0.0.0.0:8081
 metrics_address=http://0.0.0.0:8082
-default_response_timeout=10
-model_store=/home/model-server/model-store
-workflow_store=/home/model-server/wf-store
-disable_system_metrics=true
-enable_metrics_api=false
-vmargs=-Dlog4j.configurationFile=/home/model-server/log4j2.xml
 async_logging=true
-models={\
-  "model": {\
-    "1.0": {\
-        "marName": "model.mar",\
-        "batchSize": 1,\
-        "maxBatchDelay": 1,\
-        "responseTimeout": 100\
-    }\
-  }\
-}
+vmargs=-Dlog4j.configurationFile=/home/pytorch/conf/log4j2.xml
+default_response_timeout=1000
+enable_metrics_api=false
+load_models=all
+model_store=/home/pytorch/models
+enable_envvars_config=true
+models={"model": {"1.0": {"batchSize": 1,"marName": "model.mar","maxBatchDelay": 1,"responseTimeout": 100}}}
 EOF
 
 trap 'echo "torchserve.shutdown()"; exit' HUP INT QUIT TERM
-torchserve --ts-config /home/model-server/config.properties --model-store /home/model-server/model-store --models all --no-config-snapshots --foreground &
+torchserve --ts-config /home/pytorch/config.properties --model-store /home/pytorch/models --models all --no-config-snapshots --foreground &
 
 url="http://127.0.0.1:8080/ping"
 status_code=""

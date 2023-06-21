@@ -19,9 +19,9 @@ depoyedbenchmark_run_locally: ## Build and push the microbenchmark image to the 
 		-v ~/.config/gcloud:/app/.config/gcloud \
 		--platform linux/amd64 \
 		-it \
-		-p 7080:7080 -p 7081:7081 \
+		-p 8080:8080 -p 8081:8081 \
 		eu.gcr.io/$(PROJECT)/etudelib/etudelib_torchserve:latest \
-		gs://$(PROJECT)-shared/model_store/noop_bolcom_c1000000_t50_jitopt/model.mar
+		gs://$(PROJECT)-shared/model_store/static/model.mar
 		#\
 		#--entrypoint /bin/bash
 
