@@ -10,25 +10,26 @@ fi
 echo your container args are: "$@"
 gcloud auth list
 
-echo gsutil cp "$1" /home/model-server/model-store
-gsutil cp "$1" /home/model-server/model-store
+DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-cat << EOF > "/home/model-server/config.properties"
+echo gsutil cp "$1" ${DIR}/model-store
+gsutil cp "$1" ${DIR}/model-store
+
+cat << EOF > "${DIR}/config.properties"
 inference_address=http://0.0.0.0:8080
 management_address=http://0.0.0.0:8081
 metrics_address=http://0.0.0.0:8082
 async_logging=true
-# vmargs=-Dlog4j.configurationFile=/home/pytorch/conf/log4j2.xml
+vmargs=-Dlog4j.configurationFile=/home/model-server/log4j2.xml
 default_response_timeout=100
-# enable_metrics_api=false
+enable_metrics_api=true
 load_models=all
-model_store=/home/pytorch/models
 enable_envvars_config=true
 models={"model": {"1.0": {"batchSize": 1,"marName": "model.mar","maxBatchDelay": 1,"responseTimeout": 100}}}
 EOF
 
 trap 'echo "torchserve.shutdown()"; exit' HUP INT QUIT TERM
-torchserve --ts-config /home/model-server/config.properties --model-store /home/model-server/model-store --models all --no-config-snapshots --foreground &
+torchserve --ts-config ${DIR}/config.properties --model-store ${DIR}/model-store --models all --no-config-snapshots --foreground &
 
 url="http://127.0.0.1:8080/ping"
 status_code=""
