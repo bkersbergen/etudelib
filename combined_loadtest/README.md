@@ -3,13 +3,14 @@ How I setup my CICD infra:
 
 1) Set as default project 
 `
-gcloud config set project bk47475
+gcloud config set project bk47477
 `
-
+Manually enable Kubernetes API in the WebUI.
 2) Create kubernetes cluster in project. Using WebUI with all defaults (Auto-pilot) except for region: WEST-4 (Amsterdam). The WebUI gave this commandline statement at the end:
 
+PROJECT_ID=bk47477
 `
-gcloud container --project "bk47475" clusters create-auto "autopilot-cluster-1" --region "europe-west4" --release-channel "regular" --network "projects/bk47475/global/networks/default" --subnetwork "projects/bk47475/regions/europe-west4/subnetworks/default" --cluster-ipv4-cidr "/17" --services-ipv4-cidr "/22"
+gcloud container --project "${PROJECT_ID}" clusters create-auto "autopilot-cluster-1" --region "europe-west4" --release-channel "regular" --network "projects/${PROJECT_ID}/global/networks/default" --subnetwork "projects/${PROJECT_ID}/regions/europe-west4/subnetworks/default" --cluster-ipv4-cidr "/17" --services-ipv4-cidr "/22"
 `
 kubeconfig entry generated for autopilot-cluster-1.
 NAME                 LOCATION      MASTER_VERSION  MASTER_IP      MACHINE_TYPE  NODE_VERSION    NUM_NODES  STATUS
@@ -20,7 +21,7 @@ autopilot-cluster-1  europe-west4  1.25.8-gke.500  34.90.174.242  e2-medium     
 `
 gcloud container clusters get-credentials autopilot-cluster-1 \
     --region europe-west4 \
-    --project=bk47475
+    --project="${PROJECT_ID}"
 `
 `
 Fetching cluster endpoint and auth data.
@@ -41,15 +42,15 @@ gcloud iam service-accounts create etudelib \
     --description="etudelib" \
     --display-name="etudelib"
 
-6) Create a Kubernetes Service Account.
-kubectl create serviceaccount etudelib --namespace default
+6) Storage bucket
+gcloud storage buckets create gs://${PROJECT_ID}-shared
 
 For read-write workloads: 
-gcloud storage buckets add-iam-policy-binding gs://bk47476-shared \
-    --member "serviceAccount:etudelib@bk47476.iam.gserviceaccount.com" \
+gcloud storage buckets add-iam-policy-binding gs://${PROJECT_ID}-shared \
+    --member "serviceAccount:etudelib@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role "roles/storage.insightsCollectorService"
-gcloud storage buckets add-iam-policy-binding gs://bk47476-shared \
-    --member "serviceAccount:etudelib@bk47476.iam.gserviceaccount.com" \
+gcloud storage buckets add-iam-policy-binding gs://${PROJECT_ID}-shared \
+    --member "serviceAccount:etudelib@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role "roles/storage.objectAdmin"
 
 
@@ -60,13 +61,13 @@ CLUSTER_PROJECT_ID=autopilot-cluster-1
 
 
 
-gcloud iam service-accounts add-iam-policy-binding etudelib@bk47476.iam.gserviceaccount.com \
+gcloud iam service-accounts add-iam-policy-binding etudelib@${PROJECT_ID}.iam.gserviceaccount.com \
     --role roles/iam.workloadIdentityUser \
-    --member "serviceAccount:bk47476.svc.id.goog[default/etudelib]"
+    --member "serviceAccount:${PROJECT_ID}.svc.id.goog[default/etudelib]"
 
 kubectl annotate serviceaccount etudelib \
     --namespace default \
-    iam.gke.io/gcp-service-account=etudelib@bk47476.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account=etudelib@${PROJECT_ID}.iam.gserviceaccount.com
 
 
 
@@ -74,6 +75,16 @@ kubectl create rolebinding etudelib-rolebinding \
    --clusterrole=view \
    --serviceaccount=default:etudelib \
    --namespace=default
+
+
+
+
+
+
+
+
+
+==============================================================================================
 
 5) Manually add the following roles in the WebUI AIM
 'storage admin'
