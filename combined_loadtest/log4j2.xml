@@ -31,10 +31,10 @@
 					 filePattern="${env:METRICS_LOCATION:-logs}/model_metrics.%d{dd-MMM}.log.gz">
 			<PatternLayout pattern="%d{ISO8601} - %m%n"/>
 			<Policies>
-				<SizeBasedTriggeringPolicy size="100 MB"/>
+				<SizeBasedTriggeringPolicy size="1000 MB"/>
 				<TimeBasedTriggeringPolicy/>
 			</Policies>
-			<DefaultRolloverStrategy max="5"/>
+			<DefaultRolloverStrategy max="10"/>
 		</RollingFile>
 		<RollingFile
 				name="ts_log"
@@ -42,10 +42,10 @@
 				filePattern="${env:LOG_LOCATION:-logs}/ts_log.%d{dd-MMM}.log.gz">
 			<PatternLayout pattern="%d{ISO8601} [%-5p] %t %c - %m%n"/>
 			<Policies>
-				<SizeBasedTriggeringPolicy size="100 MB"/>
+				<SizeBasedTriggeringPolicy size="1000 MB"/>
 				<TimeBasedTriggeringPolicy/>
 			</Policies>
-			<DefaultRolloverStrategy max="5"/>
+			<DefaultRolloverStrategy max="10"/>
 		</RollingFile>
 		<RollingFile
 				name="ts_metrics"
@@ -53,10 +53,10 @@
 		        filePattern="${env:METRICS_LOCATION:-logs}/ts_metrics.%d{dd-MMM}.log.gz">
 			<PatternLayout pattern="%d{ISO8601} - %m%n"/>
 			<Policies>
-				<SizeBasedTriggeringPolicy size="100 MB"/>
+				<SizeBasedTriggeringPolicy size="1000 MB"/>
 				<TimeBasedTriggeringPolicy/>
 			</Policies>
-			<DefaultRolloverStrategy max="5"/>
+			<DefaultRolloverStrategy max="10"/>
 		</RollingFile>
 	</Appenders>
 	<Loggers>
@@ -64,7 +64,7 @@
 			<AppenderRef ref="access_log"/>
 		</Logger>
 		<Logger name="io.netty" level="error" />
-		<Logger name="MODEL_LOG" level="all">
+		<Logger name="MODEL_LOG" level="error">
 			<AppenderRef ref="model_log"/>
 		</Logger>
 		<Logger name="MODEL_METRICS" level="all">
@@ -78,7 +78,6 @@
 			<AppenderRef ref="ts_metrics"/>
 		</Logger>
 		<Root level="info">
-			<AppenderRef ref="STDOUT"/>
 			<AppenderRef ref="ts_log"/>
 		</Root>
 	</Loggers>
