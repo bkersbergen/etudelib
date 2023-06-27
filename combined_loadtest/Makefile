@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT=bk47476
+PROJECT=bk47477
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_deployedbenchmark_$(shell date +'%Y%m%d_%H%M%S')

@@ -18,9 +18,9 @@ inference_address=http://0.0.0.0:8080
 management_address=http://0.0.0.0:8081
 metrics_address=http://0.0.0.0:8082
 async_logging=true
-vmargs=-Dlog4j.configurationFile=/home/pytorch/conf/log4j2.xml
-default_response_timeout=1000
-enable_metrics_api=false
+# vmargs=-Dlog4j.configurationFile=/home/pytorch/conf/log4j2.xml
+default_response_timeout=100
+# enable_metrics_api=false
 load_models=all
 model_store=/home/pytorch/models
 enable_envvars_config=true

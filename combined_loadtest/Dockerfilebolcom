@@ -1,8 +1,0 @@
-# FROM eu.gcr.io/bolcom-stg-orwell-6f2/pytorch-server:latest
-#
-# COPY model.mar /home/pytorch/models
-#
-# # change ownership
-# RUN chown -R pytorch:pytorch /home/pytorch/models
-#
-# USER pytorch

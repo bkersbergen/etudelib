@@ -17,8 +17,8 @@ spec:
       serviceAccountName: etudelib
       containers:
       - name: etudelib-torchserve
-        image: eu.gcr.io/bk47476/etudelib/etudelib_torchserve:latest
-        args: ["gs://bk47476-shared/model_store/static/model.mar"]
+        image: eu.gcr.io/bk47477/etudelib/etudelib_torchserve:latest
+        args: ["gs://bk47477-shared/model_store/static/model.mar"]
         ports:
         - containerPort: 8080
         resources:
