@@ -1,5 +1,6 @@
 pub mod jitmodelruntime;
 pub mod onnxmodelruntime;
+pub mod dummymodelruntime;
 
 use serde::{Deserialize, Serialize};
 

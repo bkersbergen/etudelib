@@ -7,9 +7,11 @@ use actix_web::{web::{
     Json,
 }};
 use serde::{Deserialize, Serialize};
-use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::ModelEngine;
+use serving::modelruntime::dummymodelruntime::DummyModelRuntime;
+use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
+
 
 // https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#prediction
 #[derive(Debug, Deserialize, Serialize)]
@@ -28,39 +30,51 @@ pub struct VertexRequestParameter {
     runtime: String,
 }
 
+
+#[derive(Debug, Serialize)]
+pub struct NonFunctional {
+    preprocess_ms: f32,
+    inference_ms: f32,
+    postprocess_ms: f32,
+    model: String,
+    device: String,
+}
+
 // https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#response_requirements
 #[derive(Debug, Serialize)]
 pub struct VertexResponse {
-    pub predictions: Vec<i64>,
+    pub items: Vec<Vec<i64>>,
+    pub nf: NonFunctional,
+
 }
 
-#[post("/predictions/model")]
+#[post("/predictions/model/1.0")]
 async fn v1_recommend(
     models: Data<Models>,
     query: Json<VertexRequest>,
 ) -> impl Responder {
     let session_items: Vec<i64> = query.instances.get(0).unwrap().context.clone();
 
-    let response = match (&*models.jitopt_model, &*models.onnx_model) {
+    let result_item_ids :Vec<i64> = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            let result_item_ids = model.recommend(&session_items);
-            let response = &VertexResponse {
-                predictions: result_item_ids,
-            };
-            HttpResponse::Ok().json(response)
+            model.recommend(&session_items)
         }
         (None, Some(ref model)) => {
-            let result_item_ids = model.recommend(&session_items);
-            let response = &VertexResponse {
-                predictions: result_item_ids,
-            };
-            HttpResponse::Ok().json(response)
+            model.recommend(&session_items)
         }
         _ => {
-            let response = &VertexResponse {
-                predictions: Vec::with_capacity(0),
-            };
-            HttpResponse::Ok().json(response)
+            let model = models.dummy_model.as_ref();
+            model.recommend(&session_items)
+        },
+    };
+    let response = &VertexResponse {
+        items: vec![result_item_ids],
+        nf: NonFunctional {
+            preprocess_ms: 0.0,
+            inference_ms: 0.0,
+            postprocess_ms: 0.0,
+            model: "".to_string(),
+            device: "".to_string(),
         },
     };
     return response;
@@ -95,6 +109,7 @@ async fn home() -> impl Responder {
 pub struct Models {
     pub jitopt_model: Arc<Option<JITModelRuntime>>,
     pub onnx_model: Arc<Option<OnnxModelRuntime>>,
+    pub dummy_model: Arc<DummyModelRuntime>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -154,11 +169,13 @@ async fn main() -> std::io::Result<()> {
         Arc::new(None)
     };
     assert!(jitmodelruntime.is_some() || onnxruntime.is_some(), "Both JITModelRuntime and OnnxModelRuntime are None.");
+    let dummyruntime: Arc<DummyModelRuntime> = Arc::new(DummyModelRuntime::new());
 
     HttpServer::new(move || {
         let models = Models {
             jitopt_model: jitmodelruntime.clone(),
             onnx_model: onnxruntime.clone(),
+            dummy_model: dummyruntime.clone(),
         };
         App::new()
             .service(home)

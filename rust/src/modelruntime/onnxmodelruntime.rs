@@ -107,7 +107,7 @@ mod onnxmodelruntime_test {
 
     #[test]
     fn should_happyflow_onnxmodel() {
-        let mut undertest = OnnxModelRuntime::new("../../model_store/sasrec_bolcom_c10000_t50_onnx.pth".parse().unwrap(), "../../model_store/sasrec_bolcom_c10000_t50_payload.yaml".parse().unwrap(), );
+        let undertest = OnnxModelRuntime::new(&"../../model_store/sasrec_bolcom_c10000_t50_onnx.pth".to_string(), &"../../model_store/sasrec_bolcom_c10000_t50_payload.yaml".to_string(), &1);
         let session_items: Vec<i64> = vec![1, 5, 7, 1];
         let actual = undertest.recommend(&session_items);
         assert_eq!(actual.len(), 21);

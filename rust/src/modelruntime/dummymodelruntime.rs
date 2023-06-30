@@ -1,16 +1,16 @@
 use crate::modelruntime::ModelEngine;
 
-pub struct DummyRuntime {
+pub struct DummyModelRuntime {
 }
 
-impl DummyRuntime {
-    pub fn new() -> DummyRuntime {
-        DummyRuntime {
+impl DummyModelRuntime {
+    pub fn new() -> DummyModelRuntime {
+        DummyModelRuntime {
         }
     }
 }
 
-impl ModelEngine for DummyRuntime {
+impl ModelEngine for DummyModelRuntime {
     fn recommend(&self, _session_items: &Vec<i64>) -> Vec<i64>{
         let vec: Vec<i64> = (1..=21).collect();
         vec
@@ -20,12 +20,12 @@ impl ModelEngine for DummyRuntime {
 
 
 #[cfg(test)]
-mod dummyruntime_test {
+mod dummymodelruntime_test {
     use super::*;
 
     #[test]
     fn should_happyflow_dummymodel() {
-        let mut undertest = DummyRuntime::new();
+        let undertest = DummyModelRuntime::new();
         let session_items: Vec<i64> = vec![1, 5, 7, 1];
         let actual = undertest.recommend(&session_items);
         assert_eq!(actual.len(), 21);
