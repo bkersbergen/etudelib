@@ -32,27 +32,31 @@ RUN rustup default nightly; cargo search
 RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
 
 RUN mkdir -p ./target/libtorch
+ENV LIBTORCH="/opt/conda/lib/python3.10/site-packages/torch"
+ENV DYLD_LIBRARY_PATH="/opt/conda/lib/python3.10/site-packages/torch/lib"
 
-RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
 
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
-
-RUN set -eux; \
-    apt-get update;
-
-WORKDIR /app
-
+#RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
+#
+#FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
+#
+#RUN set -eux; \
+#    apt-get update;
+#
+#WORKDIR /app
+#
 # Setup the local account
-RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
-RUN chown -R app:app /app
-USER app
+#RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
+#RUN chown -R app:app /app
+#USER app
 
-ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
+#ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
 
-COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
-COPY --from=builder /usr/src/devel/target/release/libonnx* /usr/local/lib/
-COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
-COPY --from=builder /usr/src/devel/build.log /app
+#COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
+#COPY --from=builder /usr/src/devel/target/release/libonnx* /usr/local/lib/
+#COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
+#COPY --from=builder /usr/src/devel/build.log /app
 
-ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
+#ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
 EXPOSE 8080/tcp

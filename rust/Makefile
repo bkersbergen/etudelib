@@ -2,7 +2,7 @@ SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 PWD:=$(shell pwd)
 USER ?= -SA
-PROJECT_ID=bk47475
+PROJECT_ID=bk47477
 
 hello:
 	@echo "Hello"
@@ -43,14 +43,17 @@ serve_buildpush:  ## build the serving application for the models
 serve_interactive:  ## run the docker base image interactive
 	docker run --rm -it --entrypoint /bin/bash --platform linux/amd64 --user root -v $(shell pwd):/local/ -i -t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest
 
+serve_deploy:
+	echo needs implementation
+
 model_buildpush:  ## build and push model
 	docker build --platform linux/amd64 \
 		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
 		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
 		--build-arg path_to_config="config/serving.yaml" \
-		-t eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/noop_bolcom_c1000000_t50_jitopt:latest \
+		-t eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest \
 		-f docker/ModelDockerfile .
-	docker push eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/noop_bolcom_c1000000_t50_jitopt:latest
+	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest
 
 model_interactive:  ## run the model interactive
 	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest /bin/bash

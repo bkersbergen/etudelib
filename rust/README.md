@@ -15,12 +15,12 @@ You can install torch manually following the indications from https://github.com
 `pip3 install torch==2.0.0`
 
 Then update the following environment variables:
-`export LIBTORCH=$(python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)')
+`
+export LIBTORCH=$(python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)')
 export DYLD_LIBRARY_PATH=${LIBTORCH}/lib`
 
-This can also be done in the run configuration of Intellij
 
-DYLD_LIBRARY_PATH=/path/to/venv/lib/python3.10/site-packages/torch/lib
-LIBTORCH=/path/to/venv/lib/python3.10/site-packages/torch/lib
+This can also be done in the run configuration of Intellij
+DYLD_LIBRARY_PATH=/Users/bkersbergen/phd/etudelib/rust/venv/lib/python3.10/site-packages/torch/lib;LIBTORCH=/Users/bkersbergen/phd/etudelib/rust/venv/lib/python3.10/site-packages/torch
 
 

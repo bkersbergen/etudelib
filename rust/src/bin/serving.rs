@@ -77,7 +77,7 @@ async fn v1_recommend(
             device: "".to_string(),
         },
     };
-    return response;
+    HttpResponse::Ok().json(response)
 }
 
 
