@@ -37,11 +37,11 @@ COPY ./build_loop.sh ./
 RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
 
 RUN mkdir -p ./target/libtorch
-ENV LIBTORCH="/opt/conda/lib/python3.10/site-packages/torch"
-ENV DYLD_LIBRARY_PATH="/opt/conda/lib/python3.10/site-packages/torch/lib"
+#ENV LIBTORCH="/opt/conda/lib/python3.10/site-packages/torch"
+#ENV DYLD_LIBRARY_PATH="/opt/conda/lib/python3.10/site-packages/torch/lib"
 
-
-#RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
+ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
+RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
 #
 #FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
 #
