@@ -1,14 +1,15 @@
 How I setup my CICD infra:
 
-
+PROJECT_ID=bk47478
 1) Set as default project 
 `
-gcloud config set project bk47477
+gcloud config set project ${PROJECT_ID}
 `
 Manually enable Kubernetes API in the WebUI.
 2) Create kubernetes cluster in project. Using WebUI with all defaults (Auto-pilot) except for region: WEST-4 (Amsterdam). The WebUI gave this commandline statement at the end:
 
-PROJECT_ID=bk47477
+gcloud services enable container.googleapis.com
+
 `
 gcloud container --project "${PROJECT_ID}" clusters create-auto "autopilot-cluster-1" --region "europe-west4" --release-channel "regular" --network "projects/${PROJECT_ID}/global/networks/default" --subnetwork "projects/${PROJECT_ID}/regions/europe-west4/subnetworks/default" --cluster-ipv4-cidr "/17" --services-ipv4-cidr "/22"
 `
@@ -23,10 +24,10 @@ gcloud container clusters get-credentials autopilot-cluster-1 \
     --region europe-west4 \
     --project="${PROJECT_ID}"
 `
-`
+
 Fetching cluster endpoint and auth data.
 kubeconfig entry generated for autopilot-cluster-1.
-`
+
 
 4) Create Kubernetes service account
 `
@@ -38,29 +39,32 @@ metadata:
 EOF
 `
 5) Create GCP service account
+`
 gcloud iam service-accounts create etudelib \
     --description="etudelib" \
     --display-name="etudelib"
-
+`
 6) Storage bucket
+
+`
 gcloud storage buckets create gs://${PROJECT_ID}-shared
+`
 
 For read-write workloads: 
+`
 gcloud storage buckets add-iam-policy-binding gs://${PROJECT_ID}-shared \
     --member "serviceAccount:etudelib@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role "roles/storage.insightsCollectorService"
 gcloud storage buckets add-iam-policy-binding gs://${PROJECT_ID}-shared \
     --member "serviceAccount:etudelib@${PROJECT_ID}.iam.gserviceaccount.com" \
     --role "roles/storage.objectAdmin"
-
+`
 
 The relationship between kubernetes accounts and google cloud
 https://github.com/GoogleCloudPlatform/gcs-fuse-csi-driver/blob/main/docs/usage.md
 Bind the the Kubernetes Service Account with the GCP Service Account.
-CLUSTER_PROJECT_ID=autopilot-cluster-1
 
-
-
+`
 gcloud iam service-accounts add-iam-policy-binding etudelib@${PROJECT_ID}.iam.gserviceaccount.com \
     --role roles/iam.workloadIdentityUser \
     --member "serviceAccount:${PROJECT_ID}.svc.id.goog[default/etudelib]"
@@ -76,7 +80,7 @@ kubectl create rolebinding etudelib-rolebinding \
    --serviceaccount=default:etudelib \
    --namespace=default
 
-
+`
 
 
 

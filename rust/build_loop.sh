@@ -2,7 +2,8 @@
 max_attempts=5
 attempt=0
 while [ $attempt -lt $max_attempts ]; do
-    cargo build --release --bin serving
+#    cargo build --release --bin serving
+    cargo build --bin serving
     return_code=$?
     if [ $return_code -eq 0 ]; then
         echo "Build successful"
