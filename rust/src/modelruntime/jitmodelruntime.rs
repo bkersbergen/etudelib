@@ -14,6 +14,12 @@ impl JITModelRuntime {
     pub fn new(model_path: &String, payload_path: &String, qty_threads: &usize) -> JITModelRuntime {
         println!("Number of jit threads: {qty_threads}");
 
+        println!("Cuda available: {}", tch::Cuda::is_available());
+        println!("Cudnn available: {}", tch::Cuda::cudnn_is_available());
+        println!("has_mps: {}", tch::utils::has_mps());
+        println!("has_vulkan: {}", tch::utils::has_vulkan());
+        println!("version_cudnn: {}", tch::utils::version_cudnn());
+        println!("version_cudart: {}", tch::utils::version_cudart());
         tch::set_num_threads(*qty_threads as i32);
         tch::set_num_interop_threads(*qty_threads as i32);
         let device = Device::cuda_if_available();
