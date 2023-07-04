@@ -20,6 +20,8 @@ spec:
       containers:
       - name: etudelib-servingrust
         image: eu.gcr.io/bk47478/etudelib/serving_rust:latest
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 600; done;" ]
         # args: ["gs://bk47478-shared/model_store/static/model.mar"]
         ports:
         - containerPort: 8080
@@ -27,6 +29,7 @@ spec:
           requests:
             memory: "32Gi"
             cpu: 2
+            ephemeral-storage: "20Gi"
           limits:
             nvidia.com/gpu: 1
 

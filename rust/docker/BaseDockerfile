@@ -1,64 +1,68 @@
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel AS builder
-# FROM nvidia/cuda:12.2.0-devel-ubuntu20.04 as builder
-WORKDIR /usr/src/devel
-# https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
-ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Amsterdam"
+FROM nvidia/cuda:12.2.0-runtime-ubuntu20.04
 
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y \
-    libssl-dev \
-    libzstd-dev \
-    pkg-config \
-    musl-tools \
-    curl \
-	llvm \
-    clang \
-    bc;
+# Inspired by https://github.com/Rust-GPU/Rust-CUDA/blob/master/Dockerfile which is no longer maintained
+
+# Update default packages
+RUN apt-get update
+
+# https://serverfault.com/questions/949991/how-to-install-tzdata-on-a-ubuntu-docker-image
+# Get Ubuntu packages
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    build-essential \
+    curl xz-utils pkg-config libssl-dev zlib1g-dev libtinfo-dev libxml2-dev llvm clang zip
+
+
+# Get Rust
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+
+# Install TorchLib C++ with latest CUDA support (/libtorch)
+RUN curl https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip -o libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
+RUN unzip libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
+
+# set env
+ENV LLVM_CONFIG=/usr/bin/llvm-config
+ENV CUDA_ROOT=/usr/local/cuda
+ENV CUDA_PATH=$CUDA_ROOT
+ENV LLVM_LINK_STATIC=1
+ENV RUST_LOG=info
+ENV PATH=$CUDA_ROOT/nvvm/lib64:/root/.cargo/bin:$PATH
+
+# make ld aware of necessary *.so libraries
+RUN echo $CUDA_ROOT/lib64 >> /etc/ld.so.conf &&\
+    echo $CUDA_ROOT/compat >> /etc/ld.so.conf &&\
+    echo $CUDA_ROOT/nvvm/lib64 >> /etc/ld.so.conf &&\
+    echo /libtorch/lib >> /etc/ld.so.conf &&\
+    ldconfig
 
 # Install Google SDK
 RUN apt-get install -y apt-transport-https ca-certificates gnupg
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y
 
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-RUN rustup default nightly; cargo search
+## Install PyTorch with latest CUDA support
+#RUN apt-get install -y python3-distutils python3-apt
+#RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+#RUN python3.8 get-pip.py
+#RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 
 COPY ./src src
 COPY ./Cargo.toml ./
 COPY ./build_loop.sh ./
 
+# Trigger Onnx to download CUDA version
+ENV ORT_USE_CUDA=1
+RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
+RUN cp ./target/release/libonnx* /usr/local/lib/
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # A simple `cargo build` failed over and over again. Randomly producing all kinds of compile- or out of memory- errors
 # I was not able to pin point it. Suggestions from the internet did not help consistently.
 # Perhaps its related by my M1 emulating a x64 on QEMU.
-# The best way to make it work is keep compiling until its successful. This seems to work and works on all platforms.
-RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
+# The best way to make it work is keep compiling until its successful. This seems to work on all platforms.
 
-RUN mkdir -p ./target/libtorch
-
-RUN find ./ -type d -wholename "*out/libtorch/libtorch/lib" -exec cp -r {}/. ./target/libtorch \;
-
-FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS runtime
-
-RUN set -eux; \
-    apt-get update;
-
-WORKDIR /app
-
-# Setup the local account
-RUN groupadd -r app && useradd -r -g app -u 1002 app --home /app
-RUN chown -R app:app /app
-USER app
-
-ENV LD_LIBRARY_PATH="/usr/local/lib/:/opt/conda/lib/"
-
-COPY --chown=app:app --from=builder /usr/src/devel/target/release/serving /app
-COPY --from=builder /usr/src/devel/target/release/libonnx* /usr/local/lib/
-COPY --from=builder /usr/src/devel/target/libtorch/* /usr/local/lib/
-COPY --from=builder /usr/src/devel/build.log /app
 COPY ./config config
 COPY ./model_store model_store
 
-ENTRYPOINT [ "/app/serving" , "./config/serving.yaml" ]
-EXPOSE 8080/tcp
+# LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+# curl https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip -o libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
+# unzip libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip

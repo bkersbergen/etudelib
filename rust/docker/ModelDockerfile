@@ -1,9 +1,0 @@
-FROM eu.gcr.io/bolcom-pro-reco-analytics-fcc/etudelib/serving_rust:latest
-
-ARG path_to_model
-ARG path_to_payload
-ARG path_to_config
-
-COPY --chown=app:app ${path_to_model} ./model_store/
-COPY --chown=app:app ${path_to_payload} ./model_store/
-COPY --chown=app:app ${path_to_config} ./config/serving.yaml
