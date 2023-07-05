@@ -14,3 +14,7 @@ while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${HEALTH_URL})" != "200" ]]
   sleep 1;
 done
 echo EtudeLib Model serving ready
+
+sleep infinity
+
+
