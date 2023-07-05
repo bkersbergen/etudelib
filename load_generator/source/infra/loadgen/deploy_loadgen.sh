@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-PROJECT_ID=bk47477
+PROJECT_ID=bk47478
 if [ $# -lt 5 ]; then
     echo "requires args 'VERTEX_ENDPOINT', 'CATALOG_SIZE', 'REPORT_LOCATION', 'TARGET_RPS', 'RAMP_DURATION_MINUTES'"
     exit 1

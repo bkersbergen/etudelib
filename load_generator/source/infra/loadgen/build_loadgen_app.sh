@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-PROJECT_ID=bk47477
+PROJECT_ID=bk47478
 ./mvnw clean package -DskipTests
 
 docker build . \
