@@ -24,7 +24,7 @@ ENV LLVM_CONFIG=/usr/bin/llvm-config
 ENV CUDA_ROOT=/usr/local/cuda
 ENV CUDA_PATH=$CUDA_ROOT
 ENV LLVM_LINK_STATIC=1
-ENV RUST_LOG=info
+ENV RUST_LOG=error
 ENV PATH=$CUDA_ROOT/nvvm/lib64:/root/.cargo/bin:$PATH
 
 # make ld aware of necessary *.so libraries
