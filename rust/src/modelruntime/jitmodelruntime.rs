@@ -16,17 +16,17 @@ impl JITModelRuntime {
 
         println!("Cuda available: {}", tch::Cuda::is_available());
         println!("Cudnn available: {}", tch::Cuda::cudnn_is_available());
-        println!("version_cudnn: {}", tch::utils::version_cudnn());
-        println!("version_cudart: {}", tch::utils::version_cudart());
         tch::set_num_threads(*qty_threads as i32);
         tch::set_num_interop_threads(*qty_threads as i32);
         let device = Device::cuda_if_available();
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
         if device.is_cuda() {
-            println!("JIT using CUDA and CPU")
+            println!("JIT using CUDA and CPU");
+            println!("version_cudnn: {}", tch::utils::version_cudnn());
+            println!("version_cudart: {}", tch::utils::version_cudart());
         } else {
-            println!("JIT using only CPU")
+            println!("JIT using only CPU");
         }
         let model = tch::CModule::load_on_device(model_path, device).unwrap();
 
@@ -74,7 +74,7 @@ mod jitmodelruntime_test {
 
     #[test]
     fn should_happyflow_jitmodel() {
-        let undertest = JITModelRuntime::new(&"../../model_store/noop_bolcom_c10000_t50_jitopt.pth".to_string(), &"../../model_store/noop_bolcom_c10000_t50_payload.yaml".to_string(), &1);
+        let undertest = JITModelRuntime::new(&"/Users/bkersbergen/phd/etudelib/rust/model_store/noop_bolcom_c10000_t50_jitopt.pth".to_string(), &"/Users/bkersbergen/phd/etudelib/rust/model_store/noop_bolcom_c10000_t50_payload.yaml".to_string(), &1);
         let session_items: Vec<i64> = vec![1, 5, 7, 1];
         let actual = undertest.recommend(&session_items);
         assert_eq!(actual.len(), 21);
