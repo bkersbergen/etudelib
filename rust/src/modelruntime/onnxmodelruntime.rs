@@ -20,7 +20,7 @@ impl OnnxModelRuntime {
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
 
         let environment = Environment::builder()
-            .with_log_level(LoggingLevel::Info)
+            .with_log_level(LoggingLevel::Error)
             .build().unwrap().into_arc();
 
         let session = if Device::cuda_if_available().is_cuda() {

@@ -20,8 +20,9 @@ from etudelib.models.topkdecorator import TopKDecorator
 
 def export_models():
     rootdir = Path(__file__).parent.parent.parent
+    BUCKET_BASE_URI='gs://bk47478-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-    for C in [10_000, 100_000, 1_000_000, 5_000_000]:
+    for C in [10_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -35,12 +36,16 @@ def export_models():
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
         # for model_name in ['noop']:
-        for model_name in ['topkonly']:
+        for model_name in ['noop']:
             output_path = f'{rootdir}/rust/model_store/'
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = create_model(
                 model_name=model_name, C=C, max_seq_length=t, param_source=param_source, model_input=model_input)
 
+            os.system(f'gsutil cp -r {payload_path} {BUCKET_BASE_URI}/')
+            os.system(f'gsutil cp -r {eager_model_path} {BUCKET_BASE_URI}/')
+            os.system(f'gsutil cp -r {jitopt_model_path} {BUCKET_BASE_URI}/')
+            os.system(f'gsutil cp -r {onnx_model_path} {BUCKET_BASE_URI}/')
 
             # TorchServeExporter.export_mar_file(eager_model_path, payload_path, output_path)
             # docker_build_push(eager_model_path)
