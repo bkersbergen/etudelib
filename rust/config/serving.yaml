@@ -1,6 +1,0 @@
-host: "0.0.0.0"
-port: 8080
-# model_store_path must have the value "model_store" for the docker image to work
-model_store_path: "model_store"
-model_filename: "noop_bolcom_c10000_t50_jitopt.pth"
-payload_filename: "noop_bolcom_c10000_t50_payload.yaml"

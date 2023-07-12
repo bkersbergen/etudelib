@@ -2,22 +2,10 @@ SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 PWD:=$(shell pwd)
 USER ?= -SA
-PROJECT_ID=bk47478
+PROJECT_ID=bk47479
 
 hello:
 	@echo "Hello"
-
-ifeq (,$(filter defined,$(origin LIBTORCH)))
-	@if [ -f .libtorch_path ]; then \
-		LIBTORCH=$$(cat .libtorch_path); \
-	else \
-		LIBTORCH=$$(python3 -c 'import torch; from pathlib import Path; print(Path(torch.__file__).parent)'); \
-		echo $$LIBTORCH > .libtorch_path; \
-	fi
-	@DYLD_LIBRARY_PATH=$$LIBTORCH/lib
-	@export LIBTORCH
-	@export DYLD_LIBRARY_PATH
-endif
 
 configure: requirements.txt ## configure a virtual environment with pytorch for its c++ libs
 	test -d venv || virtualenv venv
@@ -45,21 +33,6 @@ serve_interactive:  ## run the docker base image interactive
 
 serve_deploy:
 	echo needs implementation
-
-model_buildpush:  ## build and push model
-	docker build --platform linux/amd64 \
-		--build-arg path_to_model="model_store/noop_bolcom_c1000000_t50_jitopt.pth" \
-		--build-arg path_to_payload="model_store/noop_bolcom_c1000000_t50_payload.yaml" \
-		--build-arg path_to_config="config/serving.yaml" \
-		-t eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest \
-		-f docker/ModelDockerfile .
-	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest
-
-model_interactive:  ## run the model interactive
-	docker run --rm -it --platform linux/amd64 -v $(shell pwd):/local/ -i -t eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest /bin/bash
-
-model_run:  ## run the model
-	docker run --platform linux/amd64 -p 7080:7080 -t eu.gcr.io/$(PROJECT_ID)/etudelib/noop_bolcom_c1000000_t50_jitopt:latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

@@ -18,14 +18,13 @@ spec:
       containers:
       - name: etudelib-servingrust
         image: eu.gcr.io/bk47478/etudelib/serving_rust:latest
-        # args: ["gs://bk47478-shared/model_store/static/model.mar"]
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "while true; do sleep 600; done;" ]
+        command: [ "./start.sh" ]
+        args: [ "gs://bk47479-shared/model_store/topkonly_bolcom_t50_10000000/topkonly_bolcom_c10000000_t50_jitopt.pth", "gs://bk47479-shared/model_store/topkonly_bolcom_t50_10000000/topkonly_bolcom_c10000000_t50_payload.yaml" ]
         ports:
         - containerPort: 8080
         resources:
           requests:
             memory: "32Gi"
-            cpu: 6
+            cpu: 4
             ephemeral-storage: "20Gi"
 

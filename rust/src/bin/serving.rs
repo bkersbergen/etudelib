@@ -116,9 +116,10 @@ pub struct Models {
 struct Config {
     host: Ipv4Addr,
     port: u16,
-    model_store_path: String,
-    model_filename: String,
-    payload_filename: String,
+    qty_actix_workers: usize,
+    qty_model_threads: usize,
+    model_path: String,
+    payload_path: String,
 }
 
 #[actix_web::main]
@@ -132,8 +133,9 @@ async fn main() -> std::io::Result<()> {
     let qty_physical_cores = num_cpus::get_physical();
     println!("Number of logical cores: {qty_logical_cores}");
     println!("Number of physical cores: {qty_physical_cores}");
-    let qty_actix_threads = qty_physical_cores;
-    let qty_model_threads = 1;
+
+    let qty_actix_threads = config.qty_actix_workers;
+    let qty_model_threads = config.qty_model_threads;
     // let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
     //     (1, 1)
     // } else {
@@ -154,17 +156,13 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     println!("EtudeServing started successfully");
 
-    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_filename.ends_with("_jitopt.pth") {
-        let model_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.model_filename);
-        let payload_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.payload_filename);
-        Arc::new(Some(JITModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
+    let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_path.ends_with("_jitopt.pth") {
+        Arc::new(Some(JITModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
-    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_filename.ends_with("_onnx.pth") {
-        let model_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.model_filename);
-        let payload_path = format!("{}{}{}", &config.model_store_path, std::path::MAIN_SEPARATOR, &config.payload_filename);
-        Arc::new(Some(OnnxModelRuntime::new(&model_path, &payload_path, &qty_model_threads)))
+    let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_path.ends_with("_onnx.pth") {
+        Arc::new(Some(OnnxModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
