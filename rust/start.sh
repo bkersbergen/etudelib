@@ -28,7 +28,7 @@ port: 8080
 qty_actix_workers: 4
 qty_model_threads: 1
 model_path: "model_store/${model_filename}"
-payload_pathfilename: "model_store/${payload_filename}"
+payload_path: "model_store/${payload_filename}"
 EOF
 
 
