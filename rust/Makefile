@@ -26,6 +26,7 @@ serve_buildpush:  ## build the serving application for the models
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
 deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
+	$(MAKE) undeploy_serving
 	kubectl apply -f etudelibrust-deployment_cpu.yaml 
 
 undeploy_serving:  ## undeploys etudelibrust from kubernetes
