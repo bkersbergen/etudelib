@@ -63,7 +63,8 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 COPY ./config config
 COPY ./model_store model_store
 COPY ./start.sh ./
-RUN chmod +x ./start.sh
+COPY ./predict_by_id.sh ./
+RUN chmod +x ./*.sh
 
 # LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 # curl https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip -o libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip

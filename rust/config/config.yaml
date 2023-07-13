@@ -1,6 +1,6 @@
 host: "0.0.0.0"
 port: 8080
 qty_actix_workers: 4
-qty_model_threads: 4
-model_path: "model_store/noop_bolcom_c10000_t50_jitopt.pth"
-payload_pathfilename: "model_store/noop_bolcom_c10000_t50_payload.yaml"
+qty_model_threads: 1
+model_path: "model_store/topkonly_bolcom_c100000_t50/topkonly_bolcom_c100000_t50_jitopt.pth"
+payload_path: "model_store/topkonly_bolcom_c100000_t50/topkonly_bolcom_c100000_t50_payload.yaml"

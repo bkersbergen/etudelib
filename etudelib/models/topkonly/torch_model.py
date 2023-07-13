@@ -8,6 +8,8 @@ A TOPKONLY model. Used as a zero measurement
 
 """
 
+print('TODO: This model is not compatible with the top-k decorator and allways returns the catalog size results.')
+
 import torch
 from torch import nn
 

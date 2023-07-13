@@ -48,7 +48,7 @@ pub struct VertexResponse {
 
 }
 
-#[post("/predictions/model/1.0")]
+#[post("/predictions/model/1.0/")]
 async fn v1_recommend(
     models: Data<Models>,
     query: Json<VertexRequest>,
@@ -57,12 +57,15 @@ async fn v1_recommend(
 
     let result_item_ids :Vec<i64> = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
+            println!("JIT predictions");
             model.recommend(&session_items)
         }
         (None, Some(ref model)) => {
+            println!("ONNX predictions");
             model.recommend(&session_items)
         }
         _ => {
+            println!("Dummymodel predictions");
             let model = models.dummy_model.as_ref();
             model.recommend(&session_items)
         },
@@ -157,11 +160,13 @@ async fn main() -> std::io::Result<()> {
     println!("EtudeServing started successfully");
 
     let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_path.ends_with("_jitopt.pth") {
+        println!("loading JIT model from: {0}", config.model_path);
         Arc::new(Some(JITModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)
     };
     let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_path.ends_with("_onnx.pth") {
+        println!("loading ONNX model from: {0}", config.model_path);
         Arc::new(Some(OnnxModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
     } else{
         Arc::new(None)

@@ -12,9 +12,6 @@ configure: requirements.txt ## configure a virtual environment with pytorch for 
 	. venv/bin/activate; pip install -Ur requirements.txt
 	touch venv/touchfile
 
-train: ## Train a PyTorch model and persist it to disk
-	python train.py
-
 serving: ## Build and run the Rust application in debug mode
 	cargo run --release --bin serving -- $(ARGS)
 
@@ -34,7 +31,7 @@ deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
 undeploy_serving:  ## undeploys etudelibrust from kubernetes
 	kubectl delete deployment etudelibrust
 
-upload_models_to_bucket:  ## train and deploy the models to the storage bucket
+train:  ## train and deploy the models to the storage bucket
 	. venv/bin/activate; python train.py
 
 

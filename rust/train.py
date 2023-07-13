@@ -23,7 +23,7 @@ def export_models():
     rootdir = Path(__file__).parent.parent.parent
     BUCKET_BASE_URI='gs://'+PROJECT_ID+'-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-    for C in [10_000_000]:
+    for C in [100_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -38,7 +38,6 @@ def export_models():
         #            'stamp']:
         # for model_name in ['noop']:
         for model_name in ['noop', 'core', 'topkonly']:
-            output_path = f'{rootdir}/rust/model_store/'
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = create_model(
                 model_name=model_name, C=C, max_seq_length=t, param_source=param_source, model_input=model_input)
@@ -61,8 +60,11 @@ def create_model(model_name: str, C: int, max_seq_length:int, param_source: str,
     device_type = 'cpu'
     rootdir = Path(__file__).parent.parent
 
-    projectdir = Path(rootdir, 'rust/model_store')
+    base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}'
 
+    projectdir = Path(rootdir, 'rust/model_store', base_filename)
+    print(projectdir)
+    projectdir.mkdir(parents=True, exist_ok=True)
     config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
     config = OmegaConf.load(config_path)
 
@@ -85,7 +87,6 @@ def create_model(model_name: str, C: int, max_seq_length:int, param_source: str,
     eager_model = TopKDecorator(eager_model, topk=21)
     eager_model.eval()
 
-    base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}'
 
     payload = {'max_seq_length': max_seq_length,
                'C': C,
