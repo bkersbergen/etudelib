@@ -19,7 +19,7 @@ spec:
       - name: etudelib-servingrust
         image: eu.gcr.io/bk47479/etudelib/serving_rust:latest
         command: [ "./start.sh" ]
-        args: [ "gs://bk47479-shared/model_store/topkonly_bolcom_t50_10000000/topkonly_bolcom_c10000000_t50_jitopt.pth", "gs://bk47479-shared/model_store/topkonly_bolcom_t50_10000000/topkonly_bolcom_c10000000_t50_payload.yaml" ]
+        args: [ "gs://bk47479-shared/model_store/core_bolcom_t50_100000/core_bolcom_c100000_t50_jitopt.pth", "gs://bk47479-shared/model_store/core_bolcom_t50_100000/core_bolcom_c100000_t50_payload.yaml" ]
         ports:
         - containerPort: 8080
         resources:

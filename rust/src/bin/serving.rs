@@ -57,15 +57,12 @@ async fn v1_recommend(
 
     let result_item_ids :Vec<i64> = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            println!("JIT predictions");
             model.recommend(&session_items)
         }
         (None, Some(ref model)) => {
-            println!("ONNX predictions");
             model.recommend(&session_items)
         }
         _ => {
-            println!("Dummymodel predictions");
             let model = models.dummy_model.as_ref();
             model.recommend(&session_items)
         },
