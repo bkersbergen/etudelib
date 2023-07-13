@@ -12,18 +12,21 @@ gcloud auth list
 
 DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+model_path_arg=$1
+payload_path_arg=$2
 set -x
-gsutil cp "$1" ${DIR}/model_store/
-gsutil cp "$2" ${DIR}/model_store/
+gsutil cp "${model_path_arg}" ${DIR}/model_store/
+gsutil cp "${payload_path_arg}" ${DIR}/model_store/
 
-model_filename="${$1##*/}"
-payload_filename="${$2##*/}"
+
+model_filename=$(basename -- ${model_path_arg})
+payload_filename=$(basename -- ${payload_path_arg})
 
 cat << EOF > "config/serving.yaml"
 host: "0.0.0.0"
 port: 8080
 qty_actix_workers: 4
-qty_model_threads: 4
+qty_model_threads: 1
 model_path: "model_store/${model_filename}"
 payload_pathfilename: "model_store/${payload_filename}"
 EOF

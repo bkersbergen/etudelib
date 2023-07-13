@@ -28,6 +28,16 @@ serve_buildpush:  ## build the serving application for the models
 	docker build --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f docker/BaseDockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
+deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
+	kubectl apply -f etudelibrust-deployment_cpu.yaml 
+
+undeploy_serving:  ## undeploys etudelibrust from kubernetes
+	kubectl delete deployment etudelibrust
+
+upload_models_to_bucket:  ## train and deploy the models to the storage bucket
+	. venv/bin/activate; python train.py
+
+
 serve_interactive:  ## run the docker base image interactive
 	docker run --rm -it --entrypoint /bin/bash --platform linux/amd64 --user root -v $(shell pwd):/local/ -i -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
