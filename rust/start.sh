@@ -14,7 +14,7 @@ DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 model_path_arg=$1
 payload_path_arg=$2
-set -x
+
 gsutil cp "${model_path_arg}" ${DIR}/model_store/
 gsutil cp "${payload_path_arg}" ${DIR}/model_store/
 
@@ -49,6 +49,16 @@ while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' ${HEALTH_URL})" != "200" ]]
   sleep 1;
 done
 echo "EtudeServing ready"
+
+script_path="./predict_by_id.sh"
+echo Doing a single prediction
+# Check if the script file exists
+if [ -f "$script_path" ]; then
+    # Execute the script
+    source "$script_path"
+else
+    echo "Script file '$script_path' not found."
+fi
 
 sleep infinity
 
