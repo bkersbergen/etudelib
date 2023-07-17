@@ -1,6 +1,13 @@
 #!/bin/bash
+set -e
 
-PROJECT_ID=bk47479
+if [[ $# -ne 1 ]]; then
+    echo "Illegal number of parameters. PROJECT_ID is missing"
+    echo "Usage: $0 bk47471"
+    exit 2
+fi
+
+PROJECT_ID=$1
 `
 gcloud config set project ${PROJECT_ID}
 `

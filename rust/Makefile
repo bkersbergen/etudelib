@@ -2,7 +2,7 @@ SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 PWD:=$(shell pwd)
 USER ?= -SA
-PROJECT_ID=bk47479
+PROJECT_ID=bk47471
 
 hello:
 	@echo "Hello"
@@ -27,10 +27,11 @@ serve_buildpush:  ## build the serving application for the models
 
 deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
 	$(MAKE) undeploy_serving
-	kubectl apply -f etudelibrust-deployment_cpu.yaml 
+	kubectl apply -f etudelibrust-deployment_cpu.yaml
+	kubectl apply -f etudelibrust-service.yaml
 
 undeploy_serving:  ## undeploys etudelibrust from kubernetes
-	kubectl delete deployment etudelibrust
+	-kubectl delete deployment etudelibrust
 
 train:  ## train and deploy the models to the storage bucket
 	. venv/bin/activate; python train.py
@@ -38,9 +39,6 @@ train:  ## train and deploy the models to the storage bucket
 
 serve_interactive:  ## run the docker base image interactive
 	docker run --rm -it --entrypoint /bin/bash --platform linux/amd64 --user root -v $(shell pwd):/local/ -i -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
-
-serve_deploy:
-	echo needs implementation
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)

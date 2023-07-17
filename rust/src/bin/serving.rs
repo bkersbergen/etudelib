@@ -168,7 +168,6 @@ async fn main() -> std::io::Result<()> {
     } else{
         Arc::new(None)
     };
-    assert!(jitmodelruntime.is_some() || onnxruntime.is_some(), "Both JITModelRuntime and OnnxModelRuntime are None.");
     let dummyruntime: Arc<DummyModelRuntime> = Arc::new(DummyModelRuntime::new());
 
     HttpServer::new(move || {

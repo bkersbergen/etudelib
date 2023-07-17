@@ -17,7 +17,7 @@ import subprocess
 
 from etudelib.models.topkdecorator import TopKDecorator
 
-PROJECT_ID="bk47479"
+PROJECT_ID="bk47471"
 
 def export_models():
     rootdir = Path(__file__).parent.parent.parent
