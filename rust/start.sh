@@ -31,11 +31,11 @@ model_path: "model_store/${model_filename}"
 payload_path: "model_store/${payload_filename}"
 EOF
 
-
-
 # cargo run --release --bin serving -- model_store/noop_bolcom_c10000_t50_jitopt.pth model_store/noop_bolcom_c10000_t50_payload.yaml &
 cat config/serving.yaml
-target/release/serving config/serving.yaml &
+cargo build --release --bin serving
+cp ./target/release/libonnx* /usr/local/lib/
+cargo run --release --bin serving config/serving.yaml &
 SERVING_PID=$!
 
 declare -r HOST="http://127.0.0.1:8080"
@@ -60,6 +60,6 @@ else
     echo "Script file '$script_path' not found."
 fi
 
-sleep infinity
+# sleep infinity
 
 

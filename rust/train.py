@@ -23,7 +23,7 @@ def export_models():
     rootdir = Path(__file__).parent.parent.parent
     BUCKET_BASE_URI='gs://'+PROJECT_ID+'-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-    for C in [100_000]:
+    for C in [10_000]:
         t = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -37,7 +37,7 @@ def export_models():
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
         # for model_name in ['noop']:
-        for model_name in ['noop', 'core', 'topkonly']:
+        for model_name in ['gru4rec']:
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
             payload_path, eager_model_path, jitopt_model_path, onnx_model_path = create_model(
                 model_name=model_name, C=C, max_seq_length=t, param_source=param_source, model_input=model_input)
@@ -98,10 +98,12 @@ def create_model(model_name: str, C: int, max_seq_length:int, param_source: str,
     jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
     onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
 
-    eager_model.to(device_type)
+    # eager_model.to(device_type)
 
+    # jit_model = torch.jit.optimize_for_inference(
+    #     torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
     jit_model = torch.jit.optimize_for_inference(
-        torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
+        torch.jit.trace(eager_model, (model_input[0], model_input[1])))
 
     conf = OmegaConf.create(payload)
     with open(payload_path, 'w+') as fp:

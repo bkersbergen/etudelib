@@ -36,7 +36,8 @@ serde = { version = "1.0.162", features = ["derive"] }
 tch = "0.11.0"
 uuid = { version = "1.3.2", features = ["v4"] }
 serde_yaml = "0.9.21"
-ort = "1.14.6"
+# prevent auto upgrading to non compatible version https://stackoverflow.com/questions/45224563/how-to-specify-the-exact-version-of-a-dependency
+ort = "= 1.14.6"
 ndarray = "0.15.6"
 num_cpus = "1.15.0"
 goose = "^0.17"

@@ -30,6 +30,12 @@ deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
 	kubectl apply -f etudelibrust-deployment_cpu.yaml
 	kubectl apply -f etudelibrust-service.yaml
 
+deploy_gpu_serving:  ## deploy rust serving engine in kubernetes
+	$(MAKE) undeploy_serving
+	kubectl apply -f etudelibrust-deployment_gpu.yaml
+	kubectl apply -f etudelibrust-service.yaml
+
+
 undeploy_serving:  ## undeploys etudelibrust from kubernetes
 	-kubectl delete deployment etudelibrust
 
