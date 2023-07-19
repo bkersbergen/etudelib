@@ -2,7 +2,6 @@ import math
 import os
 from importlib import import_module
 
-import yaml
 import torch
 from pathlib import Path
 
@@ -10,11 +9,6 @@ from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 
 from etudelib.data.synthetic.synthetic import SyntheticDataset
-from etudelib.deploy.modelutil import ModelUtil
-
-from etudelib.deploy.export import TorchServeExporter
-import subprocess
-
 from etudelib.models.topkdecorator import TopKDecorator
 
 PROJECT_ID="bk47471"
@@ -23,41 +17,72 @@ def export_models():
     rootdir = Path(__file__).parent.parent.parent
     BUCKET_BASE_URI='gs://'+PROJECT_ID+'-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
+    device_types = ['cpu']
+    if torch.cuda.is_available():
+        device_types.append('cuda')
+
     for C in [10_000]:
-        t = 50
+        max_seq_length = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
         train_ds = SyntheticDataset(qty_interactions=50_000,
                                     qty_sessions=50_000,
                                     n_items=C,
-                                    max_seq_length=t, param_source=param_source)
+                                    max_seq_length=max_seq_length, param_source=param_source)
         benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
         item_seq, session_length, next_item = next(iter(benchmark_loader))
         model_input = (item_seq, session_length)
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
         # for model_name in ['noop']:
+
+
         for model_name in ['gru4rec']:
-            print(f'export model: model_name={model_name}, C={C}, max_seq_length={t}, param_source={param_source}')
-            payload_path, eager_model_path, jitopt_model_path, onnx_model_path = create_model(
-                model_name=model_name, C=C, max_seq_length=t, param_source=param_source, model_input=model_input)
+            print(f'export model: model_name={model_name}, C={C}, max_seq_length={max_seq_length}, param_source={param_source}')
+            eager_model, payload = train_model(
+                model_name=model_name, C=C, max_seq_length=max_seq_length, param_source=param_source, model_input=model_input)
 
-            destination = f'{BUCKET_BASE_URI}/{model_name}_{param_source}_t{t}_{C}'
-            os.system(f'gsutil cp -r {payload_path} {destination}/')
-            os.system(f'gsutil cp -r {eager_model_path} {destination}/')
-            os.system(f'gsutil cp -r {jitopt_model_path} {destination}/')
-            os.system(f'gsutil cp -r {onnx_model_path} {destination}/')
+            # export for both CPU and GPU, because JIT trace hardcodes the device_type in the exported model
+            for device_type in device_types:
+                # Move model and tensors to the device_type
+                eager_model = eager_model.to(device_type)
+                model_input = (model_input[0].to(device_type), model_input[1].to(device_type))
 
-            # TorchServeExporter.export_mar_file(eager_model_path, payload_path, output_path)
-            # docker_build_push(eager_model_path)
-            # TorchServeExporter.export_mar_file(jitopt_model_path, payload_path, output_path)
-            # docker_build_push(jitopt_model_path)
-            # TorchServeExporter.export_mar_file(onnx_model_path, payload_path, output_path)
-            # docker_build_push(onnx_model_path)
+                jit_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
+
+                base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}_{device_type}'
+
+                projectdir = Path(rootdir, 'rust/model_store', base_filename)
+                print(projectdir)
+                projectdir.mkdir(parents=True, exist_ok=True)
+
+                payload_path = str(projectdir / f'{base_filename}_payload.yaml')
+                eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
+                jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
+                onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
+
+                conf = OmegaConf.create(payload)
+                with open(payload_path, 'w+') as fp:
+                    OmegaConf.save(config=conf, f=fp)
+
+                torch.save(eager_model, eager_model_path)
+                torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
+                torch.onnx.export(
+                    eager_model,
+                    model_input,
+                    onnx_model_path,
+                    input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                    output_names=['output'],  # the model's output names
+                )
+
+                destination = f'{BUCKET_BASE_URI}/{base_filename}'
+                os.system(f'gsutil cp -r {payload_path} {destination}/')
+                os.system(f'gsutil cp -r {eager_model_path} {destination}/')
+                os.system(f'gsutil cp -r {jitopt_model_path} {destination}/')
+                os.system(f'gsutil cp -r {onnx_model_path} {destination}/')
 
 
-def create_model(model_name: str, C: int, max_seq_length:int, param_source: str, model_input):
-    device_type = 'cpu'
+def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, model_input):
     rootdir = Path(__file__).parent.parent
 
     base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}'
@@ -93,32 +118,34 @@ def create_model(model_name: str, C: int, max_seq_length:int, param_source: str,
                'idx2item': [i for i in range(C)],
                }
 
-    payload_path = str(projectdir / f'{base_filename}_payload.yaml')
-    eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
-    jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
-    onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
-
-    # eager_model.to(device_type)
-
+    # payload_path = str(projectdir / f'{base_filename}_payload.yaml')
+    # eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
+    # jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
+    # onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
+    #
+    # device_type = 'cpu'
+    # # eager_model.to(device_type)
+    #
+    # # jit_model = torch.jit.optimize_for_inference(
+    # #     torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
     # jit_model = torch.jit.optimize_for_inference(
-    #     torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
-    jit_model = torch.jit.optimize_for_inference(
-        torch.jit.trace(eager_model, (model_input[0], model_input[1])))
-
-    conf = OmegaConf.create(payload)
-    with open(payload_path, 'w+') as fp:
-        OmegaConf.save(config=conf, f=fp)
-
-    torch.save(eager_model, eager_model_path)
-    torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
-    torch.onnx.export(
-        eager_model,
-        (model_input[0].to(device_type), model_input[1].to(device_type)),
-        onnx_model_path,
-        input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-        output_names=['output'],  # the model's output names
-    )
-    return payload_path, eager_model_path, jitopt_model_path, onnx_model_path
+    #     torch.jit.trace(eager_model, (model_input[0], model_input[1])))
+    #
+    # conf = OmegaConf.create(payload)
+    # with open(payload_path, 'w+') as fp:
+    #     OmegaConf.save(config=conf, f=fp)
+    #
+    # torch.save(eager_model, eager_model_path)
+    # torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
+    # torch.onnx.export(
+    #     eager_model,
+    #     (model_input[0].to(device_type), model_input[1].to(device_type)),
+    #     onnx_model_path,
+    #     input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+    #     output_names=['output'],  # the model's output names
+    # )
+    return eager_model, payload
+    # return payload_path, eager_model_path, jitopt_model_path, onnx_model_path
 
 
 # def docker_build_push(model_path):
