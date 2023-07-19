@@ -49,7 +49,8 @@ COPY ./build_loop.sh ./
 # Trigger Onnx to download CUDA version
 ENV ORT_USE_CUDA=1
 # RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+ENV LIBTORCH=/libtorch
+ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
 # A simple `cargo build` failed over and over again. Randomly producing all kinds of compile- or out of memory- errors
 # I was not able to pin point it. Suggestions from the internet did not help consistently.
@@ -60,7 +61,6 @@ COPY ./config config
 COPY ./model_store model_store
 COPY ./start.sh ./
 COPY ./predict_by_id.sh ./
-COPY ./jit_to_gpu.py ./
 RUN chmod +x ./*.sh
 
 ENTRYPOINT [ "./start.sh" ]

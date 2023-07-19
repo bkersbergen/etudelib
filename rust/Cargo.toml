@@ -33,7 +33,7 @@ actix-web = {version = "4.3.1", default-features = false, features= ['cookies', 
 chrono = { version = "0.4.24", features = ["serde"] }
 env_logger = "0.10.0"
 serde = { version = "1.0.162", features = ["derive"] }
-tch = "0.11.0"
+tch = "= 0.11.0"
 uuid = { version = "1.3.2", features = ["v4"] }
 serde_yaml = "0.9.21"
 # prevent auto upgrading to non compatible version https://stackoverflow.com/questions/45224563/how-to-specify-the-exact-version-of-a-dependency
