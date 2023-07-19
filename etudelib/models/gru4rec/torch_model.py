@@ -89,6 +89,6 @@ class GRU4RecModel(nn.Module):
 
     def gather_indexes(self, output, gather_index):
         """Gathers the vectors at the specific positions over a minibatch"""
-        gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1])
-        output_tensor = output.gather(dim=1, index=gather_index)
-        return output_tensor.squeeze(1)
+        gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1]).to(torch.int64)
+        output_tensor = output.gather(dim=1, index=gather_index).to(torch.float32)
+        return output_tensor.squeeze(1).to(torch.float32)

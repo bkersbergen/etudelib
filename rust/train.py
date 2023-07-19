@@ -32,6 +32,7 @@ def export_models():
         benchmark_loader = DataLoader(train_ds, batch_size=1, shuffle=False)
         item_seq, session_length, next_item = next(iter(benchmark_loader))
         model_input = (item_seq, session_length)
+        print(model_input)
         # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
         #            'stamp']:
         # for model_name in ['noop']:
@@ -47,6 +48,8 @@ def export_models():
                 # Move model and tensors to the device_type
                 eager_model = eager_model.to(device_type)
                 model_input = (model_input[0].to(device_type), model_input[1].to(device_type))
+
+                _recommendations = eager_model.forward(*model_input)
 
                 jit_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
 
@@ -111,7 +114,6 @@ def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, 
 
     eager_model = TopKDecorator(eager_model, topk=21)
     eager_model.eval()
-
 
     payload = {'max_seq_length': max_seq_length,
                'C': C,
