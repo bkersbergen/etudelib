@@ -33,7 +33,8 @@ EOF
 
 # cargo run --release --bin serving -- model_store/noop_bolcom_c10000_t50_jitopt.pth model_store/noop_bolcom_c10000_t50_payload.yaml &
 cat config/serving.yaml
-cargo build --release --bin serving
+# trigger a compile so we can copy ./target/release/libonnx* in /usr/local/lib/
+cargo run --release --bin serving 2> /dev/null
 cp ./target/release/libonnx* /usr/local/lib/
 cargo run --release --bin serving config/serving.yaml &
 SERVING_PID=$!
@@ -60,6 +61,6 @@ else
     echo "Script file '$script_path' not found."
 fi
 
-# sleep infinity
+sleep infinity
 
 
