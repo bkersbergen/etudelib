@@ -17,11 +17,11 @@ spec:
       serviceAccountName: etudelib
       containers:
       - name: etudelib-servingrust
-        image: eu.gcr.io/bk47471/etudelib/serving_rust:latest
+        image: eu.gcr.io/bk47472/etudelib/serving_rust:latest
 #        command: [ "/bin/bash", "-c", "--" ]
 #        args: [ "while true; do sleep 600; done;" ]
         command: [ "./start.sh" ]
-        args: [ "gs://bk47471-shared/model_store/gru4rec_bolcom_c10000_t50_cpu/gru4rec_bolcom_c10000_t50_cpu_jitopt.pth", "gs://bk47471-shared/model_store/gru4rec_bolcom_c10000_t50_cpu/gru4rec_bolcom_c10000_t50_cpu_payload.yaml" ]
+        args: [ "gs://bk47472-shared/model_store/gru4rec_bolcom_c10000_t50_cpu/gru4rec_bolcom_c10000_t50_cpu_jitopt.pth", "gs://bk47472-shared/model_store/gru4rec_bolcom_c10000_t50_cpu/gru4rec_bolcom_c10000_t50_cpu_payload.yaml" ]
         ports:
         - containerPort: 8080
         resources:

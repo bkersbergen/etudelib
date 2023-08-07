@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 
 pub trait ModelEngine {
     fn recommend(&self, session_items: &Vec<i64>) -> Vec<i64>;
+    fn get_model_device_name(&self) -> String;
+    fn get_model_qty_threads(&self) -> i32;
+    fn get_model_filename(&self) -> String;
 }
 
 

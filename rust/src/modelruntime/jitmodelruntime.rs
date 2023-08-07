@@ -1,3 +1,4 @@
+use std::path::Path;
 use tch::{CModule, Device, Tensor};
 use crate::modelruntime::{ModelEngine, ModelPayload};
 use serde_yaml::{self};
@@ -6,9 +7,10 @@ pub struct JITModelRuntime {
     payload: ModelPayload,
     model: CModule,
     device: Device,
+    device_name: String,
+    qty_model_threads: i32,
+    model_filename: String,
 }
-
-// impl JITModelRuntime {}
 
 impl JITModelRuntime {
     pub fn new(model_path: &String, payload_path: &String, qty_threads: &usize) -> JITModelRuntime {
@@ -21,6 +23,13 @@ impl JITModelRuntime {
         let device = Device::cuda_if_available();
         let payload_file = std::fs::File::open(payload_path).expect("Could not open payload file.");
         let payload: ModelPayload = serde_yaml::from_reader(payload_file).expect("Could not read values.");
+        let device_name = if device.is_cuda() { "cuda".to_string() } else { "cpu".to_string() };
+        let qty_model_threads = *qty_threads as i32;
+        let model_filename = Path::new(model_path)
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or_default().to_string();
+
         if device.is_cuda() {
             println!("JIT using CUDA and CPU");
             println!("version_cudnn: {}", tch::utils::version_cudnn());
@@ -34,6 +43,9 @@ impl JITModelRuntime {
             payload,
             model,
             device,
+            device_name: device_name,
+            qty_model_threads: qty_model_threads,
+            model_filename,
         }
     }
 }
@@ -63,6 +75,18 @@ impl ModelEngine for JITModelRuntime {
         let input_mask = Tensor::from(item_seq_len as i32).to_device(self.device);
         let result_tensor = self.model.forward_ts(&[input, input_mask]).unwrap();
         Vec::from(result_tensor.to_device(Device::Cpu))
+    }
+
+    fn get_model_device_name(&self) -> String {
+        self.device_name.clone()
+    }
+
+    fn get_model_qty_threads(&self) -> i32 {
+        self.qty_model_threads.clone()
+    }
+
+    fn get_model_filename(&self) -> String {
+        self.model_filename.clone()
     }
 }
 

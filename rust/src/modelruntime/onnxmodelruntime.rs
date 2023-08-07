@@ -9,6 +9,7 @@ use tch::Device;
 pub struct OnnxModelRuntime {
     payload: ModelPayload,
     session: Session,
+
 }
 
 
@@ -96,6 +97,18 @@ impl ModelEngine for OnnxModelRuntime {
         let x: &ArrayBase<ViewRepr<&i64>, IxDyn> = &values.view().clone().into_dyn();
         let y: Vec<i64> = x.iter().copied().collect();
         y
+    }
+
+    fn get_model_device_name(&self) -> String {
+        todo!()
+    }
+
+    fn get_model_qty_threads(&self) -> i32 {
+        todo!()
+    }
+
+    fn get_model_filename(&self) -> String {
+        todo!()
     }
 }
 

@@ -1,5 +1,6 @@
 use std::net::Ipv4Addr;
 use std::sync::Arc;
+use std::time::Instant;
 use actix_web::middleware::{Logger};
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder, middleware, http::header};
 use actix_web::{web::{
@@ -36,8 +37,10 @@ pub struct NonFunctional {
     preprocess_ms: f32,
     inference_ms: f32,
     postprocess_ms: f32,
-    model: String,
-    device: String,
+    model_filename: String,
+    model_qty_threads: i32,
+    model_device: String,
+
 }
 
 // https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#response_requirements
@@ -53,29 +56,28 @@ async fn v1_recommend(
     models: Data<Models>,
     query: Json<VertexRequest>,
 ) -> impl Responder {
+    let preprocess_start_time = Instant::now();
     let session_items: Vec<i64> = query.instances.get(0).unwrap().context.clone();
+    let preprocess_ms = preprocess_start_time.elapsed().as_millis();
 
-    let result_item_ids :Vec<i64> = match (&*models.jitopt_model, &*models.onnx_model) {
+    let inference_start_time = Instant::now();
+    let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            model.recommend(&session_items)
+            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         (None, Some(ref model)) => {
-            model.recommend(&session_items)
+            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         _ => {
             let model = models.dummy_model.as_ref();
-            model.recommend(&session_items)
+            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         },
     };
+    let inference_ms = inference_start_time.elapsed().as_millis();
+
     let response = &VertexResponse {
         items: vec![result_item_ids],
-        nf: NonFunctional {
-            preprocess_ms: 0.0,
-            inference_ms: 0.0,
-            postprocess_ms: 0.0,
-            model: "".to_string(),
-            device: "".to_string(),
-        },
+        nf: NonFunctional { preprocess_ms: preprocess_ms as f32, inference_ms: inference_ms as f32, postprocess_ms: 0.0, model_filename, model_qty_threads, model_device},
     };
     HttpResponse::Ok().json(response)
 }
