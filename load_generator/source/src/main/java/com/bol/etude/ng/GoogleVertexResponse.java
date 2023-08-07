@@ -10,13 +10,23 @@ public class GoogleVertexResponse {
     List<List<Long>> items;
 
     static class Timings {
-        @SerializedName("postprocess_ms")
-        float postprocessing;
-
-        @SerializedName("preprocess_ms")
+        @SerializedName("pre_ms")
         float preprocessing;
 
-        @SerializedName("inference_ms")
+        @SerializedName("inf_ms")
         float inferencing;
+
+        @SerializedName("post_ms")
+        float postprocessing;
+
+        @SerializedName("mname")
+        String model_name;
+
+        @SerializedName("mthreads")
+        int model_thread_qty;
+
+        @SerializedName("mdevice")
+        String model_device;
+
     }
 }

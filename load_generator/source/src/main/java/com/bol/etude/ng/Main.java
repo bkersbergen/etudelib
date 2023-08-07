@@ -178,6 +178,9 @@ public class Main {
                     interaction.setPreprocessingMillis(vertex.timings.preprocessing);
                     interaction.setInferencingMillis(vertex.timings.inferencing);
                     interaction.setProcessingMillis(vertex.timings.postprocessing);
+                    interaction.setModelName(vertex.timings.model_name);
+                    interaction.setModelThreadQty(vertex.timings.model_thread_qty);
+                    interaction.setModelDevice(vertex.timings.model_device);
                 } catch (Throwable t) {
                     System.out.println("GoogleVertexResponse.parse().err + " + t + "-------" + response.body);
                     applyInteractionErrorValues(interaction, response.status);

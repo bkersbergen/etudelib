@@ -8,6 +8,11 @@ JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
 IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT)/etudelib/etudelib_microbenchmark:latest
 IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT)/etudelib/etudelib_torchserve:latest
 
+docker_prune: ## prune docker to free up resources
+	docker system prune -a -f
+	docker image prune -a -f
+
+
 infra:  ## Create the infrastructure in GCP
 	@.ci/create_infra.sh $(PROJECT)
 

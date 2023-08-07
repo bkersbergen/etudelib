@@ -53,7 +53,19 @@
             {
               "name": "processing_millis",
               "type": "float"
-            }
+            },
+            {
+			  "name": "model_name",
+			  "type": "string"
+			},
+			{
+			  "name": "model_thread_qty",
+			  "type": "int"
+			},
+			{
+			"name": "model_device",
+			"type": "string"
+			}
           ]
         }
       }
