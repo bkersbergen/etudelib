@@ -2,7 +2,7 @@ SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 PWD:=$(shell pwd)
 USER ?= -SA
-PROJECT_ID=bk47471
+PROJECT_ID=bk47472
 
 hello:
 	@echo "Hello"
@@ -40,7 +40,7 @@ undeploy_serving:  ## undeploys etudelibrust from kubernetes
 	-kubectl delete deployment etudelibrust
 
 train:  ## train and deploy the models to the storage bucket
-	. venv/bin/activate; python train.py
+	. venv/bin/activate; python train.py $(PROJECT_ID)
 
 
 serve_interactive:  ## run the docker base image interactive

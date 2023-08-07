@@ -1,12 +1,15 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT=bolcom-pro-reco-analytics-fcc
+PROJECT=bk47472
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
 IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT)/etudelib/etudelib_microbenchmark:latest
 IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT)/etudelib/etudelib_torchserve:latest
+
+infra:  ## Create the infrastructure in GCP
+	@.ci/create_infra.sh $(PROJECT)
 
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
 	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .ci/Dockerfile .

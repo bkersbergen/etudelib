@@ -1,6 +1,7 @@
 import math
 import os
 from importlib import import_module
+import sys
 
 import torch
 from pathlib import Path
@@ -11,11 +12,10 @@ from torch.utils.data import DataLoader
 from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.models.topkdecorator import TopKDecorator
 
-PROJECT_ID="bk47471"
 
-def export_models():
+def export_models(project_id):
     rootdir = Path(__file__).parent.parent.parent
-    BUCKET_BASE_URI='gs://'+PROJECT_ID+'-shared/model_store'
+    BUCKET_BASE_URI=f'gs://{project_id}-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
     device_types = ['cpu']
     if torch.cuda.is_available():
@@ -161,6 +161,10 @@ def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, 
 
 
 if __name__ == '__main__':
-    export_models()
+    project_id=sys.argv[1]
+    if project_id:
+        export_models(project_id)
+    else:
+        print(f'argument error: project_id not given')
 
 
