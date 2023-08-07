@@ -34,12 +34,12 @@ pub struct VertexRequestParameter {
 
 #[derive(Debug, Serialize)]
 pub struct NonFunctional {
-    preprocess_ms: f32,
-    inference_ms: f32,
-    postprocess_ms: f32,
-    model_filename: String,
-    model_qty_threads: i32,
-    model_device: String,
+    pre_ms: f32,
+    inf_ms: f32,
+    post_ms: f32,
+    mname: String,
+    mthreads: i32,
+    mdevice: String,
 
 }
 
@@ -77,7 +77,7 @@ async fn v1_recommend(
 
     let response = &VertexResponse {
         items: vec![result_item_ids],
-        nf: NonFunctional { preprocess_ms: preprocess_ms as f32, inference_ms: inference_ms as f32, postprocess_ms: 0.0, model_filename, model_qty_threads, model_device},
+        nf: NonFunctional { pre_ms: preprocess_ms as f32, inf_ms: inference_ms as f32, post_ms: 0.0, mname: model_filename, mthreads: model_qty_threads, mdevice: model_device },
     };
     HttpResponse::Ok().json(response)
 }
