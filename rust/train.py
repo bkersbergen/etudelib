@@ -91,9 +91,6 @@ def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, 
 
     base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}'
 
-    projectdir = Path(rootdir, 'rust/model_store', base_filename)
-    print(projectdir)
-    projectdir.mkdir(parents=True, exist_ok=True)
     config_path = os.path.join(rootdir, f"etudelib/models/{model_name}/config.yaml".lower())
     config = OmegaConf.load(config_path)
 
