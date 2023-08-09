@@ -58,7 +58,7 @@ async fn v1_recommend(
 ) -> impl Responder {
     let preprocess_start_time = Instant::now();
     let session_items: Vec<i64> = query.instances.get(0).unwrap().context.clone();
-    let preprocess_ms = preprocess_start_time.elapsed().as_millis();
+    let preprocess_ms = preprocess_start_time.elapsed().as_micros() as f32 / 1000.0;
 
     let inference_start_time = Instant::now();
     let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
@@ -76,7 +76,7 @@ async fn v1_recommend(
             (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         },
     };
-    let inference_ms = inference_start_time.elapsed().as_millis();
+    let inference_ms = inference_start_time.elapsed().as_micros() as f32 / 1000.0;
 
     let response = &VertexResponse {
         items: vec![result_item_ids],
