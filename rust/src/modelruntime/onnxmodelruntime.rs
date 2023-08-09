@@ -3,13 +3,16 @@ use crate::modelruntime::{ModelEngine, ModelPayload};
 use ndarray::{Array, ViewRepr, IxDyn, ArrayBase};
 use ort::{tensor::{DynOrtTensor, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, SessionBuilder, LoggingLevel, Session, GraphOptimizationLevel};
 use core::option::Option;
+use std::path::Path;
 use tch::Device;
 
 
 pub struct OnnxModelRuntime {
     payload: ModelPayload,
     session: Session,
-
+    device_name: String,
+    qty_model_threads: i32,
+    model_filename: String,
 }
 
 
@@ -43,10 +46,20 @@ impl OnnxModelRuntime {
                 .unwrap()
         };
 
+        let model_filename = Path::new(model_path)
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .unwrap_or_default().to_string();
+
+        let device_name = if Device::cuda_if_available().is_cuda() { "cuda".to_string() } else { "cpu".to_string() };
 
         OnnxModelRuntime {
             payload,
             session,
+            device_name,
+            qty_model_threads: *qty_model_threads as i32,
+            model_filename
+
         }
     }
 }
@@ -91,7 +104,6 @@ impl ModelEngine for OnnxModelRuntime {
         };
 
         let output =combined_tensor.get(0).unwrap();
-        // Usage example
         let values: OrtOwnedTensor<'_, i64, ndarray::Dim<ndarray::IxDynImpl>>  = output.try_extract().unwrap();
 
         let x: &ArrayBase<ViewRepr<&i64>, IxDyn> = &values.view().clone().into_dyn();
@@ -100,15 +112,15 @@ impl ModelEngine for OnnxModelRuntime {
     }
 
     fn get_model_device_name(&self) -> String {
-        todo!()
+        self.device_name.clone()
     }
 
     fn get_model_qty_threads(&self) -> i32 {
-        todo!()
+        self.qty_model_threads.clone()
     }
 
     fn get_model_filename(&self) -> String {
-        todo!()
+        self.model_filename.clone()
     }
 }
 
