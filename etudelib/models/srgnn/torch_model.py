@@ -197,7 +197,7 @@ class SRGNNModel(nn.Module):
         hidden = self.gnn(A, hidden)
         alias_inputs = alias_inputs.view(-1, alias_inputs.size(1), 1).expand(
             -1, -1, self.embedding_size
-        )
+        ).to(torch.int64)
         seq_hidden = torch.gather(hidden, dim=1, index=alias_inputs)
         # fetch the last hidden state of last timestamp
         ht = self.gather_indexes(seq_hidden, item_seq_len - 1)
@@ -215,6 +215,6 @@ class SRGNNModel(nn.Module):
 
     def gather_indexes(self, output, gather_index):
         """Gathers the vectors at the specific positions over a minibatch"""
-        gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1])
+        gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1]).to(torch.int64)
         output_tensor = output.gather(dim=1, index=gather_index)
         return output_tensor.squeeze(1)
