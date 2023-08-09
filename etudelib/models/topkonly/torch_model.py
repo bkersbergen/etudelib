@@ -7,9 +7,6 @@ A TOPKONLY model. Used as a zero measurement
 
 
 """
-
-print('TODO: This model is not compatible with the top-k decorator and allways returns the catalog size results.')
-
 import torch
 from torch import nn
 
@@ -32,6 +29,5 @@ class TOPKONLYModel(nn.Module):
     def forward(self, item_seq, _item_seq_len):
         shape = (item_seq.size(0),) + self.data.shape
         result = self.data.unsqueeze(0).expand(shape)
-        result = result + item_seq.unsqueeze(-1)
         return result
 
