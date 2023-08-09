@@ -22,7 +22,7 @@ example: ## simple post request to endpoint
 	--data "{\"instances\": [{\"context\": [1, 2, 3]}],\"parameters\": [{\"runtime\":  \"\"}]}"
 
 serve_buildpush:  ## build the serving application for the models
-	docker build --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f docker/BaseDockerfile .
+	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f docker/BaseDockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
 deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
