@@ -63,12 +63,15 @@ async fn v1_recommend(
     let inference_start_time = Instant::now();
     let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
+            println!("JITModelRuntime");
             (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         (None, Some(ref model)) => {
+            println!("OnnxModelRuntime");
             (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         _ => {
+            println!("DummyModelRuntime");
             let model = models.dummy_model.as_ref();
             (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         },

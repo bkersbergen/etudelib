@@ -14,7 +14,7 @@ from etudelib.models.topkdecorator import TopKDecorator
 
 
 def export_models(project_id):
-    rootdir = Path(__file__).parent.parent.parent
+    rootdir = Path(__file__).parent.parent
     BUCKET_BASE_URI=f'gs://{project_id}-shared/model_store'
     # for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
     device_types = ['cpu']
@@ -38,7 +38,8 @@ def export_models(project_id):
         # for model_name in ['noop']:
 
 
-        for model_name in ['gru4rec']:
+        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
+                           'stamp', 'topkonly']:
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={max_seq_length}, param_source={param_source}')
             eager_model, payload = train_model(
                 model_name=model_name, C=C, max_seq_length=max_seq_length, param_source=param_source, model_input=model_input)

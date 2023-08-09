@@ -3,7 +3,7 @@
 set -o nounset
 
 DIR="$(dirname "$0")"
-PROJECT_ID=bk47471
+PROJECT_ID=bk47472
 echo Determining service endpoint for etudelibrust
 endpoint_ip=$(kubectl get service etudelibrust -o yaml | awk '/clusterIP:/ { gsub("\"","",$2); print $2 }')
 echo Found endpoint: http://${endpoint_ip}:8080
