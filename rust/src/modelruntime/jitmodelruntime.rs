@@ -72,7 +72,7 @@ impl ModelEngine for JITModelRuntime {
             .to_device(self.device)
             ;
         // Create the mask for the input items on the same device as the model
-        let input_mask = Tensor::from(item_seq_len as i32).to_device(self.device);
+        let input_mask = Tensor::of_slice(&[item_seq_len as i32]).to_device(self.device);
         let result_tensor = self.model.forward_ts(&[input, input_mask]).unwrap();
         Vec::from(result_tensor.to_device(Device::Cpu))
     }
