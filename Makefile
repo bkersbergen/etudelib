@@ -1,12 +1,12 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT=bk47472
+PROJECT_ID=bk47472
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
-IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT)/etudelib/etudelib_microbenchmark:latest
-IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT)/etudelib/etudelib_torchserve:latest
+IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT_ID)/etudelib/etudelib_microbenchmark:latest
+IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT_ID)/etudelib/etudelib_torchserve:latest
 
 docker_prune: ## prune docker to free up resources
 	docker system prune -a -f
@@ -14,7 +14,7 @@ docker_prune: ## prune docker to free up resources
 
 
 infra:  ## Create the infrastructure in GCP
-	@.ci/create_infra.sh $(PROJECT)
+	@.ci/create_infra.sh $(PROJECT_ID)
 
 training_buildpush:  ## build the serving application for the models
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .ci/DockerfileModelTraining .
@@ -38,7 +38,7 @@ microbenchmark_build: ## Build and push the microbenchmark image to the reposito
 microbenchmark_run: ## Run the microbenchmark in Google AI platform
 	@gcloud beta ai-platform jobs submit training $(JOB_NAME) \
 	  --region $(REGION) \
-	  --project $(PROJECT) \
+	  --project $(PROJECT_ID) \
 	  --master-image-uri $(IMAGE_URI_MICROBENCHMARK) \
 	  --scale-tier CUSTOM \
 	  --master-machine-type n1-highmem-8 \
@@ -51,12 +51,12 @@ model_baseimage: ## Build and push the Docker base image that the deployed model
 model_build: ## Build and push a marfile Docker image.
 	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make model_build MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
 	@cd .docker && \
-		docker build --platform=linux/amd64 --build-arg MODELFILE_WO_EXT=$(MARFILE_WO_EXT) -t eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest -f ModelDockerfile . && \
-		docker push eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest
+		docker build --platform=linux/amd64 --build-arg MODELFILE_WO_EXT=$(MARFILE_WO_EXT) -t eu.gcr.io/$(PROJECT_ID)/etudelib/$(MARFILE_WO_EXT):latest -f ModelDockerfile . && \
+		docker push eu.gcr.io/$(PROJECT_ID)/etudelib/$(MARFILE_WO_EXT):latest
 
 model_run:  ## Run marfile Docker image locally
 	@test $(MARFILE_WO_EXT) || ( echo ">> MARFILE_WO_EXT must be specified. E.g. make torchserve_run MARFILE_WO_EXT=core_bolcom_c100000_t50_eager"; exit 1 )
-	@docker run --platform linux/amd64 -p 7080:7080 -p 7081:7081 eu.gcr.io/$(PROJECT)/etudelib/$(MARFILE_WO_EXT):latest
+	@docker run --platform linux/amd64 -p 7080:7080 -p 7081:7081 eu.gcr.io/$(PROJECT_ID)/etudelib/$(MARFILE_WO_EXT):latest
 
 help:
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
