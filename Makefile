@@ -16,6 +16,21 @@ docker_prune: ## prune docker to free up resources
 infra:  ## Create the infrastructure in GCP
 	@.ci/create_infra.sh $(PROJECT)
 
+training_buildpush:  ## build the serving application for the models
+	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .ci/DockerfileModelTraining .
+	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest
+
+training_run_gpu:  ## deploy rust serving engine in kubernetes
+	YAML_TEMPLATE=.ci/etudelib-training_gpu.yaml; \
+	$(MAKE) undeploy_training_run; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    );
+
+undeploy_training_run:  ## undeploys training_run from kubernetes
+	-kubectl delete deployment etudelibtraining
+
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
 	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .ci/Dockerfile .
 	@docker push $(IMAGE_URI_MICROBENCHMARK)
