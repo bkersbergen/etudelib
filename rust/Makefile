@@ -26,13 +26,21 @@ serve_buildpush:  ## build the serving application for the models
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
 deploy_cpu_serving:  ## deploy rust serving engine in kubernetes
-	$(MAKE) undeploy_serving
-	kubectl apply -f etudelibrust-deployment_cpu.yaml
+	YAML_TEMPLATE=etudelibrust-deployment_cpu.yaml; \
+	$(MAKE) undeploy_serving; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    ); \
 	kubectl apply -f etudelibrust-service.yaml
 
 deploy_gpu_serving:  ## deploy rust serving engine in kubernetes
-	$(MAKE) undeploy_serving
-	kubectl apply -f etudelibrust-deployment_gpu.yaml
+	YAML_TEMPLATE=etudelibrust-deployment_gpu.yaml; \
+	$(MAKE) undeploy_serving; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    ); \
 	kubectl apply -f etudelibrust-service.yaml
 
 
