@@ -71,13 +71,26 @@ def export_models(project_id):
 
                 torch.save(eager_model, eager_model_path)
                 torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
-                torch.onnx.export(
-                    eager_model,
-                    model_input,
-                    onnx_model_path,
-                    input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                    output_names=['output'],  # the model's output names
-                )
+                try:
+                    torch.onnx.export(
+                        eager_model,
+                        (model_input[0].to(device_type), model_input[1].to(device_type)),
+                        onnx_model_path,
+                        input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                        output_names=['output'],  # the model's output names
+                    )
+                except Exception as error:
+                    print(
+                        "Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
+                    torch.onnx.export(
+                        eager_model,
+                        (model_input[0].to(device_type), model_input[1].to(device_type)),
+                        onnx_model_path,
+                        input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                        output_names=['output'],  # the model's output names
+                        do_constant_folding=False
+                        # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
+                    )
 
                 destination = f'{BUCKET_BASE_URI}/{base_filename}'
                 os.system(f'gsutil cp -r {payload_path} {destination}/')
