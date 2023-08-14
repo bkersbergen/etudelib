@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT_ID=bk47472
+PROJECT_ID=bk47473
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
@@ -14,7 +14,12 @@ docker_prune: ## prune docker to free up resources
 
 
 infra:  ## Create the infrastructure in GCP
-	@.ci/create_infra.sh $(PROJECT_ID)
+	@infra/create_infra.sh $(PROJECT_ID)
+
+rustserving_buildpush:  ## build the serving application for the models
+	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
+	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
+
 
 training_buildpush:  ## build the serving application for the models
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .ci/DockerfileModelTraining .
@@ -32,7 +37,7 @@ undeploy_training_run:  ## undeploys training_run from kubernetes
 	-kubectl delete deployment etudelibtraining
 
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
-	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .ci/Dockerfile .
+	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .docker/microbenchmark.Dockerfile .
 	@docker push $(IMAGE_URI_MICROBENCHMARK)
 
 microbenchmark_run: ## Run the microbenchmark in Google AI platform

@@ -43,10 +43,10 @@ RUN apt-get install -y python3-pip
 RUN pip3 install torch --index-url https://download.pytorch.org/whl/cu118
 RUN pip3 install omegaconf scipy lightning
 
-COPY ./src src
-COPY ./Cargo.toml ./
-COPY ./build_loop.sh ./
-COPY ./train.py ./
+COPY ./rust/src src
+COPY ./rust/Cargo.toml ./
+COPY ./rust/build_loop.sh ./
+COPY ./rust/train.py ./
 
 
 # Trigger Onnx to download CUDA version
@@ -60,10 +60,10 @@ ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:/usr/local/lib:$LD_LIBRARY_PATH
 # Perhaps its related by my M1 emulating a x64 on QEMU.
 # The best way to make it work is keep compiling until its successful. This seems to work on all platforms.
 
-COPY ./config config
-COPY ./model_store model_store
-COPY ./start.sh ./
-COPY ./predict_by_id.sh ./
+COPY ./rust/config config
+COPY ./rust/model_store model_store
+COPY ./rust/start.sh ./
+COPY ./rust/predict_by_id.sh ./
 RUN chmod +x ./*.sh
 
 ENTRYPOINT [ "./start.sh" ]
