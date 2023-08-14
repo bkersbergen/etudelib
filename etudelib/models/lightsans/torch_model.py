@@ -78,7 +78,7 @@ class LightSANsModel(nn.Module):
 
     def embedding_layer(self, item_seq):
         position_ids = torch.arange(
-            item_seq.size(1), dtype=torch.long, device=item_seq.device
+            item_seq.size(1), dtype=torch.long
         )
         position_embedding = self.position_embedding(position_ids)
         item_emb = self.item_embedding(item_seq)

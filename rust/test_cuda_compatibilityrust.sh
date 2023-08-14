@@ -5,7 +5,7 @@
 # ./test_cuda_compatibilitytest.sh
 
 for d in /rust/model_store/*cuda; do
-  model_filename=$(ls $d/*cuda_jitopt.pth)
+  model_filename=$(ls $d/*cuda_onnx.pth)
   payload_path=$(ls $d/*cuda_payload.yaml)
 
   cat << EOF > "config/serving.yaml"
