@@ -55,6 +55,10 @@ loadgenerator_buildpush:  ## build the serving application and push it to the do
 	docker push "eu.gcr.io/$(PROJECT_ID)/etude-loadgen:latest"
 
 
+loadgenerator_k8s_deploy:  ## deploy the load generator in kubernetes
+	endpoint_ip="$$(kubectl get service etudelibrust -o yaml | awk '/clusterIP:/ { gsub("\"","",$$2); print $$2 }')"; \
+    .k8s/deploy_loadgen.sh $(PROJECT_ID) "http://$${endpoint_ip}:8080/predictions/model/1.0/" 10000 "gs://$(PROJECT_ID)-shared/results/static.avro" 1000 10
+
 training_buildpush:  ## build the models training application and push it to the docker repo
 	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest" -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .docker/training.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest
