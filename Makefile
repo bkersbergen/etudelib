@@ -20,6 +20,10 @@ rustserving_buildpush:  ## build the serving application for the models
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
+loadgenerator_build_push:  ## build the deployed load generator for the models
+	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="azul/zulu-openjdk-debian:17-latest" --tag "eu.gcr.io/$(PROJECT_ID)/etude-loadgen:latest" -f .docker/loadgen.Dockerfile .
+	docker push "eu.gcr.io/$(PROJECT_ID)/etude-loadgen:latest"
+
 
 training_buildpush:  ## build the serving application for the models
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .ci/DockerfileModelTraining .
