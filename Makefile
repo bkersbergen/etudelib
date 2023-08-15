@@ -16,13 +16,40 @@ docker_prune: ## prune docker to free up resources
 infra:  ## Create the infrastructure in GCP
 	@infra/create_infra.sh $(PROJECT_ID)
 
-rustserving_buildpush:  ## build the serving application for the models
+serving_buildpush:  ## build the serving application and push it to the docker repo
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
+
+
+serving_k8s_deploy_cpu:  ## deploy rust serving engine in kubernetes
+	YAML_TEMPLATE=.k8s/etudelibrust-deployment_cpu.yaml; \
+	$(MAKE) undeploy_serving; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    ); \
+	kubectl apply -f .k8s/etudelibrust-service.yaml
+
+serving_k8s_deploy_gpu:  ## deploy rust serving engine in kubernetes
+	YAML_TEMPLATE=.k8s/etudelibrust-deployment_gpu.yaml; \
+	$(MAKE) undeploy_serving; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    ); \
+	kubectl apply -f .k8s/etudelibrust-service.yaml
+
+
+undeploy_serving:  ## undeploys etudelibrust from kubernetes
+	-kubectl delete deployment etudelibrust
+
+
+
 
 loadgenerator_build_push:  ## build the deployed load generator for the models
 	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="azul/zulu-openjdk-debian:17-latest" --tag "eu.gcr.io/$(PROJECT_ID)/etude-loadgen:latest" -f .docker/loadgen.Dockerfile .
 	docker push "eu.gcr.io/$(PROJECT_ID)/etude-loadgen:latest"
+
 
 
 training_buildpush:  ## build the serving application for the models

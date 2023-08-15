@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etudelibrust
+  labels:
+    app: etudelibrust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: etudelibrust
+  template:
+    metadata:
+      labels:
+        app: etudelibrust
+    spec:
+      serviceAccountName: etudelib
+      nodeSelector:
+        cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+      containers:
+      - name: etudelib-servingrust
+        image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_rust:latest
+#        command: [ "/bin/bash", "-c", "--" ]
+#        args: [ "while true; do sleep 600; done;" ]
+        command: [ "./start.sh" ]
+        args: [ "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_jitopt.pth", "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_payload.yaml" ]
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "32Gi"
+            cpu: 4
+            ephemeral-storage: "20Gi"
+          limits:
+            nvidia.com/gpu: 1
+
