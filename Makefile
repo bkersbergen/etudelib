@@ -52,7 +52,7 @@ loadgenerator_buildpush:  ## build the serving application and push it to the do
 
 
 training_buildpush:  ## build the models training application and push it to the docker repo
-	docker build --no-cache --platform linux/amd64 --build-arg PARENT_IMAGE="eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest" -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .docker/training.Dockerfile .
+	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest" -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .docker/training.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest
 
 
