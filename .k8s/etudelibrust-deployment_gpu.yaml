@@ -23,7 +23,7 @@ spec:
 #        command: [ "/bin/bash", "-c", "--" ]
 #        args: [ "while true; do sleep 600; done;" ]
         command: [ "./start.sh" ]
-        args: [ "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_jitopt.pth", "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_payload.yaml" ]
+        args: [ "${MODEL_PATH}", "${PAYLOAD_PATH}" ]
         ports:
         - containerPort: 8080
         resources:

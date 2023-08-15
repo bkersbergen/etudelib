@@ -26,8 +26,10 @@ serving_k8s_deploy_cpu:  ## deploy rust serving engine in kubernetes
 	$(MAKE) undeploy_serving; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_onnx.pth/' \
+        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_payload.yaml/' \
             $$YAML_TEMPLATE \
-    ); \
+    );
 	kubectl apply -f .k8s/etudelibrust-service.yaml
 
 serving_k8s_deploy_gpu:  ## deploy rust serving engine in kubernetes
@@ -35,8 +37,10 @@ serving_k8s_deploy_gpu:  ## deploy rust serving engine in kubernetes
 	$(MAKE) undeploy_serving; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_onnx.pth/' \
+        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_payload.yaml/' \
             $$YAML_TEMPLATE \
-    ); \
+    );
 	kubectl apply -f .k8s/etudelibrust-service.yaml
 
 

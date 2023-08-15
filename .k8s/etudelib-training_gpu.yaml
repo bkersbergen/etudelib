@@ -1,31 +1,31 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: etudelibtraining
   labels:
     app: etudelibtraining
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: etudelibtraining
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
   template:
     metadata:
-      labels:
-        app: etudelibtraining
+      annotations:
+        sidecar.istio.io/proxyCPU: "512m"
+        sidecar.istio.io/proxyCPULimit: "1024m"
+        sidecar.istio.io/proxyMemory: "512Mi"
+        sidecar.istio.io/proxyMemoryLimit: "1024Mi"
     spec:
       serviceAccountName: etudelib
       nodeSelector:
         cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+      restartPolicy: Never
       containers:
       - name: etudelib-training
         image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_modeltraining:latest
-        command: [ "python3"]
-        args: [ "train.py", "${PROJECT_ID}"]
-#        command: [ "./start.sh" ]
-#        args: [ "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_jitopt.pth", "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_payload.yaml" ]
-        ports:
-        - containerPort: 8080
+        command: [ "python3" ]
+        args: [ "train.py", "${PROJECT_ID}" ]
+      #        command: [ "./start.sh" ]
+      #        args: [ "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_jitopt.pth", "gs://${PROJECT_ID}-shared/model_store/gru4rec_bolcom_c10000_t50_cuda/gru4rec_bolcom_c10000_t50_cuda_payload.yaml" ]
         resources:
           requests:
             memory: "52Gi"
@@ -33,4 +33,13 @@ spec:
             ephemeral-storage: "20Gi"
           limits:
             nvidia.com/gpu: 1
-
+        imagePullPolicy: Always
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          runAsNonRoot: true
+          runAsUser: 1001
+          seccompProfile:
+            type: "RuntimeDefault"
