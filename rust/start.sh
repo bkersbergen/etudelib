@@ -52,11 +52,13 @@ done
 echo "EtudeServing ready"
 
 script_path="./predict_by_id.sh"
-echo Doing a single prediction
+echo Doing a few predictions
 # Check if the script file exists
 if [ -f "$script_path" ]; then
-    # Execute the script
+  # Do 5 predictions for the server to be warm
+  for ((i=1; i<=50; i++)); do
     source "$script_path"
+  done
 else
     echo "Script file '$script_path' not found."
 fi
