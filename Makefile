@@ -73,7 +73,7 @@ training_k8s_deploy_gpu:  ## deploy the model training application in kubernetes
     );
 
 undeploy_training_run:  ## undeploys training_run from kubernetes
-	-kubectl delete deployment etudelibtraining
+	-kubectl delete job etudelibtraining
 
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
 	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .docker/microbenchmark.Dockerfile .
