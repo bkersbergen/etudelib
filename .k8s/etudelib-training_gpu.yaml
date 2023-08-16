@@ -28,18 +28,8 @@ spec:
         args: [ "while true; do sleep 600; done;" ]
         resources:
           requests:
-            memory: "52Gi"
-            cpu: 8
+            memory: "32Gi"
+            cpu: 4
             ephemeral-storage: "20Gi"
           limits:
             nvidia.com/gpu: 1
-        imagePullPolicy: Always
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          runAsNonRoot: true
-          runAsUser: 1001
-          seccompProfile:
-            type: "RuntimeDefault"

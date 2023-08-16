@@ -8,4 +8,8 @@ USER root
 COPY ./etudelib etudelib
 COPY ./rust/train.py ./
 
+RUN mkdir /.config
+# free up disk space
+RUN apt-get autoclean
+
 CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
