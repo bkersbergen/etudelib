@@ -20,14 +20,16 @@ serving_buildpush:  ## build the serving application and push it to the docker r
 	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
+hello:  ## Define a target that takes an argument
+	echo "hello $(arg)"
 
 serving_k8s_deploy_cpu:  ## deploy rust serving engine in kubernetes
 	YAML_TEMPLATE=.k8s/etudelibrust-deployment_cpu.yaml; \
 	$(MAKE) undeploy_serving; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
-        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_onnx.pth/' \
-        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_payload.yaml/' \
+        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cpu\/gru4rec_bolcom_c1000000_t50_cpu_onnx.pth/' \
+        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cpu\/gru4rec_bolcom_c1000000_t50_cpu_payload.yaml/' \
             $$YAML_TEMPLATE \
     );
 	kubectl apply -f .k8s/etudelibrust-service.yaml
@@ -37,8 +39,8 @@ serving_k8s_deploy_gpu:  ## deploy rust serving engine in kubernetes
 	$(MAKE) undeploy_serving; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
-        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_onnx.pth/' \
-        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c10000_t50_cuda\/gru4rec_bolcom_c10000_t50_cuda_payload.yaml/' \
+        -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cuda\/gru4rec_bolcom_c1000000_t50_cuda_onnx.pth/' \
+        -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cuda\/gru4rec_bolcom_c1000000_t50_cuda_payload.yaml/' \
             $$YAML_TEMPLATE \
     );
 	kubectl apply -f .k8s/etudelibrust-service.yaml
@@ -57,7 +59,7 @@ loadgenerator_buildpush:  ## build the serving application and push it to the do
 
 loadgenerator_k8s_deploy:  ## deploy the load generator in kubernetes
 	endpoint_ip="$$(kubectl get service etudelibrust -o yaml | awk '/clusterIP:/ { gsub("\"","",$$2); print $$2 }')"; \
-    .k8s/deploy_loadgen.sh $(PROJECT_ID) "http://$${endpoint_ip}:8080/predictions/model/1.0/" 10000 "gs://$(PROJECT_ID)-shared/results/static.avro" 1000 10
+    .k8s/deploy_loadgen.sh $(PROJECT_ID) "http://$${endpoint_ip}:8080/predictions/model/1.0/" 10000 "gs://$(PROJECT_ID)-shared/results/gru4rec_bolcom_c1000000_t50_cpu_onnx.avro" 1000 10
 
 training_buildpush:  ## build the models training application and push it to the docker repo
 	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest" -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_modeltraining:latest -f .docker/training.Dockerfile .
