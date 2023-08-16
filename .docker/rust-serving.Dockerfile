@@ -40,8 +40,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
 
 ## Install PyTorch with latest CUDA support
 RUN apt-get install -y python3-pip
-RUN pip3 install torch --index-url https://download.pytorch.org/whl/cu118
-RUN pip3 install omegaconf scipy lightning
+RUN pip3 install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cu118
+RUN pip3 install --no-cache-dir omegaconf scipy lightning
 
 COPY ./rust/src src
 COPY ./rust/Cargo.toml ./
@@ -65,6 +65,9 @@ COPY ./rust/model_store model_store
 COPY ./rust/start.sh ./
 COPY ./rust/predict_by_id.sh ./
 RUN chmod +x ./*.sh
+
+# free up disk space
+RUN apt-get autoclean
 
 ENTRYPOINT [ "./start.sh" ]
 EXPOSE 8080/tcp
