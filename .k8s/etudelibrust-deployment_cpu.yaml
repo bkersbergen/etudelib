@@ -22,6 +22,15 @@ spec:
 #        args: [ "while true; do sleep 600; done;" ]
         command: [ "./start.sh" ]
         args: [ "${MODEL_PATH}", "${PAYLOAD_PATH}" ]
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 300   # Wait xx seconds before starting checks
+          periodSeconds: 30          # Check every xx seconds
+          timeoutSeconds: 5          # Wait up to 5 seconds for a response
+          successThreshold: 1        # Consider ready after 1 successful check
+          failureThreshold: 25        # Allow up to xxx consecutive failures before considering not ready. Init takes between 5 and 15 minutes
         ports:
         - containerPort: 8080
         resources:
