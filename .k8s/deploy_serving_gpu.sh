@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# set -x
 
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 PROJECT_ID MODEL_PATH PAYLOAD_PATH"
@@ -11,6 +11,8 @@ PROJECT_ID="${1}"
 MODEL_PATH="${2}"
 PAYLOAD_PATH="${3}"
 YAML_TEMPLATE=${DIR}/etudelibrust-deployment_gpu.yaml
+
+echo "$0.run(PROJECT_ID = '${PROJECT_ID}', MODEL_PATH = '${MODEL_PATH}', PAYLOAD_PATH = '${PAYLOAD_PATH}'')"
 
 # Check if the YAML file exists
 if [ ! -f "$YAML_TEMPLATE" ]; then
