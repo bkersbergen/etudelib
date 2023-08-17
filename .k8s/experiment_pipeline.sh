@@ -21,6 +21,10 @@ deploy_evaluate() {
   local REPORT_LOCATION="$6"
   local TARGET_RPS="$7"
   local RAMP_DURATION_MINUTES="$8"
+  if (file_exists ${REPORT_LOCATION}); then
+    echo "${REPORT_LOCATION} already exists, skipping this test"
+    return 0
+  fi
   if ! (file_exists "$MODEL_PATH" && file_exists "$PAYLOAD_PATH"); then
     echo "Error: MODEL, payload or both do not exist."
     echo "$MODEL_PATH"
