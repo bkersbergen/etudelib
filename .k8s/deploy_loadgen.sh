@@ -15,7 +15,7 @@ REPORT_LOCATION="${4}"
 TARGET_RPS="${5}"
 RAMP_DURATION_MINUTES="${6}"
 
-echo "loadtest.run(endpoint = '${VERTEX_ENDPOINT}', catalog_size = '${CATALOG_SIZE}', report_location = '${REPORT_LOCATION}', target_rps = '${TARGET_RPS}', ramp_duration_minutes = '${RAMP_DURATION_MINUTES}')"
+echo "$0.run(PROJECT_ID = '${PROJECT_ID}', VERTEX_ENDPOINT = '${VERTEX_ENDPOINT}', CATALOG_SIZE = '${CATALOG_SIZE}', TARGET_RPS = '${TARGET_RPS}', RAMP_DURATION_MINUTES = '${RAMP_DURATION_MINUTES}')"
 
 HASH=$(sum <<< "${VERTEX_ENDPOINT}" | cut -f 1 -d ' ')
 JOB_NAME="etude-run-loadtest-${HASH}"

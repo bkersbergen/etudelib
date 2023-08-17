@@ -20,7 +20,7 @@ if [ ! -f "$YAML_TEMPLATE" ]; then
     exit 1
 fi
 
-kubectl delete deployment etudelibrust
+kubectl delete deployment etudelibrust --grace-period=0 --wait=true --ignore-not-found=true --timeout=5m
 
 kubectl apply -f <(
   sed -e "s|\${PROJECT_ID}|${PROJECT_ID}|" \
