@@ -63,7 +63,7 @@ models=('core' 'gru4rec')
 devices=('cpu' 'cuda')
 runtimes=('jitopt' 'onnx')
 c_values=(10000 1000000)
-TARGET_RPS=1000
+TARGET_RPS=500
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
@@ -76,7 +76,7 @@ for DEVICE in "${devices[@]}"; do
        for c in "${c_values[@]}"; do
          MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
          PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
-         REPORT_LOCATION="gs://${PROJECT_ID}-shared/results/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.avro"
+         REPORT_LOCATION="gs://${PROJECT_ID}-shared/results/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
          echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES}"
        done
      done
