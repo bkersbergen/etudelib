@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: etudelibrust
+  name: ${SERVING_NAME}
   labels:
-    app: etudelibrust
+    app: ${SERVING_NAME}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: etudelibrust
+      app: ${SERVING_NAME}
   template:
     metadata:
       labels:
-        app: etudelibrust
+        app: ${SERVING_NAME}
     spec:
       serviceAccountName: etudelib
       containers:

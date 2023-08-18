@@ -32,19 +32,21 @@ deploy_evaluate() {
     exit 1
   fi
   HASH=$(sum <<< "${MODEL_PATH}" | awk '{print $1}')
-  POD_NAME="etudeservingpod-${HASH}-$(date +%s)"
+  SECONDS=$(date +%s)
+  SERVING_NAME="etudeserving-${HASH}-${SECONDS}"
   if [ "${DEVICE}" == 'cuda' ]; then
-    ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH}
+    ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
   else
-    ${DIR}/deploy_serving_cpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH}
+    ${DIR}/deploy_serving_cpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
   fi
-  POD_NAME=$(kubectl get pods | grep -v Terminating | grep etudelibrust | awk '{print $1}')
-  echo "Waiting for pod $POD_NAME to become ready..."
+  POD_NAME=$(kubectl get pods | grep -v Terminating | grep ${SERVING_NAME} | awk '{print $1}')
+  echo "Waiting for pod ${POD_NAME} to become ready..."
   ${DIR}/wait_for_service_ready.sh ${POD_NAME}
-  echo "Pod $POD_NAME is now ready."
-  endpoint_ip=$(kubectl get service etudelibrust -o yaml | awk '/clusterIP:/ { gsub("\"","",$2); print $2 }')
+  echo "Pod ${POD_NAME} is now ready."
+  endpoint_ip=$(kubectl get service ${SERVING_NAME} -o yaml | awk '/clusterIP:/ { gsub("\"","",$2); print $2 }')
   ${DIR}/deploy_loadgen.sh ${PROJECT_ID} "http://${endpoint_ip}:8080/predictions/model/1.0/" ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES}
-  kubectl delete deployment etudelibrust
+  kubectl delete deployment ${SERVING_NAME}
+  kubectl delete service ${SERVING_NAME}
 }
 
 # Function to check if a file exists

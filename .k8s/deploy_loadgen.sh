@@ -17,7 +17,7 @@ RAMP_DURATION_MINUTES="${6}"
 
 echo "$0.run(PROJECT_ID = '${PROJECT_ID}', VERTEX_ENDPOINT = '${VERTEX_ENDPOINT}', CATALOG_SIZE = '${CATALOG_SIZE}', TARGET_RPS = '${TARGET_RPS}', RAMP_DURATION_MINUTES = '${RAMP_DURATION_MINUTES}')"
 
-HASH=$(sum <<< "${VERTEX_ENDPOINT}" | cut -f 1 -d ' ')
+HASH=$(sum <<< "${REPORT_LOCATION}" | cut -f 1 -d ' ')
 JOB_NAME="etude-run-loadtest-${HASH}"
 
 kubectl delete job "${JOB_NAME}" --grace-period=0 --wait=true --ignore-not-found=true --timeout=5m
