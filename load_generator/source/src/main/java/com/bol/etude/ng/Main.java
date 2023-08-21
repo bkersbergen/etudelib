@@ -75,23 +75,8 @@ public class Main {
             File temporary = new File("/tmp/etude/report.avro");
             Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                try {
-                    writeReportToStorage(temporary, report_location_arg);
-                    System.out.println("Report.write.ok()");
-                    System.exit(0);
-                } catch (Throwable e) {
-                    //noinspection CallToPrintStackTrace
-                    e.printStackTrace();
-                    System.out.println("Report.write.err()");
-                    try {
-                        Thread.sleep(300_000);
-                    } catch (InterruptedException ex) {
-                        // ignore, can't fix
-                    }
-                    System.exit(1);
-                }
-            }));
+            registerShutdownHookForReporting(temporary,
+                    report_location_arg);
 
             executeTestScenario(endpoint,
                     temporary,
@@ -108,6 +93,26 @@ public class Main {
             Thread.sleep(300_000);
             System.exit(1);
         }
+    }
+
+    private static void registerShutdownHookForReporting(File temporary, String report_location_arg) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                writeReportToStorage(temporary, report_location_arg);
+                System.out.println("Report.write.ok()");
+                System.exit(0);
+            } catch (Throwable e) {
+                //noinspection CallToPrintStackTrace
+                e.printStackTrace();
+                System.out.println("Report.write.err()");
+                try {
+                    Thread.sleep(300_000);
+                } catch (InterruptedException ex) {
+                    // ignore, can't fix
+                }
+                System.exit(1);
+            }
+        }));
     }
 
     private static Journeys createSyntheticJourneys(int size) {

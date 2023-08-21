@@ -1,6 +1,7 @@
 package com.bol.etude.ng;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,10 +15,12 @@ public class Tester {
     private final long milliInNanos = Duration.ofMillis(1).toNanos();
     private final long parkInNanos = milliInNanos / 100000; // 1 millis = 1_000_000 nanos
     private final long secondInNanos = Duration.ofSeconds(1).toNanos();
+    private final Instant deadline;
 
     private Tester(Integer target, Duration ramp) {
         this.target = target;
         this.ramp = ramp;
+        this.deadline = Instant.now().plus(ramp.plusMinutes(1));
     }
 
     private void run(Consumer<Request> runner) {
@@ -34,12 +37,23 @@ public class Tester {
             long nextTickMoment = nextTickNanos + firstTickMoment;
             long timeToNextTick;
 
+            if (isDeadlineReached()) {
+                System.out.println("Tester.ticks['" + ticks + "'].deadline()");
+                return;
+            }
+
             System.out.println("Tester.ticks['" + ticks + "'].state(rps = '" + rps + "', inflight = '" + inflight.get() + "')");
 //            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "')");
 
             inner:
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
+
+                if (isDeadlineReached()) {
+                    System.out.println("Tester.ticks['" + ticks + "'].deadline()");
+                    return;
+                }
+
                 waiter:
                 while (inflight.get() >= rps) {
                     if (timeToNextTick > milliInNanos) {
@@ -72,6 +86,10 @@ public class Tester {
 
             LockSupport.parkNanos(timeToNextTick);
         }
+    }
+
+    private boolean isDeadlineReached() {
+        return !Instant.now().isBefore(deadline);
     }
 
     private static long timeTillNextTick(long next) {
