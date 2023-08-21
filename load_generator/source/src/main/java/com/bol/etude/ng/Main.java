@@ -74,16 +74,35 @@ public class Main {
             URI endpoint = URI.create(endpoint_arg);
             File temporary = new File("/tmp/etude/report.avro");
             Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    writeReportToStorage(temporary, report_location_arg);
+                    System.out.println("Report.write.ok()");
+                    System.exit(0);
+                } catch (Throwable e) {
+                    //noinspection CallToPrintStackTrace
+                    e.printStackTrace();
+                    System.out.println("Report.write.err()");
+                    try {
+                        Thread.sleep(300_000);
+                    } catch (InterruptedException ex) {
+                        // ignore, can't fix
+                    }
+                    System.exit(1);
+                }
+            }));
+
             executeTestScenario(endpoint,
                     temporary,
                     journeys,
                     Integer.parseInt(target_rps_arg),
                     ofMinutes(Integer.parseInt(ramp_duration_minutes_arg)));
-            writeReportToStorage(temporary, report_location_arg);
 
             System.out.println("Test.ok()");
             System.exit(0);
         } catch (Throwable t) {
+            //noinspection CallToPrintStackTrace
             t.printStackTrace();
             System.out.println("Test.err()");
             Thread.sleep(300_000);
