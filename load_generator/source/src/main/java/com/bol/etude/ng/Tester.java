@@ -51,11 +51,14 @@ public class Tester {
                     return;
                 }
 
-                if (inflight.get() >= rps) {
-                    if (timeToNextTick >= milliInNanos) {
-                        System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
-                        LockSupport.parkNanos(milliInNanos);
+                while (inflight.get() >= rps) {
+                    if (timeToNextTick < milliInNanos) {
+                        break;
                     }
+
+                    System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
+                    LockSupport.parkNanos(milliInNanos);
+                    timeToNextTick = timeTillNextTick(nextTickMoment);
                 }
 
                 if (timeToNextTick <= 0) {
