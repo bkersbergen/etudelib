@@ -39,10 +39,10 @@ deploy_evaluate() {
   else
     ${DIR}/deploy_serving_cpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
   fi
+  ${DIR}/wait_for_service_ready.sh ${SERVING_NAME}
   POD_NAME=$(kubectl get pods | grep -v Terminating | grep ${SERVING_NAME} | awk '{print $1}')
-  echo "Waiting for pod ${POD_NAME} to become ready..."
-  ${DIR}/wait_for_service_ready.sh ${POD_NAME}
   echo "Pod ${POD_NAME} is now ready."
+  echo "Waiting for pod ${POD_NAME} to become ready..."
   endpoint_ip=$(kubectl get service ${SERVING_NAME} -o yaml | awk '/clusterIP:/ { gsub("\"","",$2); print $2 }')
   ${DIR}/deploy_loadgen.sh ${PROJECT_ID} "http://${endpoint_ip}:8080/predictions/model/1.0/" ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES}
   kubectl delete deployment ${SERVING_NAME}
@@ -65,11 +65,11 @@ models=('core' 'gru4rec')
 devices=('cpu' 'cuda')
 runtimes=('jitopt' 'onnx')
 c_values=(10000 1000000)
-TARGET_RPS=500
+TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=1
+max_parallel=3
 
 
 for DEVICE in "${devices[@]}"; do

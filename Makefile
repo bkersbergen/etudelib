@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT_ID=bk47473
+PROJECT_ID=bk474711
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
@@ -17,7 +17,7 @@ infra:  ## Create the infrastructure in GCP
 	@infra/create_infra.sh $(PROJECT_ID)
 
 serving_buildpush:  ## build the serving application and push it to the docker repo
-	docker build --no-cache --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
+	docker build --platform linux/amd64 -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest -f .docker/rust-serving.Dockerfile .
 	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest
 
 hello:  ## Define a target that takes an argument

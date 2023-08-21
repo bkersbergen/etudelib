@@ -100,7 +100,7 @@ public class Main {
             try {
                 writeReportToStorage(temporary, report_location_arg);
                 System.out.println("Report.write.ok()");
-                System.exit(0);
+//                System.exit(0);
             } catch (Throwable e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
@@ -110,8 +110,9 @@ public class Main {
                 } catch (InterruptedException ex) {
                     // ignore, can't fix
                 }
-                System.exit(1);
+//                System.exit(1);
             }
+            System.out.println("Last line of code in addShutdownHook");
         }));
     }
 
