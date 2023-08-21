@@ -29,8 +29,7 @@ public class Tester {
         AtomicInteger inflight = new AtomicInteger(0);
         Ramper ramper = new Ramper(target, ramp);
 
-        outer:
-        for (int rps : ramper) {
+        outer: for (int rps : ramper) {
             ticks += 1;
             boolean first = true;
             long nextTickNanos = secondInNanos * ticks;
@@ -43,9 +42,7 @@ public class Tester {
             }
 
             System.out.println("Tester.ticks['" + ticks + "'].state(rps = '" + rps + "', inflight = '" + inflight.get() + "')");
-//            System.out.println("Test.threads(active = '" + ManagementFactory.getThreadMXBean().getThreadCount() + "')");
 
-            inner:
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
 
@@ -54,13 +51,10 @@ public class Tester {
                     return;
                 }
 
-                waiter:
-                while (inflight.get() >= rps) {
-                    if (timeToNextTick > milliInNanos) {
+                if (inflight.get() >= rps) {
+                    if (timeToNextTick >= milliInNanos) {
                         System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
                         LockSupport.parkNanos(milliInNanos);
-                        timeToNextTick = timeTillNextTick(nextTickMoment);
-//                        continue inner;
                     }
                 }
 
@@ -70,9 +64,7 @@ public class Tester {
                     continue outer;
                 }
 
-//                long scheduleTaskStart = System.nanoTime();
                 runner.accept(new Request(ticks, rps, inflight, first));
-//                long scheduleTaskNanos = System.nanoTime() - scheduleTaskStart;
 
                 if (first) first = false;
             }
