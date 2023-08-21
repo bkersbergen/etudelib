@@ -52,8 +52,8 @@ public class Tester {
                 }
 
                 while (inflight.get() >= rps) {
-                    if (timeToNextTick < milliInNanos) {
-                        break;
+                    if (timeToNextTick <= 0) {
+                        continue outer;
                     }
 
                     System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
