@@ -21,6 +21,7 @@ deploy_evaluate() {
   local REPORT_LOCATION="$6"
   local TARGET_RPS="$7"
   local RAMP_DURATION_MINUTES="$8"
+  local sleep_delay="$9"
   if (file_exists ${REPORT_LOCATION}); then
     echo "${REPORT_LOCATION} already exists, skipping this test"
     return 0
@@ -31,6 +32,10 @@ deploy_evaluate() {
     echo "$PAYLOAD_PATH"
     exit 1
   fi
+
+  echo sleeping ${sleep_delay} seconds to slowly ramp up deployments
+  sleep ${sleep_delay}
+
   HASH=$(sum <<< "${MODEL_PATH}" | awk '{print $1}')
   SECONDS=$(date +%s)
   SERVING_NAME="etudeserving-${HASH}-${SECONDS}"
@@ -69,8 +74,10 @@ TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=5
+max_parallel=10
 
+# Initial sleep delay (seconds) for the first deployments
+sleep_delay=10*${max_parallel}
 
 for DEVICE in "${devices[@]}"; do
    for RUNTIME in "${runtimes[@]}"; do
@@ -79,9 +86,11 @@ for DEVICE in "${devices[@]}"; do
          MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
          PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
          REPORT_LOCATION="gs://${PROJECT_ID}-shared/results/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
-         echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES}"
+         # reduce the sleep delay with each deployment
+         sleep_delay=$((sleep_delay > 0 ? sleep_delay-${max_parallel} : 0))
+         echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay}"
        done
      done
    done
-done | xargs -n 8 -P $max_parallel bash -c 'deploy_evaluate "$@"' _
+done | xargs -n 9 -P $max_parallel bash -c 'deploy_evaluate "$@"' _
 
