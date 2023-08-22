@@ -69,7 +69,7 @@ TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=3
+max_parallel=5
 
 
 for DEVICE in "${devices[@]}"; do

@@ -12,6 +12,8 @@ docker_prune: ## prune docker to free up resources
 	docker system prune -a -f
 	docker image prune -a -f
 
+run_deployed_benchmark:  ## execute the deployed benchmark pipeline
+	.k8s/experiment_pipeline.sh $(PROJECT_ID)
 
 infra:  ## Create the infrastructure in GCP
 	@infra/create_infra.sh $(PROJECT_ID)

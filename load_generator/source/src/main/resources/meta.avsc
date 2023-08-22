@@ -1,0 +1,24 @@
+{
+  "namespace": "com.bol.etude.generated",
+  "type": "record",
+  "name": "Meta",
+  "doc": "metadata of load generator",
+  "fields": [
+    {
+      "name": "timestamp_epoch_millis",
+      "type": "long"
+    },
+    {
+      "name": "ticks",
+      "type": "long"
+    },
+    {
+      "name": "rps",
+      "type": "int"
+    },
+    {
+      "name": "inflight",
+      "type": "int"
+    }
+  ]
+}

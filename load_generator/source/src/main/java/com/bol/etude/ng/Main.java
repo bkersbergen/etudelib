@@ -1,6 +1,7 @@
 package com.bol.etude.ng;
 
 import com.bol.etude.generated.Interaction;
+import com.bol.etude.generated.Meta;
 import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
 import com.bol.etude.ng.Requester.Response;
@@ -24,7 +25,6 @@ import java.util.concurrent.Executors;
 
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
 import static java.time.Duration.ofMinutes;
-import static java.time.Duration.ofSeconds;
 
 public class Main {
 
@@ -41,10 +41,10 @@ public class Main {
 //        catalog_size_arg = "5000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
-        String report_location_arg = System.getenv("REPORT_LOCATION");
-//        report_location_arg = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
-//        report_location_arg = "/tmp/etude.avro";
-        System.out.println("ENV_VAR[REPORT_LOCATION] = '" + report_location_arg + "'");
+        String reportFileDestination = System.getenv("REPORT_LOCATION");
+//        reportFileDestination = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
+//        reportFileDestination = "/tmp/etude.avro";
+        System.out.println("ENV_VAR[REPORT_LOCATION] = '" + reportFileDestination + "'");
 
         String target_rps_arg = System.getenv("TARGET_RPS");
 //        target_rps_arg = 1000
@@ -54,10 +54,9 @@ public class Main {
 //        ramp_duration_minutes_arg = 20
         System.out.println("ENV_VAR[RAMP_DURATION_MINUTES] = '" + ramp_duration_minutes_arg + "'");
 
-
         if (Strings.isNullOrEmpty(endpoint_arg) ||
                 Strings.isNullOrEmpty(catalog_size_arg) ||
-                Strings.isNullOrEmpty(report_location_arg) ||
+                Strings.isNullOrEmpty(reportFileDestination) ||
                 Strings.isNullOrEmpty(target_rps_arg) ||
                 Strings.isNullOrEmpty(ramp_duration_minutes_arg)
         ) {
@@ -72,14 +71,19 @@ public class Main {
             System.out.println("Test.start()");
 
             URI endpoint = URI.create(endpoint_arg);
-            File temporary = new File("/tmp/etude/report.avro");
+            File temporaryReportFile = new File("/tmp/etude/report.avro");
+            File temporaryMetaFile = new File("/tmp/etude/meta.avro");
+
+            String metaFileDestination = appendMetaToBaseFilename(reportFileDestination);
+
             Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
 
-            registerShutdownHookForReporting(temporary,
-                    report_location_arg);
+            registerShutdownHookForReporting(temporaryReportFile,
+                    reportFileDestination, temporaryMetaFile, metaFileDestination);
 
             executeTestScenario(endpoint,
-                    temporary,
+                    temporaryReportFile,
+                    temporaryMetaFile,
                     journeys,
                     Integer.parseInt(target_rps_arg),
                     ofMinutes(Integer.parseInt(ramp_duration_minutes_arg)));
@@ -95,12 +99,30 @@ public class Main {
         }
     }
 
-    private static void registerShutdownHookForReporting(File temporary, String report_location_arg) {
+    private static String appendMetaToBaseFilename(String originalPath) {
+        // Extract the base filename without the extension
+        int lastSlashIndex = originalPath.lastIndexOf("/");
+        int lastDotIndex = originalPath.lastIndexOf(".");
+
+        if (lastSlashIndex >= 0 && lastDotIndex >= lastSlashIndex) {
+            String baseFilename = originalPath.substring(lastSlashIndex + 1, lastDotIndex);
+            String newBaseFilename = baseFilename + "_meta";
+
+            // Replace the old base filename with the new one
+            return originalPath.substring(0, lastSlashIndex + 1) + newBaseFilename + originalPath.substring(lastDotIndex);
+        } else {
+            // If the format of the input path is unexpected, return the original path
+            return originalPath;
+        }
+    }
+
+    private static void registerShutdownHookForReporting(File reportSourceFile, String reportFileDestination, File temporaryMetaFile, String metaFileDestination) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                writeReportToStorage(temporary, report_location_arg);
-                System.out.println("Report.write.ok()");
-//                System.exit(0);
+                copyFileTo(reportSourceFile, reportFileDestination);
+                System.out.println("Report.write.ok(report)");
+                copyFileTo(temporaryMetaFile, metaFileDestination);
+                System.out.println("Report.write.ok(meta)");
             } catch (Throwable e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
@@ -110,7 +132,6 @@ public class Main {
                 } catch (InterruptedException ex) {
                     // ignore, can't fix
                 }
-//                System.exit(1);
             }
             System.out.println("Last line of code in addShutdownHook");
         }));
@@ -123,7 +144,7 @@ public class Main {
         return new Journeys(journeys);
     }
 
-    private static void executeTestScenario(URI endpoint, File temporary, Journeys journeys, int targetRps, Duration ramp) {
+    private static void executeTestScenario(URI endpoint, File tempReportFile, File tempMetaFile, Journeys journeys, int targetRps, Duration ramp) throws IOException {
         ExecutorService executor = Executors.newFixedThreadPool(4);
 
         GoogleBearerAuthenticator authenticator = null;
@@ -135,14 +156,16 @@ public class Main {
         }
 
         Requester<GoogleVertexRequest> requester = new Requester<>(endpoint, authenticator);
-        Persister<Report> persister = new DataFilePersister<>(temporary, Report.class);
+        Persister<Report> reportPersister = new DataFilePersister<>(tempReportFile, Report.class);
+        Persister<Meta> metaPersister = new DataFilePersister<>(tempMetaFile, Meta.class);
+
         Collector<Journey> collector = new Collector<>();
 //        Journeys supplier = new Journeys(randomJourneySupplier());
 
-        try (persister; requester) {
+        try (reportPersister; requester) {
             System.out.println("Scenario.run()");
 
-            rampWithBackPressure(targetRps, ramp, (request) -> {
+            rampWithBackPressure(targetRps, ramp, metaPersister, (request) -> {
                 executor.execute(() -> {
                     request.fly();
 
@@ -159,13 +182,14 @@ public class Main {
                             journeys.push(journey);
                         } else {
                             Report report = buildJourneyReport(journey, collector.remove(journey), gson);
-                            persister.accept(report);
+                            reportPersister.accept(report);
                         }
                     });
 
                     request.doOnTickStart(() -> {
                         try {
-                            persister.flush();
+                            reportPersister.flush();
+                            metaPersister.flush();
                         } catch (IOException e) {
                             // ...
                         }
@@ -179,6 +203,7 @@ public class Main {
             err.printStackTrace();
             throw new RuntimeException(err);
         }
+        metaPersister.close();
     }
 
     private static Report buildJourneyReport(Journey journey, List<Response> responses, Gson gson) {
@@ -228,20 +253,20 @@ public class Main {
         interaction.setProcessingMillis(-1);
     }
 
-    private static void writeReportToStorage(File temporary, String permanent) throws IOException {
+    private static void copyFileTo(File sourceFile, String destination) throws IOException {
         try {
-            System.out.println("Storage.write(uri = '" + permanent + "')");
-            if (permanent.startsWith("gs://")) {
+            System.out.println("Storage.write(uri = '" + destination + "')");
+            if (destination.startsWith("gs://")) {
                 Storage storage = StorageOptions.getDefaultInstance().getService();
-                URI uri = URI.create(permanent);
+                URI uri = URI.create(destination);
                 Bucket bucket = storage.get(uri.getHost());
-                bucket.create(uri.getPath().substring(1), Files.newInputStream(temporary.toPath()));
+                bucket.create(uri.getPath().substring(1), Files.newInputStream(sourceFile.toPath()));
             } else {
-                Files.copy(temporary.toPath(), new File(permanent).toPath());
+                Files.copy(sourceFile.toPath(), new File(destination).toPath());
             }
-            System.out.println("Storage.write(uri = '" + permanent + "').ok");
+            System.out.println("Storage.write(uri = '" + destination + "').ok");
         } catch (Throwable err) {
-            System.out.println("Storage.write(uri = '" + permanent + "').err");
+            System.out.println("Storage.write(uri = '" + destination + "').err");
             throw err;
         }
     }

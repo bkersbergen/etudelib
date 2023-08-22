@@ -1,5 +1,7 @@
 package com.bol.etude.ng;
 
+import com.bol.etude.generated.Meta;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Iterator;
@@ -23,7 +25,7 @@ public class Tester {
         this.deadline = Instant.now().plus(ramp.plusMinutes(1));
     }
 
-    private void run(Consumer<Request> runner) {
+    private void run(Consumer<Request> runner, Persister<Meta> metaPersister) {
         long firstTickMoment = System.nanoTime();
         long ticks = 0;
         AtomicInteger inflight = new AtomicInteger(0);
@@ -42,7 +44,9 @@ public class Tester {
             }
 
             System.out.println("Tester.ticks['" + ticks + "'].state(rps = '" + rps + "', inflight = '" + inflight.get() + "')");
-
+            Meta t = Meta.newBuilder().setTimestampEpochMillis(Instant.now().toEpochMilli()).setTicks(ticks).setRps(rps).setInflight(inflight.get()).build();
+            System.out.println(t);
+            metaPersister.accept(t);
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);
 
@@ -161,10 +165,10 @@ public class Tester {
         }
     }
 
-    public static void rampWithBackPressure(int target, Duration ramp, Consumer<Request> runner) throws InterruptedException {
+    public static void rampWithBackPressure(int target, Duration ramp, Persister<Meta> metaPersister, Consumer<Request> runner) throws InterruptedException {
         if (target < 0) throw new RuntimeException("target < 0");
         Objects.requireNonNull(ramp, "ramp == null");
         if (ramp.isNegative()) throw new IllegalArgumentException("ramp < 0");
-        new Tester(target, ramp).run(runner);
+        new Tester(target, ramp).run(runner, metaPersister);
     }
 }
