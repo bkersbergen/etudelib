@@ -45,7 +45,6 @@ public class Tester {
 
             System.out.println("Tester.ticks['" + ticks + "'].state(rps = '" + rps + "', inflight = '" + inflight.get() + "')");
             Meta t = Meta.newBuilder().setTimestampEpochMillis(Instant.now().toEpochMilli()).setTicks(ticks).setRps(rps).setInflight(inflight.get()).build();
-            System.out.println(t);
             metaPersister.accept(t);
             for (int i = 0; i < rps; i++) {
                 timeToNextTick = timeTillNextTick(nextTickMoment);

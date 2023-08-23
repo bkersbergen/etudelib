@@ -128,12 +128,17 @@ public class Main {
                 e.printStackTrace();
                 System.out.println("Report.write.err()");
                 try {
-                    Thread.sleep(300_000);
+                    Thread.sleep(Duration.ofMinutes(5).toMillis());
                 } catch (InterruptedException ex) {
                     // ignore, can't fix
                 }
             }
             System.out.println("Last line of code in addShutdownHook");
+            try {
+                Thread.sleep(Duration.ofSeconds(10).toMillis());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }));
     }
 
@@ -208,6 +213,7 @@ public class Main {
             }
             throw new RuntimeException(err);
         }
+        System.out.println("flushing and closing report and meta data");
         reportPersister.close();
         metaPersister.close();
     }
