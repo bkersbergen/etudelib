@@ -201,8 +201,14 @@ public class Main {
         } catch (Exception err) {
             System.out.println("Scenario.err()");
             err.printStackTrace();
+            try {
+                reportPersister.close();
+                metaPersister.close();
+            } catch (IOException iox) {
+            }
             throw new RuntimeException(err);
         }
+        reportPersister.close();
         metaPersister.close();
     }
 
