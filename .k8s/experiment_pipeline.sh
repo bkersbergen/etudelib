@@ -77,7 +77,7 @@ RAMP_DURATION_MINUTES=10
 max_parallel=10
 
 # Initial sleep delay (seconds) for the first deployments
-sleep_delay=10*${max_parallel}
+sleep_delay=60*${max_parallel}
 
 for DEVICE in "${devices[@]}"; do
    for RUNTIME in "${runtimes[@]}"; do
@@ -87,7 +87,7 @@ for DEVICE in "${devices[@]}"; do
          PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
          REPORT_LOCATION="gs://${PROJECT_ID}-shared/results/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
          # reduce the sleep delay with each deployment
-         sleep_delay=$((sleep_delay > 0 ? sleep_delay-${max_parallel} : 0))
+         sleep_delay=$((sleep_delay > 0 ? sleep_delay-60 : 0))
          echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay}"
        done
      done
