@@ -21,6 +21,7 @@ def export_models(project_id):
     if torch.cuda.is_available():
         device_types.append('cuda')
 
+    # for C in [10_000, 1_000_000, 5_000_000, 10_000_000]:
     for C in [10_000, 1_000_000, 5_000_000, 10_000_000]:
         max_seq_length = 50
         param_source = 'bolcom'
@@ -38,9 +39,9 @@ def export_models(project_id):
         # for model_name in ['noop']:
 
 
-        # for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
-        #                    'stamp', 'topkonly']:
-        for model_name in ['core', 'gru4rec']:
+        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn',
+                           'stamp', 'topkonly']:
+        # for model_name in ['core', 'gru4rec']:
             print(f'export model: model_name={model_name}, C={C}, max_seq_length={max_seq_length}, param_source={param_source}')
             eager_model, payload = train_model(
                 model_name=model_name, C=C, max_seq_length=max_seq_length, param_source=param_source, model_input=model_input)
@@ -178,5 +179,6 @@ if __name__ == '__main__':
         export_models(project_id)
     else:
         print(f'argument error: project_id not given')
+
 
 

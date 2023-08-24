@@ -22,10 +22,10 @@ spec:
       containers:
       - name: etudelib-training
         image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_modeltraining:latest
-        # command: [ "python3" ]
-        # args: [ "train.py", "${PROJECT_ID}" ]
-        command: [ "/bin/bash", "-c", "--" ]
-        args: [ "while true; do sleep 600; done;" ]
+        command: [ "python3" ]
+        args: [ "./train.py", "${PROJECT_ID}" ]
+        # command: [ "/bin/bash", "-c", "--" ]
+        # args: [ "while true; do sleep 600; done;" ]
         resources:
           requests:
             memory: "32Gi"

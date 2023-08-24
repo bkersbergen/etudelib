@@ -167,7 +167,7 @@ public class Main {
         Collector<Journey> collector = new Collector<>();
 //        Journeys supplier = new Journeys(randomJourneySupplier());
 
-        try (reportPersister; requester) {
+        try (reportPersister; metaPersister; requester) {
             System.out.println("Scenario.run()");
 
             rampWithBackPressure(targetRps, ramp, metaPersister, (request) -> {
