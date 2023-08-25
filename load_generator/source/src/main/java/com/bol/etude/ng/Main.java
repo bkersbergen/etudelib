@@ -263,6 +263,9 @@ public class Main {
         interaction.setPreprocessingMillis(-1);
         interaction.setInferencingMillis(-1);
         interaction.setProcessingMillis(-1);
+        interaction.setModelDevice("");
+        interaction.setModelName("");
+        interaction.setModelThreadQty(-1);
     }
 
     private static void copyFileTo(File sourceFile, String destination) throws IOException {
