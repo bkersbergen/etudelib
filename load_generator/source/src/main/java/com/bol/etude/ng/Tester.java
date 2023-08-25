@@ -54,14 +54,15 @@ public class Tester {
                     return;
                 }
 
-                while (inflight.get() >= rps) {
-                    if (timeToNextTick <= 0) {
-                        continue outer;
-                    }
-
+                if (inflight.get() >= rps ){
                     System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
-                    LockSupport.parkNanos(milliInNanos);
-                    timeToNextTick = timeTillNextTick(nextTickMoment);
+                    while (inflight.get() >= rps) {
+                        if (timeToNextTick <= 0) {
+                            continue outer;
+                        }
+                        LockSupport.parkNanos(milliInNanos);
+                        timeToNextTick = timeTillNextTick(nextTickMoment);
+                    }
                 }
 
                 if (timeToNextTick <= 0) {
