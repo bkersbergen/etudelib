@@ -40,7 +40,8 @@ public class DataFilePersister<T> implements Persister<T> {
                 var obj = backlog.poll();
                 writer.append(obj);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("DataFilePersister.flush().err");
         }
     }

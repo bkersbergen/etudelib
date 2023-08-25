@@ -5,9 +5,7 @@ import com.bol.etude.generated.Meta;
 import com.bol.etude.generated.Report;
 import com.bol.etude.ng.Journeys.Journey;
 import com.bol.etude.ng.Requester.Response;
-import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
+import com.google.cloud.storage.*;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 
@@ -89,12 +87,14 @@ public class Main {
                     ofMinutes(Integer.parseInt(ramp_duration_minutes_arg)));
 
             System.out.println("Test.ok()");
+            System.out.println("System.exit(0)");
             System.exit(0);
         } catch (Throwable t) {
             //noinspection CallToPrintStackTrace
             t.printStackTrace();
             System.out.println("Test.err()");
             Thread.sleep(300_000);
+            System.out.println("System.exit(1)");
             System.exit(1);
         }
     }
@@ -118,16 +118,18 @@ public class Main {
 
     private static void registerShutdownHookForReporting(File reportSourceFile, String reportFileDestination, File temporaryMetaFile, String metaFileDestination) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Executing ShuttingdownHook");
             try {
                 copyFileTo(reportSourceFile, reportFileDestination);
-                System.out.println("Report.write.ok(report)");
+                System.out.println("copy.ok(report)");
                 copyFileTo(temporaryMetaFile, metaFileDestination);
-                System.out.println("Report.write.ok(meta)");
+                System.out.println("copy.ok(meta)");
             } catch (Throwable e) {
                 //noinspection CallToPrintStackTrace
                 e.printStackTrace();
                 System.out.println("Report.write.err()");
                 try {
+                    System.out.println("Thread.sleep(Duration.ofMinutes(5).toMillis());");
                     Thread.sleep(Duration.ofMinutes(5).toMillis());
                 } catch (InterruptedException ex) {
                     // ignore, can't fix
@@ -201,21 +203,38 @@ public class Main {
                     });
                 });
             });
-
+            System.out.println("Thread.sleep(Duration.ofSeconds(10).toMillis());");
+            Thread.sleep(Duration.ofSeconds(10).toMillis());
+            System.out.println("reportPersister.close()");
+            reportPersister.close();
+            System.out.println("metaPersister.close()");
+            metaPersister.close();
             System.out.println("Scenario.ok()");
         } catch (Exception err) {
             System.out.println("Scenario.err()");
             err.printStackTrace();
+
+            try {
+                System.out.println("Thread.sleep(Duration.ofSeconds(10).toMillis());");
+                Thread.sleep(Duration.ofSeconds(10).toMillis());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             try {
                 reportPersister.close();
+
+            } catch (IOException iox) {
+                iox.printStackTrace();
+                System.out.println("Error: reportPersister.close()");
+            }
+            try {
                 metaPersister.close();
             } catch (IOException iox) {
+                iox.printStackTrace();
+                System.out.println("Error: metaPersister.close()");
             }
             throw new RuntimeException(err);
         }
-        System.out.println("flushing and closing report and meta data");
-        reportPersister.close();
-        metaPersister.close();
     }
 
     private static Report buildJourneyReport(Journey journey, List<Response> responses, Gson gson) {
@@ -274,8 +293,12 @@ public class Main {
             if (destination.startsWith("gs://")) {
                 Storage storage = StorageOptions.getDefaultInstance().getService();
                 URI uri = URI.create(destination);
-                Bucket bucket = storage.get(uri.getHost());
-                bucket.create(uri.getPath().substring(1), Files.newInputStream(sourceFile.toPath()));
+//                Bucket bucket = storage.get(uri.getHost());
+//                bucket.create(uri.getPath().substring(1), Files.newInputStream(sourceFile.toPath()));
+                byte[] data = Files.readAllBytes(sourceFile.toPath());
+                BlobId blobId = BlobId.of(uri.getHost(), uri.getPath().substring(1));
+                BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+                storage.create(blobInfo, data);
             } else {
                 Files.copy(sourceFile.toPath(), new File(destination).toPath());
             }
