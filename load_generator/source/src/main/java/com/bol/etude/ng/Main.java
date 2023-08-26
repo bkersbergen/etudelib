@@ -250,7 +250,7 @@ public class Main {
             interaction.setStatus(response.status);
 
             if (response.status != 200 || Strings.isNullOrEmpty(response.body)) {
-                System.out.println("GoogleVertexResponse(status ='" + response.status + "').body().err");
+//                System.out.println("GoogleVertexResponse(status ='" + response.status + "').body().err");
                 applyInteractionErrorValues(interaction, response.status);
             } else {
                 try {
