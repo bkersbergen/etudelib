@@ -180,7 +180,7 @@ public class Main {
                         request.unfly();
 
                         Requester.Response response = success == null
-                                ? new Requester.Response(Instant.EPOCH, 500, "", Duration.ofMillis(-1))
+                                ? new Requester.Response(Instant.now(), 500, failure.getMessage(), Duration.ofMillis(-1))
                                 : success;
 
                         collector.add(journey, response);
