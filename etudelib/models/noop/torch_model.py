@@ -24,4 +24,6 @@ class NOOPModel(nn.Module):
     def forward(self, item_seq, _item_seq_len):
         shape = (item_seq.size(0),) + self.data.shape
         result = self.data.unsqueeze(0).expand(shape)
+        # Add the first value from item_seq to the first result
+        result[:, 0] += item_seq[:, 0].float()  # Convert to float before addition
         return result
