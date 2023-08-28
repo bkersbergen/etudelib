@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
@@ -22,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.time.Duration.ofMinutes;
 
 public class Main {
@@ -300,7 +302,7 @@ public class Main {
                 BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
                 storage.create(blobInfo, data);
             } else {
-                Files.copy(sourceFile.toPath(), new File(destination).toPath());
+                Files.copy(sourceFile.toPath(), new File(destination).toPath(), REPLACE_EXISTING);
             }
             System.out.println("Storage.write(uri = '" + destination + "').ok");
         } catch (Throwable err) {
