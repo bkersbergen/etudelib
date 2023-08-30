@@ -31,9 +31,8 @@ deploy_evaluate() {
     exit 1
   fi
 
-  echo sleeping ${sleep_delay} seconds to slowly ramp up deployments
+  echo ${REPORT_LOCATION} sleeping ${sleep_delay} seconds to ramp up deployments
   sleep ${sleep_delay}
-  exit 0
 
   HASH=$(sum <<< "${MODEL_PATH}" | awk '{print $1}')
   SECONDS=$(date +%s)
