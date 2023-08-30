@@ -22,7 +22,7 @@ def export_models(project_id):
         device_types.append('cuda')
 
     # for C in [10_000, 1_000_000, 5_000_000, 10_000_000]:
-    for C in [10_000, 1_000_000, 5_000_000, 10_000_000]:
+    for C in [10_000, 1_000_000]:
         max_seq_length = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
