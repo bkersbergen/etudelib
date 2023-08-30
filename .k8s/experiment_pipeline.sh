@@ -34,9 +34,11 @@ deploy_evaluate() {
   echo ${REPORT_LOCATION} sleeping ${sleep_delay} seconds to ramp up deployments
   sleep ${sleep_delay}
 
-  HASH=$(sum <<< "${MODEL_PATH}" | awk '{print $1}')
+  HASH=$(echo -n "${MODEL_PATH}" | sha1sum | awk '{print $1}'| tr -cd '[:alnum:]')
   SECONDS=$(date +%s)
-  SERVING_NAME="etudeserving-${HASH}-${SECONDS}"
+  sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
+  SERVING_NAME="etudeserving-${sanitized_basename}-${HASH}-${SECONDS}"
+  SERVING_NAME=$(echo "${SERVING_NAME}" | tr -cd '[:alnum:]' | cut -c 1-52)
   if [ "${DEVICE}" == 'cuda' ]; then
     ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
   else
@@ -72,7 +74,7 @@ TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=10
+max_parallel=1
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments

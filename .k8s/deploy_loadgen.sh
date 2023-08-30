@@ -17,8 +17,10 @@ RAMP_DURATION_MINUTES="${6}"
 
 echo "$0.run(PROJECT_ID = '${PROJECT_ID}', VERTEX_ENDPOINT = '${VERTEX_ENDPOINT}', CATALOG_SIZE = '${CATALOG_SIZE}', TARGET_RPS = '${TARGET_RPS}', RAMP_DURATION_MINUTES = '${RAMP_DURATION_MINUTES}')"
 
-HASH=$(sum <<< "${REPORT_LOCATION}" | cut -f 1 -d ' ')
-JOB_NAME="etude-run-loadtest-${HASH}"
+sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
+HASH=$(echo -n "${REPORT_LOCATION}" | sha1sum | awk '{print $1}'| tr -cd '[:alnum:]')
+JOB_NAME="etudeloadgenerator-${sanitized_basename}-${HASH}"
+JOB_NAME=$(echo "${JOB_NAME}" | tr -cd '[:alnum:]' | cut -c 1-52)
 
 kubectl delete job "${JOB_NAME}" --grace-period=0 --wait=true --ignore-not-found=true --timeout=5m
 
@@ -33,7 +35,7 @@ POD_READY=$(kubectl wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 LOGS=$(kubectl logs pod/"${POD_NAME}" --follow)
 if [[ "$LOGS" =~ .*"Test.ok()".* ]]; then
   echo "loadtest.ok()"
-  exit 1
+  exit 0
 fi
 
 echo "$LOGS"
