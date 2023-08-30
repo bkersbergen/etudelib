@@ -34,7 +34,7 @@ deploy_evaluate() {
   echo ${REPORT_LOCATION} sleeping ${sleep_delay} seconds to ramp up deployments
   sleep ${sleep_delay}
 
-  HASH=$(echo -n "${MODEL_PATH}" | sha1sum | awk '{print $1}'| tr -cd '[:alnum:]')
+  HASH=$(echo -n "${MODEL_PATH}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
   SECONDS=$(date +%s)
   sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
   SERVING_NAME="etudeserving-${sanitized_basename}-${HASH}-${SECONDS}"

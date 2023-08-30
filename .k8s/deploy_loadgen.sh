@@ -18,7 +18,7 @@ RAMP_DURATION_MINUTES="${6}"
 echo "$0.run(PROJECT_ID = '${PROJECT_ID}', VERTEX_ENDPOINT = '${VERTEX_ENDPOINT}', CATALOG_SIZE = '${CATALOG_SIZE}', TARGET_RPS = '${TARGET_RPS}', RAMP_DURATION_MINUTES = '${RAMP_DURATION_MINUTES}')"
 
 sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
-HASH=$(echo -n "${REPORT_LOCATION}" | sha1sum | awk '{print $1}'| tr -cd '[:alnum:]')
+HASH=$(echo -n "${REPORT_LOCATION}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
 JOB_NAME="etudeloadgenerator-${sanitized_basename}-${HASH}"
 JOB_NAME=$(echo "${JOB_NAME}" | tr -cd '[:alnum:]' | cut -c 1-42)
 
