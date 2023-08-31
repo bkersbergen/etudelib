@@ -32,6 +32,7 @@ public class Tester {
         Ramper ramper = new Ramper(target, ramp);
 
         outer: for (int rps : ramper) {
+            rps = Math.min(rps, 100);
             ticks += 1;
             boolean first = true;
             long nextTickNanos = secondInNanos * ticks;
