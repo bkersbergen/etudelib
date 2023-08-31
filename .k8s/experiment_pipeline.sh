@@ -66,15 +66,15 @@ file_exists() {
 export -f file_exists
 export -f deploy_evaluate
 
-models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-devices=('cpu' 'cuda')
-runtimes=('jitopt' 'onnx')
-c_values=(10000 1000000)
+models=('gru4rec')
+devices=('cuda')
+runtimes=('jitopt')
+c_values=(1000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=10
+max_parallel=1
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
