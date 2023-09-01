@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccountName: etudelib
       nodeSelector:
-        cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+        cloud.google.com/gke-accelerator: "nvidia-tesla-a100"
       containers:
       - name: etudelib-servingrust
         image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_rust:latest

@@ -34,10 +34,10 @@ deploy_evaluate() {
   echo ${REPORT_LOCATION} sleeping ${sleep_delay} seconds to ramp up deployments
   sleep ${sleep_delay}
 
-  HASH=$(echo -n "${MODEL_PATH}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
+  HASH=$(echo -n "${REPORT_LOCATION}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]'| cut -c 5-10)
   SECONDS=$(date +%s)
-  sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
-  SERVING_NAME="etudeserving-${sanitized_basename}-${HASH}-${SECONDS}"
+  sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]' | cut -c 1-2)
+  SERVING_NAME="serv-${sanitized_basename}-${HASH}-${SECONDS}"
   SERVING_NAME=$(echo "${SERVING_NAME}" | tr -cd '[:alnum:]' | cut -c 1-42)
   if [ "${DEVICE}" == 'cuda' ]; then
     ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
@@ -66,15 +66,15 @@ file_exists() {
 export -f file_exists
 export -f deploy_evaluate
 
-models=('gru4rec')
-devices=('cuda')
+models=('gru4rec' 'noop')
+devices=('cpu' 'cuda')
 runtimes=('jitopt')
 c_values=(1000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
-max_parallel=1
+max_parallel=3
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
@@ -87,16 +87,16 @@ for DEVICE in "${devices[@]}"; do
          for ((repeat=0; repeat<QTY_EXPERIMENT_REPEATS; repeat++)); do
            MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
            PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
-           REPORT_LOCATION="gs://${PROJECT_ID}-shared/repeat_${repeat}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
+           REPORT_LOCATION="gs://${PROJECT_ID}-shared/repeat_${repeat}_a100/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
            if (file_exists ${REPORT_LOCATION}); then
              continue
            fi
            # reduce the sleep delay with each deployment
            sleep_delay=$((sleep_delay > 0 ? sleep_delay-60 : 0))
-           echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay}"
+           echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay} ${repeat}"
          done
        done
      done
    done
-done | xargs -n 9 -P $max_parallel bash -c 'deploy_evaluate "$@"' _
+done | xargs -n 10 -P $max_parallel bash -c 'deploy_evaluate "$@"' _
 
