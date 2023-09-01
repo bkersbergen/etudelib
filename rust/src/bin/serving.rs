@@ -7,6 +7,8 @@ use actix_web::{web::{
     Data,
     Json,
 }};
+use actix_web::dev::Service;
+use actix_web::http::header::{HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use serving::modelruntime::ModelEngine;
 use serving::modelruntime::dummymodelruntime::DummyModelRuntime;
@@ -183,6 +185,21 @@ async fn main() -> std::io::Result<()> {
             .service(ping)
             .service(v1_recommend)
             .app_data(Data::new(models))
+            .wrap_fn(|req, srv| {
+                let start = Instant::now();
+                let fut = srv.call(req);
+                async move {
+                    let mut response = fut.await?;
+                    let duration = start.elapsed().as_micros() as f32 / 1000.0;
+                    let duration_str = format!("{:.2}", duration);
+                    // Add the custom header to the response
+                    response.headers_mut().insert(
+                        HeaderName::from_static("X-Server-Latency-Ms"),
+                        HeaderValue::from_str(&duration_str).unwrap(),
+                    );
+                    Ok(response)
+                }
+            })
             .wrap(Logger::default())
             .wrap(
                 middleware::DefaultHeaders::new()
