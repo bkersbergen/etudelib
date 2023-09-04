@@ -53,6 +53,7 @@ pub struct VertexResponse {
 
 }
 
+
 #[post("/predictions/model/1.0/")]
 async fn v1_recommend(
     models: Data<Models>,
@@ -193,8 +194,9 @@ async fn main() -> std::io::Result<()> {
                     let duration = start.elapsed().as_micros() as f32 / 1000.0;
                     let duration_str = format!("{:.2}", duration);
                     // Add the custom header to the response
+                    let x_server_latency_header: &'static str = "x-server-latency-ms";
                     response.headers_mut().insert(
-                        HeaderName::from_static("X-Server-Latency-Ms"),
+                        HeaderName::from_static(x_server_latency_header),
                         HeaderValue::from_str(&duration_str).unwrap(),
                     );
                     Ok(response)
