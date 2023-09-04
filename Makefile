@@ -1,12 +1,15 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT_ID=bk474712
+PROJECT_ID=bk474713
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
 IMAGE_URI_MICROBENCHMARK=eu.gcr.io/$(PROJECT_ID)/etudelib/etudelib_microbenchmark:latest
 IMAGE_URI_TORCHSERVE=eu.gcr.io/$(PROJECT_ID)/etudelib/etudelib_torchserve:latest
+
+.PHONY: *
+# .PHONY: $(shell sed -n -e '/^$$/ { n ; /^[^ .\#][^ ]*:/ { s/:.*$$// ; p ; } ; }' $(MAKEFILE_LIST))
 
 docker_prune: ## prune docker to free up resources
 	docker system prune -a -f
