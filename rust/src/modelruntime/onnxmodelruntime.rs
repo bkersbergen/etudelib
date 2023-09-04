@@ -1,4 +1,4 @@
-use crate::modelruntime::{ModelEngine, ModelPayload};
+use crate::modelruntime::{Batch, ModelEngine, ModelInput, ModelOutput, ModelPayload};
 
 use ndarray::{Array, ViewRepr, IxDyn, ArrayBase};
 use ort::{tensor::{DynOrtTensor, InputTensor, OrtOwnedTensor}, Environment, ExecutionProvider, SessionBuilder, LoggingLevel, Session, GraphOptimizationLevel};
@@ -65,6 +65,14 @@ impl OnnxModelRuntime {
 }
 
 impl ModelEngine for OnnxModelRuntime {
+    fn recommend_batch(&self, batched_input: Batch<ModelInput>) -> Batch<ModelOutput> {
+        let mut results:Batch<ModelOutput> = Vec::with_capacity(batched_input.len());
+        for (index, value) in batched_input.iter().enumerate() {
+            let result:ModelOutput = self.recommend(value);
+            results[index] = result;
+        }
+        results
+    }
     fn recommend(&self, session_items: &Vec<i64>) -> Vec<i64>{
         let max_seq_length = self.payload.max_seq_length as usize;
         let item_seq_len = session_items.len();
@@ -121,6 +129,10 @@ impl ModelEngine for OnnxModelRuntime {
 
     fn get_model_filename(&self) -> String {
         self.model_filename.clone()
+    }
+
+    fn load() -> Self {
+        todo!()
     }
 }
 

@@ -45,5 +45,5 @@ goose-eggs = "0.5.1"
 tokio = "^1.28.0"
 serde_json = "1.0.96"
 rand = "0.8.5"
-
+batched-fn = "0.2.4"
 

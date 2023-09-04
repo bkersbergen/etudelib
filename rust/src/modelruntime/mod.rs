@@ -2,14 +2,22 @@ pub mod jitmodelruntime;
 pub mod onnxmodelruntime;
 pub mod dummymodelruntime;
 
+use std::net::Ipv4Addr;
 use serde::{Deserialize, Serialize};
 
+pub type ModelInput = Vec<i64>;
+pub type ModelOutput = Vec<i64>;
+pub type Batch<T> = Vec<T>;
 
 pub trait ModelEngine {
-    fn recommend(&self, session_items: &Vec<i64>) -> Vec<i64>;
+    fn recommend_batch(&self, batched_input: Batch<ModelInput>) -> Batch<ModelOutput>;
+    fn recommend(&self, session_items: &ModelInput) -> ModelOutput;
     fn get_model_device_name(&self) -> String;
     fn get_model_qty_threads(&self) -> i32;
     fn get_model_filename(&self) -> String;
+    fn load() -> Self;
+
+    // fn is_usable() -> Self;
 }
 
 
@@ -21,3 +29,12 @@ struct ModelPayload {
     idx2item: Vec<u64>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
+    pub host: Ipv4Addr,
+    pub port: u16,
+    pub qty_actix_workers: usize,
+    pub qty_model_threads: usize,
+    pub model_path: String,
+    pub payload_path: String,
+}

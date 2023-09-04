@@ -1,4 +1,5 @@
 use std::net::Ipv4Addr;
+use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Instant;
 use actix_web::middleware::{Logger};
@@ -9,11 +10,13 @@ use actix_web::{web::{
 }};
 use actix_web::dev::Service;
 use actix_web::http::header::{HeaderName, HeaderValue};
+use batched_fn::batched_fn;
 use serde::{Deserialize, Serialize};
-use serving::modelruntime::ModelEngine;
+use serving::modelruntime::{Config, ModelEngine, ModelInput, ModelOutput};
 use serving::modelruntime::dummymodelruntime::DummyModelRuntime;
 use serving::modelruntime::jitmodelruntime::JITModelRuntime;
 use serving::modelruntime::onnxmodelruntime::OnnxModelRuntime;
+use serving::modelruntime::Batch;
 
 
 // https://cloud.google.com/vertex-ai/docs/predictions/custom-container-requirements#prediction
@@ -66,14 +69,56 @@ async fn v1_recommend(
     let inference_start_time = Instant::now();
     let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            let batch_predict = batched_fn! {
+                handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
+                    let output = model.recommend_batch(batch.clone());
+                    println!("JIT Processed batch {:?} -> {:?}", batch, output);
+                    output
+                };
+                config = {
+                    max_batch_size: 8,
+                    max_delay: 8,
+                };
+                context = {
+                    model: JITModelRuntime::load(),
+                };
+            };
+            (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         (None, Some(ref model)) => {
-            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            let batch_predict = batched_fn! {
+                handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
+                    let output = model.recommend_batch(batch.clone());
+                    println!("Processed batch {:?} -> {:?}", batch, output);
+                    output
+                };
+                config = {
+                    max_batch_size: 8,
+                    max_delay: 8,
+                };
+                context = {
+                    model: JITModelRuntime::load(),
+                };
+            };
+            (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            // (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         }
         _ => {
-            let model = models.dummy_model.as_ref();
-            (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            let batch_predict = batched_fn! {
+                handler = |batch: Batch<ModelInput>, model: &DummyModelRuntime| -> Batch<ModelOutput> {
+                    let output = model.recommend_batch(batch.clone());
+                    output
+                };
+                config = {
+                    max_batch_size: 8,
+                    max_delay: 8,
+                };
+                context = {
+                    model: DummyModelRuntime::load(),
+                };
+            };
+            (batch_predict(session_items).await.unwrap(), "dummy".parse().unwrap(), 1, "cpu".parse().unwrap())
+            // (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
         },
     };
     let inference_ms = inference_start_time.elapsed().as_micros() as f32 / 1000.0;
@@ -117,15 +162,7 @@ pub struct Models {
     pub dummy_model: Arc<DummyModelRuntime>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Config {
-    host: Ipv4Addr,
-    port: u16,
-    qty_actix_workers: usize,
-    qty_model_threads: usize,
-    model_path: String,
-    payload_path: String,
-}
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
