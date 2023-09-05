@@ -72,7 +72,6 @@ async fn v1_recommend(
             let batch_predict = batched_fn! {
                 handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
                     let output = model.recommend_batch(batch.clone());
-                    println!("JIT Processed batch {:?} -> {:?}", batch, output);
                     output
                 };
                 config = {
@@ -89,7 +88,6 @@ async fn v1_recommend(
             let batch_predict = batched_fn! {
                 handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
                     let output = model.recommend_batch(batch.clone());
-                    println!("Processed batch {:?} -> {:?}", batch, output);
                     output
                 };
                 config = {
