@@ -50,6 +50,12 @@ deploy_evaluate() {
   echo "Waiting for pod ${POD_NAME} to become ready..."
   endpoint_ip=$(kubectl get service ${SERVING_NAME} -o yaml | awk '/clusterIP:/ { gsub("\"","",$2); print $2 }')
   ${DIR}/deploy_loadgen.sh ${PROJECT_ID} "http://${endpoint_ip}:8080/predictions/model/1.0/" ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES}
+  if [ $? -eq 0 ]; then
+    echo "ok"
+  else
+    echo "deploy_loadgen not ok, deleting incomplete output ${REPORT_LOCATION}"
+    gsutil -m rm ${REPORT_LOCATION}
+  fi
   kubectl delete deployment ${SERVING_NAME}
   kubectl delete service ${SERVING_NAME}
 }
@@ -71,7 +77,7 @@ models=('gru4rec')
 devices=('cuda')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(10000)
+c_values=(1000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 

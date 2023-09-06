@@ -40,6 +40,6 @@ fi
 
 echo "$LOGS"
 echo "loadtest.err()"
-exit 0
+exit 1
 
 

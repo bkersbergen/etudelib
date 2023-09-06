@@ -61,7 +61,7 @@ ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:/usr/local/lib:$LD_LIBRARY_PATH
 # The best way to make it work is keep compiling until its successful. This seems to work on all platforms.
 
 COPY ./rust/config config
-COPY ./rust/model_store model_store
+RUN mkdir model_store
 COPY ./rust/start.sh ./
 COPY ./rust/predict_by_id.sh ./
 RUN chmod +x ./*.sh
