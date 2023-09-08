@@ -32,14 +32,37 @@ kubectl apply -f - < "/tmp/deploy_loadgen_job.${HASH}.yaml"
 POD_NAME=$(kubectl get pods -l job-name="$JOB_NAME" -o custom-columns=:metadata.name | tr -d '\n')
 POD_READY=$(kubectl wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 
-LOGS=$(kubectl logs pod/"${POD_NAME}" --follow)
-if [[ "$LOGS" =~ .*"Test.ok()".* ]]; then
-  echo "loadtest.ok()"
-  exit 0
-fi
+# Function to check the status of the Job
+check_job_status() {
+    local job_status
+    job_status=$(kubectl get job "$JOB_NAME" -o=jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
 
-echo "$LOGS"
-echo "loadtest.err()"
-exit 1
+    if [[ "$job_status" == "True" ]]; then
+        echo "Job $JOB_NAME succeeded."
+        exit 0
+    elif [[ "$job_status" == "False" ]]; then
+        echo "Job $JOB_NAME failed."
+        exit 1
+    else
+        echo -n "."
+    fi
+}
+
+# Wait for the Job to complete (successfully or with failure)
+while true; do
+    check_job_status
+    sleep 20  # Adjust the polling interval as needed
+done
+
+#
+#LOGS=$(kubectl logs pod/"${POD_NAME}" --follow)
+#if [[ "$LOGS" =~ .*"Test.ok()".* ]]; then
+#  echo "loadtest.ok()"
+#  exit 0
+#fi
+#
+#echo "$LOGS"
+#echo "loadtest.err()"
+#exit 1
 
 

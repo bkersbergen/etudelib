@@ -2,6 +2,7 @@ import math
 import os
 from importlib import import_module
 import sys
+import time
 
 import torch
 from pathlib import Path
@@ -22,7 +23,7 @@ def export_models(project_id):
         device_types.append('cuda')
 
     # for C in [10_000, 1_000_000, 5_000_000, 10_000_000]:
-    for C in [10_000, 1_000_000]:
+    for C in [10_000_000, 20_000_000, 1_000_000]:
         max_seq_length = 50
         param_source = 'bolcom'
         # initializing the synthetic dataset takes very long for a large C value.
@@ -175,10 +176,16 @@ def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, 
 
 if __name__ == '__main__':
     project_id=sys.argv[1]
-    if project_id:
-        export_models(project_id)
-    else:
-        print(f'argument error: project_id not given')
+    try:
+        if project_id:
+            export_models(project_id)
+        else:
+            print(f'argument error: project_id not given')
+    except Exception as error:
+        # handle the exception
+        print("An exception occurred:", error)
+    print('sleeping for a few minutes. You can quit this application')
+    time.sleep(300)
 
 
 

@@ -53,8 +53,17 @@ deploy_evaluate() {
   if [ $? -eq 0 ]; then
     echo "ok"
   else
-    echo "deploy_loadgen not ok, deleting incomplete output ${REPORT_LOCATION}"
-    gsutil -m rm ${REPORT_LOCATION}
+    max_attempts=500  # Number of attempts (1 attempt per second)
+    echo "deploy_loadgen not ok, deleting incomplete output ${REPORT_LOCATION} for max ${max_attempts} seconds"
+    attempt=0
+    while [ $attempt -lt $max_attempts ]; do
+      if (file_exists ${REPORT_LOCATION}); then
+        gsutil -m rm ${REPORT_LOCATION}
+        break
+      fi
+      sleep 1
+      attempt=$((attempt + 1))
+    done
   fi
   kubectl delete deployment ${SERVING_NAME}
   kubectl delete service ${SERVING_NAME}
@@ -73,11 +82,11 @@ export -f file_exists
 export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-models=('gru4rec')
+models=('core')
 devices=('cuda')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(1000000)
+c_values=(10000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 

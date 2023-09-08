@@ -66,6 +66,8 @@ async fn v1_recommend(
     let session_items: Vec<i64> = query.instances.get(0).unwrap().context.clone();
     let preprocess_ms = preprocess_start_time.elapsed().as_micros() as f32 / 1000.0;
 
+    const MAX_BATCH_SIZE: usize = 1024;
+    const MAX_DELAY_MS: u128 = 2;
     let inference_start_time = Instant::now();
     let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
@@ -75,8 +77,8 @@ async fn v1_recommend(
                     output
                 };
                 config = {
-                    max_batch_size: 8,
-                    max_delay: 8,
+                    max_batch_size: MAX_BATCH_SIZE,
+                    max_delay: MAX_DELAY_MS,
                 };
                 context = {
                     model: JITModelRuntime::load(),
@@ -91,8 +93,8 @@ async fn v1_recommend(
                     output
                 };
                 config = {
-                    max_batch_size: 8,
-                    max_delay: 8,
+                    max_batch_size: MAX_BATCH_SIZE,
+                    max_delay: MAX_DELAY_MS,
                 };
                 context = {
                     model: JITModelRuntime::load(),
@@ -108,8 +110,8 @@ async fn v1_recommend(
                     output
                 };
                 config = {
-                    max_batch_size: 8,
-                    max_delay: 8,
+                    max_batch_size: MAX_BATCH_SIZE,
+                    max_delay: MAX_DELAY_MS,
                 };
                 context = {
                     model: DummyModelRuntime::load(),
