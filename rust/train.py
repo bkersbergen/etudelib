@@ -68,32 +68,36 @@ def export_models(project_id):
                 jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
                 onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
 
-                conf = OmegaConf.create(payload)
-                with open(payload_path, 'w+') as fp:
-                    OmegaConf.save(config=conf, f=fp)
+                if not os.path.exists(payload_path):
+                    conf = OmegaConf.create(payload)
+                    with open(payload_path, 'w+') as fp:
+                        OmegaConf.save(config=conf, f=fp)
 
-                torch.save(eager_model, eager_model_path)
-                torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
-                try:
-                    torch.onnx.export(
-                        eager_model,
-                        (model_input[0].to(device_type), model_input[1].to(device_type)),
-                        onnx_model_path,
-                        input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                        output_names=['output'],  # the model's output names
-                    )
-                except Exception as error:
-                    print(
-                        "Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
-                    torch.onnx.export(
-                        eager_model,
-                        (model_input[0].to(device_type), model_input[1].to(device_type)),
-                        onnx_model_path,
-                        input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                        output_names=['output'],  # the model's output names
-                        do_constant_folding=False
-                        # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
-                    )
+                if not os.path.exists(eager_model_path):
+                    torch.save(eager_model, eager_model_path)
+                if not os.path.exists(jitopt_model_path):
+                    torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
+                if not os.path.exists(onnx_model_path):
+                    try:
+                        torch.onnx.export(
+                            eager_model,
+                            (model_input[0].to(device_type), model_input[1].to(device_type)),
+                            onnx_model_path,
+                            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                            output_names=['output'],  # the model's output names
+                        )
+                    except Exception as error:
+                        print(
+                            "Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
+                        torch.onnx.export(
+                            eager_model,
+                            (model_input[0].to(device_type), model_input[1].to(device_type)),
+                            onnx_model_path,
+                            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                            output_names=['output'],  # the model's output names
+                            do_constant_folding=False
+                            # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
+                        )
 
                 destination = f'{BUCKET_BASE_URI}/{base_filename}'
                 os.system(f'gsutil cp -r {payload_path} {destination}/')
