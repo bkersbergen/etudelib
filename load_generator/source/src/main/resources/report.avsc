@@ -39,6 +39,10 @@
               "type": "long"
             },
             {
+              "name": "serverside_latency_millis",
+              "type": "long"
+            },
+            {
               "name": "timestamp_epoch_millis",
               "type": "long"
             },

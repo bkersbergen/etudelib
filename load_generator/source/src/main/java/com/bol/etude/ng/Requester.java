@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
 import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.reactor.IOReactorConfig;
 
 import javax.annotation.Nonnull;
@@ -26,6 +27,7 @@ public class Requester<T> implements Closeable {
 
     private static final Gson gson = new Gson();
     private static final String REQUEST_START = "request-start";
+    private static final String X_SERVER_LATENCY_MS = "x-server-latency-ms";
     private final CloseableHttpAsyncClient client = client();
     private final Phaser phaser = new Phaser();
     private final URI uri;
@@ -47,11 +49,15 @@ public class Requester<T> implements Closeable {
             @Override
             public void completed(SimpleHttpResponse response) {
                 try {
-                    Instant start = Instant.parse(response.getHeader(REQUEST_START).getValue());
+                    Instant start = Instant.parse(response.getHeader(X_SERVER_LATENCY_MS).getValue());
                     String body = response.getBodyText();
                     int status = response.getCode();
-                    Duration latency = Duration.between(start, Instant.now());
-                    callback.callback(journey, new Response(start, status, body, latency), null);
+                    Duration totalLatency = Duration.between(start, Instant.now());
+
+                    Header serverLatencyHeader = response.getHeader(X_SERVER_LATENCY_MS);
+                    Duration serverSideLatency = Duration.ofMillis(serverLatencyHeader != null ? Integer.parseInt(serverLatencyHeader.getValue()) : 0);
+
+                    callback.callback(journey, new Response(start, status, body, totalLatency, serverSideLatency), null);
                 } catch (Exception e) {
                     System.out.println("Requester.exec().err['" + e.getClass().getSimpleName() + "']");
                     e.printStackTrace();
@@ -102,11 +108,11 @@ public class Requester<T> implements Closeable {
                     if (authenticator != null) {
                         request.setHeader("Authorization", "Bearer " + authenticator.token());
                     }
-                    context.setAttribute(REQUEST_START, Instant.now());
+                    context.setAttribute(X_SERVER_LATENCY_MS, Instant.now());
                 })
                 .addResponseInterceptorLast((response, entity, context) -> {
-                    Instant start = (Instant) context.getAttribute(REQUEST_START);
-                    response.setHeader(REQUEST_START, start);
+                    Instant start = (Instant) context.getAttribute(X_SERVER_LATENCY_MS);
+                    response.setHeader(X_SERVER_LATENCY_MS, start);
                 })
                 .setIOReactorConfig(IOReactorConfig.custom().setIoThreadCount(2).build())
                 .setConnectionManager(connections)
@@ -126,12 +132,14 @@ public class Requester<T> implements Closeable {
         public final int status;
         public final String body;
         public final Duration latency;
+        public final Duration serverSideLatency;
 
-        Response(Instant start, int status, String body, Duration latency) {
+        Response(Instant start, int status, String body, Duration latency, Duration serverSideLatency) {
             this.start = start;
             this.status = status;
             this.body = body;
             this.latency = latency;
+            this.serverSideLatency = serverSideLatency;
         }
     }
 }
