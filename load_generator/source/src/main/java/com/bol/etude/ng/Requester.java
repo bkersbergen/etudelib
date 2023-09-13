@@ -49,7 +49,7 @@ public class Requester<T> implements Closeable {
             @Override
             public void completed(SimpleHttpResponse response) {
                 try {
-                    Instant start = Instant.parse(response.getHeader(X_SERVER_LATENCY_MS).getValue());
+                    Instant start = Instant.parse(response.getHeader(REQUEST_START).getValue());
                     String body = response.getBodyText();
                     int status = response.getCode();
                     Duration totalLatency = Duration.between(start, Instant.now());
@@ -108,11 +108,11 @@ public class Requester<T> implements Closeable {
                     if (authenticator != null) {
                         request.setHeader("Authorization", "Bearer " + authenticator.token());
                     }
-                    context.setAttribute(X_SERVER_LATENCY_MS, Instant.now());
+                    context.setAttribute(REQUEST_START, Instant.now());
                 })
                 .addResponseInterceptorLast((response, entity, context) -> {
-                    Instant start = (Instant) context.getAttribute(X_SERVER_LATENCY_MS);
-                    response.setHeader(X_SERVER_LATENCY_MS, start);
+                    Instant start = (Instant) context.getAttribute(REQUEST_START);
+                    response.setHeader(REQUEST_START, start);
                 })
                 .setIOReactorConfig(IOReactorConfig.custom().setIoThreadCount(2).build())
                 .setConnectionManager(connections)
