@@ -40,6 +40,7 @@ impl JITModelRuntime {
         } else {
             println!("JIT using only CPU");
         }
+        println!("Loading JIT model on CPU");
         let model = tch::CModule::load_on_device(model_path, Device::Cpu).unwrap();
 
         JITModelRuntime {

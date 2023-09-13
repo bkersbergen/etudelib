@@ -71,22 +71,29 @@ async fn v1_recommend(
     let inference_start_time = Instant::now();
     let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            let batch_predict = batched_fn! {
-                handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
-                    let output = model.recommend_batch(batch.clone());
-                    output
+            if &model.get_model_device_name() == "cpu" {
+                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            } else {
+                let batch_predict = batched_fn! {
+                    handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
+                        let output = model.recommend_batch(batch.clone());
+                        output
+                    };
+                    config = {
+                        max_batch_size: MAX_BATCH_SIZE,
+                        max_delay: MAX_DELAY_MS,
+                    };
+                    context = {
+                        model: JITModelRuntime::load(),
+                    };
                 };
-                config = {
-                    max_batch_size: MAX_BATCH_SIZE,
-                    max_delay: MAX_DELAY_MS,
-                };
-                context = {
-                    model: JITModelRuntime::load(),
-                };
-            };
-            (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+                (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            }
         }
         (None, Some(ref model)) => {
+            if &model.get_model_device_name() == "cpu" {
+                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            } else {
             let batch_predict = batched_fn! {
                 handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
                     let output = model.recommend_batch(batch.clone());
@@ -101,7 +108,8 @@ async fn v1_recommend(
                 };
             };
             (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
-            // (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+
+            }
         }
         _ => {
             let batch_predict = batched_fn! {

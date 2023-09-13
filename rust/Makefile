@@ -2,7 +2,7 @@ SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 PWD:=$(shell pwd)
 USER ?= -SA
-PROJECT_ID=bk47472
+PROJECT_ID=bk474714
 
 hello:
 	@echo "Hello"
