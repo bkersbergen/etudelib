@@ -19,8 +19,8 @@ echo "$0.run(PROJECT_ID = '${PROJECT_ID}', VERTEX_ENDPOINT = '${VERTEX_ENDPOINT}
 
 sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
 HASH=$(echo -n "${REPORT_LOCATION}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
-JOB_NAME="etudeloadgenerator-${sanitized_basename}-${HASH}"
-JOB_NAME=$(echo "${JOB_NAME}" | tr -cd '[:alnum:]' | cut -c 1-42)
+JOB_NAME="lg-${sanitized_basename}-${HASH}"
+JOB_NAME=$(echo "${JOB_NAME}" | tr -cd '[:alnum:]' | cut -c 1-52)
 
 kubectl delete job "${JOB_NAME}" --grace-period=0 --wait=true --ignore-not-found=true --timeout=5m
 
