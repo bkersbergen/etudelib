@@ -17,8 +17,8 @@ embeddings/
 lightning_logs/
 lightning_test/
 papers/
-results/
-projects/
+# results/
+# projects/
 .bash_history
 target/
 /.docker/requirements.txt

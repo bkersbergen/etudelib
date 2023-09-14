@@ -109,7 +109,7 @@ def createplot(directory: str):
 
     fig.suptitle(directory)            
     plt.tight_layout()  # adjust the spacing between subplots
-    # plt.savefig(f'sbr_models_{datasource}.pdf', bbox_inches='tight')
+    plt.savefig(f'sbr_models_{datasource}.pdf', bbox_inches='tight')
     plt.show()  # display the figure
 #%%
 createplot('../../projects/microbenchmark/results')
