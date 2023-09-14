@@ -55,7 +55,7 @@ public class Requester<T> implements Closeable {
                     Duration totalLatency = Duration.between(start, Instant.now());
 
                     Header serverLatencyHeader = response.getHeader(X_SERVER_LATENCY_MS);
-                    Duration serverSideLatency = Duration.ofNanos(serverLatencyHeader != null ? (long) (Double.parseDouble(serverLatencyHeader.getValue()) * 1_000_000) : 0L);
+                    double serverSideLatency = (serverLatencyHeader != null ? (Double.parseDouble(serverLatencyHeader.getValue())) : -1.0);
 
                     callback.callback(journey, new Response(start, status, body, totalLatency, serverSideLatency), null);
                 } catch (Exception e) {
@@ -132,9 +132,9 @@ public class Requester<T> implements Closeable {
         public final int status;
         public final String body;
         public final Duration latency;
-        public final Duration serverSideLatency;
+        public final double serverSideLatency;
 
-        Response(Instant start, int status, String body, Duration latency, Duration serverSideLatency) {
+        Response(Instant start, int status, String body, Duration latency, double serverSideLatency) {
             this.start = start;
             this.status = status;
             this.body = body;

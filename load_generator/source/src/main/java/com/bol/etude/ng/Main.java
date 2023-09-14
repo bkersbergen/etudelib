@@ -182,7 +182,7 @@ public class Main {
                         request.unfly();
 
                         Requester.Response response = success == null
-                                ? new Requester.Response(Instant.now(), 500, failure.getMessage(), Duration.ofMillis(-1), Duration.ofMillis(-1))
+                                ? new Requester.Response(Instant.now(), 500, failure.getMessage(), Duration.ofMillis(-1), -1.0)
                                 : success;
 
                         collector.add(journey, response);
@@ -249,7 +249,7 @@ public class Main {
             interaction.setTimestampEpochMillis(response.start.toEpochMilli());
             interaction.setInput(journey.items().subList(0, index + 1));
             interaction.setLatencyMillis(response.latency.toMillis());
-            interaction.setServersideLatencyMillis(response.serverSideLatency.toMillis());
+            interaction.setServersideLatencyMillis(response.serverSideLatency);
             interaction.setStatus(response.status);
 
             if (response.status != 200 || Strings.isNullOrEmpty(response.body)) {
