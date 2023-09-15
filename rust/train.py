@@ -10,6 +10,8 @@ from pathlib import Path
 from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 
+from multiprocessing import Process
+
 from etudelib.data.synthetic.synthetic import SyntheticDataset
 from etudelib.models.topkdecorator import TopKDecorator
 
@@ -49,61 +51,64 @@ def export_models(project_id):
 
             # export for both CPU and GPU, because JIT trace hardcodes the device_type in the exported model
             for device_type in device_types:
-                # Move model and tensors to the device_type
-                eager_model = eager_model.to(device_type)
-                model_input = (model_input[0].to(device_type), model_input[1].to(device_type))
+                # Run in a separate process to release (CUDA) memory when done
+                p = Process(target=export_model,
+                            args=(BUCKET_BASE_URI, C, currentdir, device_type, eager_model, max_seq_length,
+                                           model_input, model_name, param_source, payload,))
+                p.start()
+                p.join()
 
-                _recommendations = eager_model.forward(*model_input)
 
-                jit_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
-
-                base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}_{device_type}'
-
-                projectdir = Path(currentdir, 'tmp', base_filename)
-                print(projectdir)
-                projectdir.mkdir(parents=True, exist_ok=True)
-
-                payload_path = str(projectdir / f'{base_filename}_payload.yaml')
-                eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
-                jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
-                onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
-
-                if not os.path.exists(payload_path):
-                    conf = OmegaConf.create(payload)
-                    with open(payload_path, 'w+') as fp:
-                        OmegaConf.save(config=conf, f=fp)
-
-                if not os.path.exists(eager_model_path):
-                    torch.save(eager_model, eager_model_path)
-                if not os.path.exists(jitopt_model_path):
-                    torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
-                if not os.path.exists(onnx_model_path):
-                    try:
-                        torch.onnx.export(
-                            eager_model,
-                            (model_input[0].to(device_type), model_input[1].to(device_type)),
-                            onnx_model_path,
-                            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                            output_names=['output'],  # the model's output names
-                        )
-                    except Exception as error:
-                        print(
-                            "Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
-                        torch.onnx.export(
-                            eager_model,
-                            (model_input[0].to(device_type), model_input[1].to(device_type)),
-                            onnx_model_path,
-                            input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                            output_names=['output'],  # the model's output names
-                            do_constant_folding=False
-                            # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
-                        )
-
-                destination = f'{BUCKET_BASE_URI}/{base_filename}'
-                os.system(f'gsutil cp -r {payload_path} {destination}/')
-                os.system(f'gsutil cp -r {eager_model_path} {destination}/')
-                os.system(f'gsutil cp -r {jitopt_model_path} {destination}/')
-                os.system(f'gsutil cp -r {onnx_model_path} {destination}/')
+def export_model(BUCKET_BASE_URI, C, currentdir, device_type, eager_model, max_seq_length, model_input, model_name,
+                 param_source, payload):
+    # Move model and tensors to the device_type
+    eager_model = eager_model.to(device_type)
+    model_input = (model_input[0].to(device_type), model_input[1].to(device_type))
+    _recommendations = eager_model.forward(*model_input)
+    jit_model = torch.jit.optimize_for_inference(torch.jit.trace(eager_model, model_input))
+    base_filename = f'{model_name}_{param_source}_c{C}_t{max_seq_length}_{device_type}'
+    projectdir = Path(currentdir, 'tmp', base_filename)
+    print(projectdir)
+    projectdir.mkdir(parents=True, exist_ok=True)
+    payload_path = str(projectdir / f'{base_filename}_payload.yaml')
+    eager_model_path = str(projectdir / f'{base_filename}_eager.pth')
+    jitopt_model_path = str(projectdir / f'{base_filename}_jitopt.pth')
+    onnx_model_path = str(projectdir / f'{base_filename}_onnx.pth')
+    if not os.path.exists(payload_path):
+        conf = OmegaConf.create(payload)
+        with open(payload_path, 'w+') as fp:
+            OmegaConf.save(config=conf, f=fp)
+    if not os.path.exists(eager_model_path):
+        torch.save(eager_model, eager_model_path)
+    if not os.path.exists(jitopt_model_path):
+        torch.jit.save(jit_model, jitopt_model_path)  # save jitopt model
+    if not os.path.exists(onnx_model_path):
+        try:
+            torch.onnx.export(
+                eager_model,
+                (model_input[0].to(device_type), model_input[1].to(device_type)),
+                onnx_model_path,
+                input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                output_names=['output'],  # the model's output names
+            )
+        except Exception as error:
+            print(
+                "Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
+            torch.onnx.export(
+                eager_model,
+                (model_input[0].to(device_type), model_input[1].to(device_type)),
+                onnx_model_path,
+                input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+                output_names=['output'],  # the model's output names
+                do_constant_folding=False
+                # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
+            )
+    destination = f'{BUCKET_BASE_URI}/{base_filename}'
+    os.system(f'gsutil cp -r {payload_path} {destination}/')
+    os.system(f'gsutil cp -r {eager_model_path} {destination}/')
+    os.system(f'gsutil cp -r {jitopt_model_path} {destination}/')
+    os.system(f'gsutil cp -r {onnx_model_path} {destination}/')
+    return model_input
 
 
 def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, model_input):
@@ -135,7 +140,7 @@ def train_model(model_name: str, C: int, max_seq_length:int, param_source: str, 
 
     payload = {'max_seq_length': max_seq_length,
                'C': C,
-               'idx2item': [i for i in range(C)],
+               # 'idx2item': [i for i in range(C)],
                }
 
     # payload_path = str(projectdir / f'{base_filename}_payload.yaml')
