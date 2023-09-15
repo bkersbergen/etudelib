@@ -18,6 +18,7 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 # Install TorchLib C++ with latest CUDA support (/libtorch)
 RUN curl https://download.pytorch.org/libtorch/cu118/libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip -o libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
 RUN unzip libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
+RUN rm libtorch-cxx11-abi-shared-with-deps-2.0.1%2Bcu118.zip
 
 # set env
 ENV LLVM_CONFIG=/usr/bin/llvm-config
@@ -46,8 +47,6 @@ RUN pip3 install --no-cache-dir omegaconf scipy lightning
 COPY ./rust/src src
 COPY ./rust/Cargo.toml ./
 COPY ./rust/build_loop.sh ./
-COPY ./rust/train.py ./
-
 
 # Trigger Onnx to download CUDA version
 ENV ORT_USE_CUDA=1
