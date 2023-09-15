@@ -34,11 +34,12 @@ deploy_evaluate() {
   echo ${REPORT_LOCATION} sleeping ${sleep_delay} seconds to ramp up deployments
   sleep ${sleep_delay}
 
-  HASH=$(echo -n "${MODEL_PATH}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
-  SECONDS=$(date +%s)
-  sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
-  SERVING_NAME="${sanitized_basename}-srv-${HASH}-${SECONDS}"
-  SERVING_NAME=$(echo "${SERVING_NAME}" | tr -cd '[:alnum:]' | cut -c 1-42)
+
+  sanitized_basename=$(basename "${MODEL_PATH}" | rev | cut -d. -f2- | rev | tr -cd '[:alnum:]' | cut -c 1-45)
+  HASH=$(echo -n "${REPORT_LOCATION}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
+  SERVING_NAME="${sanitized_basename}-srv-${HASH}"
+  SERVING_NAME=$(echo "${SERVING_NAME}" | tr -cd '[:alnum:]' | cut -c 1-52)
+
   if [ "${DEVICE}" == 'cuda' ]; then
     ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
   else
@@ -53,8 +54,7 @@ deploy_evaluate() {
   if [ $? -eq 0 ]; then
     echo "ok"
   else
-    max_attempts=500  # Number of attempts (1 attempt per second)
-    echo "deploy_loadgen not ok, deleting incomplete output ${REPORT_LOCATION} for max ${max_attempts} seconds"
+    echo "deploy_loadgen not ok, check for incomplete output ${REPORT_LOCATION} " >> error.log
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
       if (file_exists ${REPORT_LOCATION}); then
@@ -82,17 +82,17 @@ export -f file_exists
 export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-models=( 'noop' 'topk' 'core' 'gru4rec')
+models=( 'noop' 'topkonly' 'core' 'gru4rec')
 devices=('cpu' 'cuda' )
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(10000000 1000000 100000 10000)
+c_values=(10000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
 max_parallel=5
-QTY_EXPERIMENT_REPEATS=3
+QTY_EXPERIMENT_REPEATS=1
 
 # Initial sleep delay (seconds) for the first deployments
 sleep_delay=60*${max_parallel}
