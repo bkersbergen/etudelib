@@ -34,18 +34,22 @@ POD_READY=$(kubectl wait --for=condition=Ready pod/"$POD_NAME" --timeout=30m)
 
 # Function to check the status of the Job
 check_job_status() {
-    local job_status
-    job_status=$(kubectl get job "$JOB_NAME" -o=jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
+  local job_status
+  job_status=$(kubectl get job "$JOB_NAME" -o=jsonpath='{.status.conditions[?(@.type=="Complete")].status}')
 
+  if [ -n "$job_status" ]; then
     if [[ "$job_status" == "True" ]]; then
-        echo "Job $JOB_NAME succeeded."
-        exit 0
+      echo "Job $JOB_NAME succeeded."
+      exit 0
     elif [[ "$job_status" == "False" ]]; then
-        echo "Job $JOB_NAME failed."
-        exit 1
+      echo "Job $JOB_NAME failed."
+      exit 1
     else
-        echo -n "."
+      echo -n "."
     fi
+  else
+    echo -n "."
+  fi
 }
 
 # Wait for the Job to complete (successfully or with failure)
