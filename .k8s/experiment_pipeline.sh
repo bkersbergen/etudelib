@@ -37,7 +37,7 @@ deploy_evaluate() {
   HASH=$(echo -n "${MODEL_PATH}" | shasum | awk '{print $1}'| tr -cd '[:alnum:]')
   SECONDS=$(date +%s)
   sanitized_basename=$(basename "${REPORT_LOCATION}" | tr -cd '[:alnum:]')
-  SERVING_NAME="mdl-${sanitized_basename}-${HASH}-${SECONDS}"
+  SERVING_NAME="${sanitized_basename}-srv-${HASH}-${SECONDS}"
   SERVING_NAME=$(echo "${SERVING_NAME}" | tr -cd '[:alnum:]' | cut -c 1-42)
   if [ "${DEVICE}" == 'cuda' ]; then
     ${DIR}/deploy_serving_gpu.sh ${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${SERVING_NAME}
@@ -92,7 +92,7 @@ RAMP_DURATION_MINUTES=10
 
 # Number of parallel executions
 max_parallel=5
-QTY_EXPERIMENT_REPEATS=1
+QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
 sleep_delay=60*${max_parallel}

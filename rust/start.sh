@@ -38,6 +38,10 @@ if ls ./target/release/serving 1> /dev/null 2>&1; then
   echo "release found, no need to compile"
 else
   cargo run --release --bin serving 2> /dev/null
+fi
+if ls /usr/local/lib/libonnx* 1> /dev/null 2>&1; then
+  echo "libonnx found, no need to copy"
+else
   cp ./target/release/libonnx* /usr/local/lib/
 fi
 
