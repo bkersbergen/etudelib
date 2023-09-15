@@ -7,6 +7,19 @@ PROJECT_ID=bk474714
 hello:
 	@echo "Hello"
 
+deploy_cpu_static:  ## deploy dummy model 2vCPU 2GB mem
+	YAML_TEMPLATE=etudelibrust-deployment_static_baseline_2cpu.yaml; \
+	$(MAKE) undeploy_serving; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    ); \
+	kubectl apply -f etudelibrust-service.yaml
+
+deploy_loadgen_static:
+	./deploy_loadgen.sh bk474714 "http://34.118.227.233:8080/predictions/model/1.0/" 1000 gs://bk474714-shared/static_baseline2vcpu 1000 10
+
+
 configure: requirements.txt ## configure a virtual environment with pytorch for its c++ libs
 	test -d venv || virtualenv venv
 	. venv/bin/activate; pip install -Ur requirements.txt

@@ -34,9 +34,14 @@ EOF
 # cargo run --release --bin serving -- model_store/noop_bolcom_c10000_t50_jitopt.pth model_store/noop_bolcom_c10000_t50_payload.yaml &
 cat config/serving.yaml
 # trigger a compile so we can copy ./target/release/libonnx* in /usr/local/lib/
-cargo run --release --bin serving 2> /dev/null
-cp ./target/release/libonnx* /usr/local/lib/
-cargo run --release --bin serving config/serving.yaml &
+if ls ./target/release/serving 1> /dev/null 2>&1; then
+  echo "release found, no need to compile"
+else
+  cargo run --release --bin serving 2> /dev/null
+  cp ./target/release/libonnx* /usr/local/lib/
+fi
+
+./target/release/serving config/serving.yaml &
 SERVING_PID=$!
 
 declare -r HOST="http://127.0.0.1:8080"

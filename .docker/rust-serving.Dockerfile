@@ -51,7 +51,7 @@ COPY ./rust/train.py ./
 
 # Trigger Onnx to download CUDA version
 ENV ORT_USE_CUDA=1
-# RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
+RUN chmod +x ./build_loop.sh ; ./build_loop.sh > build.log
 ENV LIBTORCH=/libtorch
 ENV LD_LIBRARY_PATH=${LIBTORCH}/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
