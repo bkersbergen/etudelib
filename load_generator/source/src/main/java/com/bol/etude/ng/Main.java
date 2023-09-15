@@ -97,6 +97,7 @@ public class Main {
             System.out.println("Test.err()");
             Thread.sleep(Duration.ofMinutes(1).toMillis());
         }
+        System.exit(0);
     }
 
     private static String appendMetaToBaseFilename(String originalPath) {
@@ -134,7 +135,7 @@ public class Main {
                 // ignore, can't fix
             }
         }
-        System.out.println("Last line of code in addShutdownHook");
+//        System.out.println("Last line of code in addShutdownHook");
         try {
             Thread.sleep(Duration.ofSeconds(10).toMillis());
         } catch (InterruptedException e) {
@@ -195,8 +196,8 @@ public class Main {
                         try {
                             reportPersister.flush();
                             metaPersister.flush();
-                        } catch (IOException e) {
-                            // ...
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     });
                 });
@@ -214,9 +215,17 @@ public class Main {
             exception.printStackTrace();
         }
         System.out.println("reportPersister.close()");
-        reportPersister.close();
+        try {
+            reportPersister.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
         System.out.println("metaPersister.close()");
-        metaPersister.close();
+        try {
+            metaPersister.close();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
         try {
             System.out.println("Thread.sleep(Duration.ofSeconds(5).toMillis());");
             Thread.sleep(Duration.ofSeconds(5).toMillis());
