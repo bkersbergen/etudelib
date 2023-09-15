@@ -26,14 +26,12 @@ pub trait ModelEngine {
 struct ModelPayload {
     max_seq_length: u32,
     C: u32,
-    idx2item: Vec<u64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub host: Ipv4Addr,
     pub port: u16,
-    pub qty_actix_workers: usize,
     pub qty_model_threads: usize,
     pub model_path: String,
     pub payload_path: String,

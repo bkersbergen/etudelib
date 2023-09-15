@@ -2,9 +2,6 @@ use std::path::Path;
 use tch::{CModule, Device, Tensor};
 use crate::modelruntime::{Batch, Config, ModelEngine, ModelInput, ModelOutput, ModelPayload};
 use serde_yaml::{self};
-use std::{env, fs};
-use std::fmt::{Debug, Formatter};
-use tch::nn::{Linear, Module, Sequential};
 
 pub struct JITModelRuntime {
     payload: ModelPayload,

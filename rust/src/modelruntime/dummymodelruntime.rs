@@ -14,7 +14,7 @@ impl ModelEngine for DummyModelRuntime {
 
     fn recommend_batch(&self, batched_input: Batch<ModelInput>) -> Batch<ModelOutput> {
         let mut results:Batch<ModelOutput> = Vec::with_capacity(batched_input.len());
-        for (index, value) in batched_input.iter().enumerate() {
+        for (_index, value) in batched_input.iter().enumerate() {
             let result:ModelOutput = self.recommend(value);
             results.push(result);
         }

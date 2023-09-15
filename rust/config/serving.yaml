@@ -1,6 +1,5 @@
 host: "0.0.0.0"
 port: 8080
-qty_actix_workers: 4
 qty_model_threads: 1
-model_path: "model_store/core_bolcom_c1000000_t50_cpu/core_bolcom_c1000000_t50_cpu_jitopt.pth"
-payload_path: "model_store/core_bolcom_c1000000_t50_cpu/core_bolcom_c1000000_t50_cpu_payload.yaml"
+model_path:
+payload_path:

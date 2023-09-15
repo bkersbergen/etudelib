@@ -1,5 +1,3 @@
-use std::net::Ipv4Addr;
-use std::ops::Deref;
 use std::sync::Arc;
 use std::time::Instant;
 use actix_web::middleware::{Logger};
@@ -12,6 +10,7 @@ use actix_web::dev::Service;
 use actix_web::http::header::{HeaderName, HeaderValue};
 use batched_fn::batched_fn;
 use serde::{Deserialize, Serialize};
+use tch::Device;
 use serving::modelruntime::{Config, ModelEngine, ModelInput, ModelOutput};
 use serving::modelruntime::dummymodelruntime::DummyModelRuntime;
 use serving::modelruntime::jitmodelruntime::JITModelRuntime;
@@ -69,11 +68,9 @@ async fn v1_recommend(
     const MAX_BATCH_SIZE: usize = 1024;
     const MAX_DELAY_MS: u128 = 2;
     let inference_start_time = Instant::now();
-    let (result_item_ids,  model_filename, model_qty_threads, model_device) : (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
+    let (result_item_ids, model_filename, model_qty_threads, model_device): (Vec<i64>, String, i32, String) = match (&*models.jitopt_model, &*models.onnx_model) {
         (Some(ref model), None) => {
-            if &model.get_model_device_name() == "cpu" {
-                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
-            } else {
+            if *models.with_cuda {
                 let batch_predict = batched_fn! {
                     handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
                         let output = model.recommend_batch(batch.clone());
@@ -88,31 +85,34 @@ async fn v1_recommend(
                     };
                 };
                 (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            } else {
+                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
             }
         }
         (None, Some(ref model)) => {
-            if &model.get_model_device_name() == "cpu" {
-                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            if *models.with_cuda {
+                let batch_predict = batched_fn! {
+                    handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
+                        let output = model.recommend_batch(batch.clone());
+                        output
+                    };
+                    config = {
+                        max_batch_size: MAX_BATCH_SIZE,
+                        max_delay: MAX_DELAY_MS,
+                    };
+                    context = {
+                        model: JITModelRuntime::load(),
+                    };
+                };
+                (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
             } else {
-            let batch_predict = batched_fn! {
-                handler = |batch: Batch<ModelInput>, model: &JITModelRuntime| -> Batch<ModelOutput> {
-                    let output = model.recommend_batch(batch.clone());
-                    output
-                };
-                config = {
-                    max_batch_size: MAX_BATCH_SIZE,
-                    max_delay: MAX_DELAY_MS,
-                };
-                context = {
-                    model: JITModelRuntime::load(),
-                };
-            };
-            (batch_predict(session_items).await.unwrap(), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
-
+                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
             }
         }
         _ => {
-            let batch_predict = batched_fn! {
+            let model = &*models.dummy_model;
+            if *models.with_cuda {
+                let batch_predict = batched_fn! {
                 handler = |batch: Batch<ModelInput>, model: &DummyModelRuntime| -> Batch<ModelOutput> {
                     let output = model.recommend_batch(batch.clone());
                     output
@@ -125,9 +125,11 @@ async fn v1_recommend(
                     model: DummyModelRuntime::load(),
                 };
             };
-            (batch_predict(session_items).await.unwrap(), "dummy".parse().unwrap(), 1, "cpu".parse().unwrap())
-            // (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
-        },
+                (batch_predict(session_items).await.unwrap(), "dummy".parse().unwrap(), 1, "cpu".parse().unwrap())
+            } else {
+                (model.recommend(&session_items), model.get_model_filename(), model.get_model_qty_threads(), model.get_model_device_name())
+            }
+        }
     };
     let inference_ms = inference_start_time.elapsed().as_micros() as f32 / 1000.0;
 
@@ -168,8 +170,8 @@ pub struct Models {
     pub jitopt_model: Arc<Option<JITModelRuntime>>,
     pub onnx_model: Arc<Option<OnnxModelRuntime>>,
     pub dummy_model: Arc<DummyModelRuntime>,
+    pub with_cuda: Arc<bool>,
 }
-
 
 
 #[actix_web::main]
@@ -184,7 +186,7 @@ async fn main() -> std::io::Result<()> {
     println!("Number of logical cores: {qty_logical_cores}");
     println!("Number of physical cores: {qty_physical_cores}");
 
-    let qty_actix_threads = config.qty_actix_workers;
+    let qty_actix_threads = qty_logical_cores;
     let qty_model_threads = config.qty_model_threads;
     // let (qty_actix_threads, qty_model_threads) = if qty_logical_cores == 1 {
     //     (1, 1)
@@ -206,16 +208,19 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     println!("EtudeServing started successfully");
 
+    let with_cuda = Arc::new(Device::cuda_if_available().is_cuda());
+
+
     let jitmodelruntime: Arc<Option<JITModelRuntime>> = if config.model_path.ends_with("_jitopt.pth") {
         println!("loading JIT model from: {0}", config.model_path);
         Arc::new(Some(JITModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
-    } else{
+    } else {
         Arc::new(None)
     };
     let onnxruntime: Arc<Option<OnnxModelRuntime>> = if config.model_path.ends_with("_onnx.pth") {
         println!("loading ONNX model from: {0}", config.model_path);
         Arc::new(Some(OnnxModelRuntime::new(&config.model_path, &config.payload_path, &qty_model_threads)))
-    } else{
+    } else {
         Arc::new(None)
     };
     let dummyruntime: Arc<DummyModelRuntime> = Arc::new(DummyModelRuntime::new());
@@ -225,6 +230,7 @@ async fn main() -> std::io::Result<()> {
             jitopt_model: jitmodelruntime.clone(),
             onnx_model: onnxruntime.clone(),
             dummy_model: dummyruntime.clone(),
+            with_cuda: with_cuda.clone(),
         };
         App::new()
             .service(home)
