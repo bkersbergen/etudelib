@@ -1,16 +1,8 @@
 package com.bol.etude.ng;
 
-import nl.peterbloem.powerlaws.Continuous;
-import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
-import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math3.distribution.PoissonDistribution;
-import org.apache.commons.math3.util.Pair;
-
 import java.io.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 
 public class BolcomJourneySupplier implements Supplier<List<Long>> {
@@ -31,10 +23,7 @@ public class BolcomJourneySupplier implements Supplier<List<Long>> {
             this.idx = 0;
             unparsedSessionOrNull = this.sessions.get(idx);
         }
-        List<Long> itemsFromOneSession = parseIntegersFromString(unparsedSessionOrNull);
-        if (itemsFromOneSession.isEmpty()) {
-            throw new RuntimeException("wtf itemsFromOneSession.isEmpty()");
-        }
+        List<Long> itemsFromOneSession = parseLongsFromString(unparsedSessionOrNull);
         return itemsFromOneSession;
     }
 
@@ -71,7 +60,7 @@ public class BolcomJourneySupplier implements Supplier<List<Long>> {
         return lines;
     }
 
-    static List<Long> parseIntegersFromString(String input) {
+    static List<Long> parseLongsFromString(String input) {
         List<Long> result = new ArrayList<>();
 
         // Remove the brackets and split the string by commas
