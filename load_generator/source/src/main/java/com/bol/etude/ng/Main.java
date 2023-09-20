@@ -77,7 +77,8 @@ public class Main {
             URI endpoint = URI.create(endpoint_arg);
 
 
-            Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+//            Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+            Journeys journeys = createBolcomJourneys(Integer.parseInt(catalog_size_arg));
 
 //            registerShutdownHookForReporting(temporaryReportFile,
 //                    reportFileDestination, temporaryMetaFile, metaFileDestination);
@@ -141,6 +142,12 @@ public class Main {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Journeys createBolcomJourneys(int size) {
+        System.out.println("BolcomJourneySupplier.create(" + size + ")");
+        BolcomJourneySupplier journeys = new BolcomJourneySupplier(size);
+        return new Journeys(journeys);
     }
 
     private static Journeys createSyntheticJourneys(int size) {
