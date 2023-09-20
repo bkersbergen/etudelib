@@ -41,6 +41,9 @@ public class Main {
 //        catalog_size_arg = "5000000";
         System.out.println("ENV_VAR[CATALOG_SIZE] = '" + catalog_size_arg + "'");
 
+        String journeysource_arg = System.getenv("JOURNEY_SOURCE");
+        System.out.println("ENV_VAR[JOURNEY_SOURCE] = '" + journeysource_arg + "'");
+
         String reportFileDestination = System.getenv("REPORT_LOCATION");
 //        reportFileDestination = "gs://bolcom-pro-reco-analytics-fcc-shared/etude_reports/xxx.avro";
 //        reportFileDestination = "/tmp/etude.avro";
@@ -58,9 +61,10 @@ public class Main {
                 Strings.isNullOrEmpty(catalog_size_arg) ||
                 Strings.isNullOrEmpty(reportFileDestination) ||
                 Strings.isNullOrEmpty(target_rps_arg) ||
-                Strings.isNullOrEmpty(ramp_duration_minutes_arg)
+                Strings.isNullOrEmpty(ramp_duration_minutes_arg) ||
+                Strings.isNullOrEmpty(journeysource_arg)
         ) {
-            System.out.println("env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION, TARGET_RPS, RAMP_DURATION_MINUTES ] are required.");
+            System.out.println("env variables [VERTEX_ENDPOINT, CATALOG_SIZE, RUNTIME, REPORT_LOCATION, JOURNEY_SOURCE, TARGET_RPS, RAMP_DURATION_MINUTES ] are required.");
             Thread.sleep(300_000);
             System.exit(1);
         }
@@ -76,11 +80,20 @@ public class Main {
 
             URI endpoint = URI.create(endpoint_arg);
 
-
-            Journeys journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
-
-//            registerShutdownHookForReporting(temporaryReportFile,
-//                    reportFileDestination, temporaryMetaFile, metaFileDestination);
+            Journeys journeys;
+            switch (journeysource_arg) {
+                case "synthetic_bolcom":
+                    System.out.println("using dataset 'synthetic_bolcom'");
+                    journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+                    break;
+                case "sample_bolcom":
+                    System.out.println("using dataset 'sample_bolcom'");
+                    journeys = createBolcomJourneys(Integer.parseInt(catalog_size_arg));
+                    break;
+                default:
+                    // Handle the case where 'a' doesn't match any strategy
+                    throw new IllegalArgumentException("Invalid value of 'journeysource_arg'" + journeysource_arg);
+            }
 
             executeTestScenario(endpoint,
                     temporaryReportFile,
@@ -141,6 +154,12 @@ public class Main {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Journeys createBolcomJourneys(int size) {
+        System.out.println("BolcomJourneySupplier.create(" + size + ")");
+        BolcomJourneySupplier journeys = new BolcomJourneySupplier(size);
+        return new Journeys(journeys);
     }
 
     private static Journeys createSyntheticJourneys(int size) {
@@ -239,6 +258,10 @@ public class Main {
         ArrayList<Interaction> interactions = new ArrayList<>();
 
         for (int index = 0; index < journey.size(); index++) {
+            if (index >= responses.size()) {
+                System.out.println("Error: the amount of reponses does not match the amount of requests. journey.size() != responses.size()");
+                continue;
+            }
             Response response = responses.get(index);
 
             Interaction.Builder interaction = Interaction.newBuilder();

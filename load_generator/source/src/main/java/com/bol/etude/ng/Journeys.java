@@ -1,10 +1,15 @@
 package com.bol.etude.ng;
 
+import org.checkerframework.checker.units.qual.A;
+
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.stream.LongStream;
 
@@ -16,8 +21,7 @@ class Journeys {
         return () -> LongStream.range(0, new Random().nextLong(1, 20)).boxed().toList();
     }
 
-    private static long counter = 0;
-
+    private AtomicLong counter = new AtomicLong(0);
     private final Supplier<List<Long>> supplier;
 
     Journeys(Supplier<List<Long>> supplier) {
@@ -27,7 +31,15 @@ class Journeys {
 
     @Nonnull Journey pull() {
         Journey journey = journeys.poll();
-        return journey == null ? new Journey(counter += 1, supplier.get()) : journey;
+
+        if (journey != null) {
+            return journey;
+        } else {
+            // expensive call
+            List<Long> items = supplier.get();
+            journey = new Journey(counter.getAndIncrement(), items);
+            return journey;
+        }
     }
 
     void push(@Nonnull Journey journey) {
