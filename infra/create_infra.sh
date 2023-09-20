@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 if [[ $# -ne 1 ]]; then
     echo "Illegal number of parameters. PROJECT_ID is missing"
