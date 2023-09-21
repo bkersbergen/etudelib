@@ -16,4 +16,6 @@ papers/
 results/
 logs/
 .docker/model_store/
+venv/
+
 

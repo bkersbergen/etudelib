@@ -1,22 +1,22 @@
-FROM pytorch/pytorch:2.0.0-cuda11.7-cudnn8-runtime AS runtime
-RUN set -eux; \
-    apt-get update; \
-    apt-get install -y \
-    curl \
-    gnupg2 \
-    wget \
-    apt-transport-https;
+# FROM eu.gcr.io/bk47472/etudelib/serving_rust:latest
+ARG PARENT_IMAGE
+FROM $PARENT_IMAGE
 
-# Setup the local account
-RUN groupadd -r app && useradd -r -g app -u 1001 app --home /app
-RUN mkdir -p /app/etudelib
-RUN chown -R app:app /app
-USER app
+RUN pip3 install onnx==1.14.0 model_archiver
+USER root
+WORKDIR /
 
-WORKDIR /app
-COPY --chown=app:app . /app/
+COPY etudelib/ ./etudelib/
+COPY setup.py ./
+COPY pyproject.toml ./
+COPY README.md ./
+COPY requirements/ ./requirements/
+RUN pip3 install -e .
+ENV PYTHONPATH=./etudelib:$PYTHONPATH
 
-RUN pip install -e .
+RUN mkdir /.config
+# free up disk space
+RUN apt-get autoclean
 
-ENTRYPOINT ["python", "etudelib/tools/microbenchmarking.py"]
 
+CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"

@@ -83,17 +83,19 @@ undeploy_training_run:  ## undeploys training_run from kubernetes
 	-kubectl delete job etudelibtraining
 
 microbenchmark_build: ## Build and push the microbenchmark image to the repository.
-	@docker build -t $(IMAGE_URI_MICROBENCHMARK) -f .docker/microbenchmark.Dockerfile .
-	@docker push $(IMAGE_URI_MICROBENCHMARK)
+	docker build --platform linux/amd64 --build-arg PARENT_IMAGE="eu.gcr.io/$(PROJECT_ID)/etudelib/serving_rust:latest" -t eu.gcr.io/$(PROJECT_ID)/etudelib/serving_microbenchmark:latest -f .docker/microbenchmark.Dockerfile .
+	docker push eu.gcr.io/$(PROJECT_ID)/etudelib/serving_microbenchmark:latest
+
+undeploy_microbenchmark_run:  ## undeploys microbenchmark from kubernetes
+	-kubectl delete job etudelibmicrobenchmark; \
 
 microbenchmark_run: ## Run the microbenchmark in Google AI platform
-	@gcloud beta ai-platform jobs submit training $(JOB_NAME) \
-	  --region $(REGION) \
-	  --project $(PROJECT_ID) \
-	  --master-image-uri $(IMAGE_URI_MICROBENCHMARK) \
-	  --scale-tier CUSTOM \
-	  --master-machine-type n1-highmem-8 \
-	  --master-accelerator count=1,type=nvidia-tesla-t4
+	YAML_TEMPLATE=.k8s/etudelib-microbenchmark_gpu.yaml; \
+	$(MAKE) undeploy_microbenchmark_run; \
+    kubectl apply -f <( \
+        sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+            $$YAML_TEMPLATE \
+    );
 
 model_baseimage: ## Build and push the Docker base image that the deployed models use.
 	@cp requirements/base.txt .docker/requirements.txt && docker build -t $(IMAGE_URI_TORCHSERVE) -f .docker/ServingDockerfile .

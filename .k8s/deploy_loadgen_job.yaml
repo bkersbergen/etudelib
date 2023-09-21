@@ -30,6 +30,8 @@ spec:
               value: "${VERTEX_ENDPOINT}"
             - name: CATALOG_SIZE
               value: "${CATALOG_SIZE}"
+            - name: JOURNEY_SOURCE
+              value: "${JOURNEY_SOURCE}"
             - name: REPORT_LOCATION
               value: "${REPORT_LOCATION}"
             - name: TARGET_RPS

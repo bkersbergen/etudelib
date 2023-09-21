@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: etudelibmicrobenchmark
+  labels:
+    app: etudelibmicrobenchmark
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 0
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyCPU: "512m"
+        sidecar.istio.io/proxyCPULimit: "1024m"
+        sidecar.istio.io/proxyMemory: "512Mi"
+        sidecar.istio.io/proxyMemoryLimit: "1024Mi"
+    spec:
+      serviceAccountName: etudelib
+      nodeSelector:
+        cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+      restartPolicy: Never
+      containers:
+      - name: etudelib-microbenchmark
+        # https://cloud.google.com/kubernetes-engine/docs/how-to/autopilot-gpus
+        image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_modeltraining:latest
+        command: [ "python3" ]
+        args: [ "./etudelib/tools/microbenchmark.py", "gcs_project_name=${PROJECT_ID}", "gcs_bucket_name=${PROJECT_ID}-shared", "" ]
+#        command: [ "/bin/bash", "-c", "--" ]
+#        args: [ "while true; do sleep 600; done;" ]
+        resources:
+          requests:
+            memory: "64Gi"
+            cpu: 2
+            ephemeral-storage: "20Gi"
+          limits:
+            nvidia.com/gpu: 1

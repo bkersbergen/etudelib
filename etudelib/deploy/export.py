@@ -8,7 +8,7 @@ import os
 import shutil
 import torch
 from pytorch_lightning import LightningModule
-import onnxruntime as ort
+# import onnxruntime as ort
 
 from model_archiver.model_packaging import generate_model_archive
 

@@ -18,7 +18,7 @@ from etudelib.tools.benchmarker.microbenchmarker import MicroBenchmark
 from etudelib.utils.loggers import configure_logger
 from multiprocessing import Process
 
-import onnxruntime as ort
+# import onnxruntime as ort
 
 logger = logging.getLogger(__name__)
 
@@ -55,41 +55,41 @@ def run_benchmark_process(eager_model, new_model_mode, benchmark_loader, device_
         model = torch.jit.optimize_for_inference(
             torch.jit.trace(eager_model, (model_input[0].to(device_type), model_input[1].to(device_type))))
         latency_results = bench.benchmark_pytorch_predictions(model, benchmark_loader, device_type)
-    elif new_model_mode == 'onnx':
-        export_path = str(projectdir / "model.pt.onnx")
-        print('export_path:' + export_path)
-        try:
-            torch.onnx.export(
-                eager_model,
-                (model_input[0].to(device_type), model_input[1].to(device_type)),
-                export_path,
-                input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                output_names=['output'],  # the model's output names
-            )
-        except Exception as error:
-            print("Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
-            torch.onnx.export(
-                eager_model,
-                (model_input[0].to(device_type), model_input[1].to(device_type)),
-                export_path,
-                input_names=['item_id_list', 'max_seq_length'],  # the model's input names
-                output_names=['output'],  # the model's output names
-                do_constant_folding=False  # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
-            )
-        if device_type == 'cuda' and 'CUDAExecutionProvider' not in ort.get_available_providers():
-            logger.error('ONNX Runtime does not have CUDA support')
-            logger.error('Please install onnxruntime-gpu version')
-            exit(1)
-
-        if device_type == 'cuda':
-            providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
-        else:
-            providers = ['CPUExecutionProvider']
-        sess_options = ort.SessionOptions()
-        sess_options.inter_op_num_threads = 1
-        sess_options.intra_op_num_threads = 1
-        ort_sess = ort.InferenceSession(export_path, sess_options=sess_options, providers=providers)
-        latency_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
+    # elif new_model_mode == 'onnx':
+        # export_path = str(projectdir / "model.pt.onnx")
+        # print('export_path:' + export_path)
+        # try:
+        #     torch.onnx.export(
+        #         eager_model,
+        #         (model_input[0].to(device_type), model_input[1].to(device_type)),
+        #         export_path,
+        #         input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+        #         output_names=['output'],  # the model's output names
+        #     )
+        # except Exception as error:
+        #     print("Onnx export with default settings failed. Now exporting with 'Disabled constant folding' disabled. This is expected behaviour for the LightSANS model to operate on CUDA.")
+        #     torch.onnx.export(
+        #         eager_model,
+        #         (model_input[0].to(device_type), model_input[1].to(device_type)),
+        #         export_path,
+        #         input_names=['item_id_list', 'max_seq_length'],  # the model's input names
+        #         output_names=['output'],  # the model's output names
+        #         do_constant_folding=False  # LightSANS Disable Constant Folding: Constant folding can sometimes lead to these device placement issues. You can disable constant folding during ONNX export to see if it resolves the problem.
+        #     )
+        # if device_type == 'cuda' and 'CUDAExecutionProvider' not in ort.get_available_providers():
+        #     logger.error('ONNX Runtime does not have CUDA support')
+        #     logger.error('Please install onnxruntime-gpu version')
+        #     exit(1)
+        #
+        # if device_type == 'cuda':
+        #     providers = ['CUDAExecutionProvider', 'CPUExecutionProvider']
+        # else:
+        #     providers = ['CPUExecutionProvider']
+        # sess_options = ort.SessionOptions()
+        # sess_options.inter_op_num_threads = 1
+        # sess_options.intra_op_num_threads = 1
+        # ort_sess = ort.InferenceSession(export_path, sess_options=sess_options, providers=providers)
+        # latency_results = bench.benchmark_onnxed_predictions(ort_sess, benchmark_loader)
 
     results['runtime'] = '_'.join([new_model_mode, device_type])
     results['latency_df'] = latency_results
@@ -224,11 +224,11 @@ def microbenchmark(args):
                     args=(eager_model, 'jitopt', benchmark_loader, device_type, results, projectdir,))
         p.start()
         p.join()
-
-        p = Process(target=run_benchmark_process,
-                    args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
-        p.start()
-        p.join()
+        #
+        # p = Process(target=run_benchmark_process,
+        #             args=(eager_model, 'onnx', benchmark_loader, device_type, results, projectdir,))
+        # p.start()
+        # p.join()
 
     if args.gcs_project_name:
         print('Start transferring results to google storage bucket')
@@ -242,12 +242,12 @@ def microbenchmark(args):
 if __name__ == "__main__":
     args = get_args()
     args.qty_interactions = 50_000
-    args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
-    args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
-    args.gcs_dir = 'bkersbergen_etude'
-    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000, 40_000_000]:
-        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec',
-                           'sine', 'srgnn', 'stamp', 'topkonly']:
+    # args.gcs_project_name = 'bolcom-pro-reco-analytics-fcc'
+    # args.gcs_bucket_name = 'bolcom-pro-reco-analytics-fcc-shared'
+    # args.gcs_dir = 'bkersbergen_etude'
+    for C in [10_000, 100_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]:
+        for model_name in ['core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec',
+                           'sine', 'srgnn', 'stamp']:
             args.C = C
             args.model = model_name
             for t in [50]:
