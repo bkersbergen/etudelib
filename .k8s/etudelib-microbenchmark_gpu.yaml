@@ -22,9 +22,9 @@ spec:
       containers:
       - name: etudelib-microbenchmark
         # https://cloud.google.com/kubernetes-engine/docs/how-to/autopilot-gpus
-        image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_modeltraining:latest
+        image: eu.gcr.io/${PROJECT_ID}/etudelib/serving_microbenchmark:latest
         command: [ "python3" ]
-        args: [ "./etudelib/tools/microbenchmark.py", "gcs_project_name=${PROJECT_ID}", "gcs_bucket_name=${PROJECT_ID}-shared", "" ]
+        args: [ "/etudelib/tools/microbenchmark.py", "--gcs_project_name=${PROJECT_ID}", "--gcs_bucket_name=${PROJECT_ID}-shared", "--gcs_dir=microbenchmark" ]
 #        command: [ "/bin/bash", "-c", "--" ]
 #        args: [ "while true; do sleep 600; done;" ]
         resources:
