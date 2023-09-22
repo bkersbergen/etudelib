@@ -82,36 +82,38 @@ export -f file_exists
 export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-models=('core' 'gru4rec')
+models=('core' 'gcsan' 'gru4rec' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
 devices=('cpu' 'cuda')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(1000000 10000000)
+c_values=(53000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
-JOURNEY_SOURCE='sample_bolcom'
+JOURNEY_SOURCES=('sample_bolcom' 'sample_yoochoose')
 
 # Number of parallel executions
-max_parallel=4
+max_parallel=8
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
 sleep_delay=60*${max_parallel}
 
 for ((repeat=0; repeat<QTY_EXPERIMENT_REPEATS; repeat++)); do
-  for c in "${c_values[@]}"; do
-    for DEVICE in "${devices[@]}"; do
-       for RUNTIME in "${runtimes[@]}"; do
-         for MODEL in "${models[@]}"; do
-           MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
-           PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
-           REPORT_LOCATION="gs://${PROJECT_ID}-shared/${JOURNEY_SOURCE}_${repeat}/${MODEL}_${JOURNEY_SOURCE}_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
-           if (file_exists ${REPORT_LOCATION}); then
-             continue
-           fi
-           # reduce the sleep delay with each deployment
-           sleep_delay=$((sleep_delay > 0 ? sleep_delay-60 : 0))
-           echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay} ${JOURNEY_SOURCE}"
+  for JOURNEY_SOURCE in "${JOURNEY_SOURCES[@]}"; do
+    for c in "${c_values[@]}"; do
+      for DEVICE in "${devices[@]}"; do
+         for RUNTIME in "${runtimes[@]}"; do
+           for MODEL in "${models[@]}"; do
+             MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
+             PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
+             REPORT_LOCATION="gs://${PROJECT_ID}-shared/${JOURNEY_SOURCE}_${repeat}/${MODEL}_${JOURNEY_SOURCE}_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
+             if (file_exists ${REPORT_LOCATION}); then
+               continue
+             fi
+             # reduce the sleep delay with each deployment
+             sleep_delay=$((sleep_delay > 0 ? sleep_delay-60 : 0))
+             echo "${PROJECT_ID} ${MODEL_PATH} ${PAYLOAD_PATH} ${DEVICE} ${c} ${REPORT_LOCATION} ${TARGET_RPS} ${RAMP_DURATION_MINUTES} ${sleep_delay} ${JOURNEY_SOURCE}"
+           done
          done
        done
      done
