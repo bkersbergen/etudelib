@@ -12,7 +12,6 @@ import com.google.gson.Gson;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.time.Instant;
@@ -90,6 +89,10 @@ public class Main {
                     System.out.println("using dataset 'sample_bolcom'");
                     journeys = createBolcomJourneys(Integer.parseInt(catalog_size_arg));
                     break;
+                case "sample_yoochoose":
+                    System.out.println("using dataset 'sample_yoochoose'");
+                    journeys = createYoochooseJourneys(Integer.parseInt(catalog_size_arg));
+                    break;
                 default:
                     // Handle the case where 'a' doesn't match any strategy
                     throw new IllegalArgumentException("Invalid value of 'journeysource_arg'" + journeysource_arg);
@@ -156,9 +159,14 @@ public class Main {
         }
     }
 
+    private static Journeys createYoochooseJourneys(int size) {
+        CsvBasedJourneySupplier journeys = new CsvBasedJourneySupplier(size, "yoochoose_sample.csv");
+        return new Journeys(journeys);
+
+    }
+
     private static Journeys createBolcomJourneys(int size) {
-        System.out.println("BolcomJourneySupplier.create(" + size + ")");
-        BolcomJourneySupplier journeys = new BolcomJourneySupplier(size);
+        CsvBasedJourneySupplier journeys = new CsvBasedJourneySupplier(size, "raw_click_lists.csv");
         return new Journeys(journeys);
     }
 
