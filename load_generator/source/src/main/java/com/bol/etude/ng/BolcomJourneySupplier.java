@@ -2,6 +2,9 @@ package com.bol.etude.ng;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import  java.util.regex.Matcher;
@@ -9,7 +12,8 @@ import  java.util.regex.Matcher;
 public class BolcomJourneySupplier implements Supplier<List<Long>> {
     private int C = 0;
     private List<String> sessions;
-    private int idx = 0;
+    private AtomicInteger idx = new AtomicInteger(0);
+    private final Lock lock = new ReentrantLock();
     Pattern pattern = Pattern.compile("\\[(.*?)\\]");
     public BolcomJourneySupplier(int C) {
         System.out.println("new BolcomJourneySupplier()");
@@ -19,15 +23,22 @@ public class BolcomJourneySupplier implements Supplier<List<Long>> {
 
     @Override
     public List<Long> get() {
-        String unparsedSessionOrNull = this.sessions.get(idx);
-        if (unparsedSessionOrNull == null) {
-//            reset the index to start over again
-            this.idx = 0;
-            unparsedSessionOrNull = this.sessions.get(idx);
-        } else {
-            idx += 1;
+        int currentIdx = idx.getAndIncrement();
+        if (currentIdx >= sessions.size()) {
+            lock.lock();
+            try {
+                currentIdx = idx.get();
+                // Double-check within the locked section to prevent multiple threads from resetting idx
+                if (currentIdx >= sessions.size()) {
+                    idx.set(0);
+                    currentIdx = 0;
+                }
+            } finally {
+                lock.unlock();
+            }
         }
-        List<Long> itemsFromOneSession = parseLongsFromString(unparsedSessionOrNull);
+        String unparsedSession = this.sessions.get(currentIdx);
+        List<Long> itemsFromOneSession = parseLongsFromString(unparsedSession);
         for (int i = 0; i < itemsFromOneSession.size(); i++) {
             long currentValue = itemsFromOneSession.get(i);
             if (currentValue > C) {

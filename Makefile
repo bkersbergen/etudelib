@@ -94,6 +94,7 @@ microbenchmark_run: ## Run the microbenchmark in Google AI platform
 	$(MAKE) undeploy_microbenchmark_run; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+        -e 's/$${PROJECT_ID}-shared/$(PROJECT_ID)-shared/' \
             $$YAML_TEMPLATE \
     );
 
