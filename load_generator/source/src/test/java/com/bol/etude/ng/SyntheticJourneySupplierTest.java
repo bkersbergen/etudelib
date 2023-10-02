@@ -18,7 +18,7 @@ class SyntheticJourneySupplierTest {
         Journeys underTest = new Journeys(journeys);
         Instant start = Instant.now();
         int clicks = 0;
-        for ( int i = 0 ; i < 10000; i++) {
+        for ( int i = 0 ; i < 10_000_000; i++) {
             Journeys.Journey journey = underTest.pull();
             for (int t = 0 ; t < journey.size(); t++) {
                 List<Long> sessionItems = journey.item();
@@ -26,7 +26,7 @@ class SyntheticJourneySupplierTest {
             }
         }
         Duration duration = Duration.between(start, Instant.now());
-        System.out.println(clicks / duration.toSeconds());
+        System.out.println(clicks / (duration.toSeconds()));
     }
 
 }

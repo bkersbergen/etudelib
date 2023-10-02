@@ -15,6 +15,9 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
     private int C = 0;
     private PoissonDistribution sessionLengthDistribution;
     private PolynomialSplineFunction itemFunction;
+    private double rangeMin;
+    private double rangeMax;
+
 
     private Random random = new Random();
 
@@ -25,12 +28,12 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
     @Override
     public List<Long> get() {
         int sessionLength = Math.max(1, sessionLengthDistribution.sample());
+        assert this.rangeMin != -1.0;
+        assert this.rangeMax != -1.0;
 
-        double rangeMin = itemFunction.getKnots()[0];
-        double rangeMax = itemFunction.getKnots()[itemFunction.getN()];
         List<Long> result = new ArrayList<>();
         for (int i = 0 ; i < sessionLength; i++) {
-            double randomValue = rangeMin + (rangeMax - rangeMin) * random.nextDouble();
+            double randomValue = this.rangeMin + (this.rangeMax - this.rangeMin) * random.nextDouble();
             Long itemId = Math.round(itemFunction.value(randomValue));
             result.add(itemId);
         }
@@ -100,6 +103,9 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
         double[] y = itemCdf.stream().mapToDouble(Double::doubleValue).toArray();
         LinearInterpolator interpolator = new LinearInterpolator();
         this.itemFunction = interpolator.interpolate(y, x);  // interpolate from proba to itemid
+        this.rangeMin = itemFunction.getKnots()[0];
+        this.rangeMax = itemFunction.getKnots()[itemFunction.getN()];
+
     }
 
     public void cumsum(List<Double> input) {
