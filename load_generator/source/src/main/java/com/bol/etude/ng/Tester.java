@@ -7,15 +7,12 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 public class Tester {
 
     private final Integer target;
     private final Duration ramp;
-    private final long milliInNanos = Duration.ofMillis(1).toNanos();
-    private final long parkInNanos = milliInNanos / 100000; // 1 millis = 1_000_000 nanos
     private final long secondInNanos = Duration.ofSeconds(1).toNanos();
     private final Instant deadline;
 
@@ -31,7 +28,8 @@ public class Tester {
         AtomicInteger inflight = new AtomicInteger(0);
         Ramper ramper = new Ramper(target, ramp);
 
-        outer: for (int rps : ramper) {
+        outer:
+        for (int rps : ramper) {
             ticks += 1;
             boolean first = true;
             long nextTickNanos = secondInNanos * ticks;
@@ -60,7 +58,7 @@ public class Tester {
                         if (timeToNextTick <= 0) {
                             continue outer;
                         }
-                        LockSupport.parkNanos(milliInNanos);
+                        Tester.sleep(1);
                         timeToNextTick = timeTillNextTick(nextTickMoment);
                     }
                 }
@@ -72,10 +70,18 @@ public class Tester {
                 }
 
                 runner.accept(new Request(ticks, rps, inflight, first));
-                long sleepingNanos = timeTillNextTick(nextTickMoment) / (rps - i);
-                LockSupport.parkNanos(sleepingNanos);
 
                 if (first) first = false;
+
+                if (i + 1 < rps) {
+                    long ttnt = timeTillNextTick(nextTickMoment);
+                    if (ttnt > 5_000_000) {
+                        long timeTillNextRequestNanos = (long) (ttnt / (double) (rps - i));
+                        if (timeTillNextRequestNanos > 2_000_000) {
+                            Tester.sleep(timeTillNextRequestNanos / 1_000_000);
+                        }
+                    }
+                }
             }
 
             timeToNextTick = timeTillNextTick(nextTickMoment);
@@ -84,8 +90,16 @@ public class Tester {
                 System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(timeToNextTick).toSeconds() + "')");
                 continue;
             }
+            Tester.sleep(timeToNextTick / 1_000_000);
+        }
+    }
 
-            LockSupport.parkNanos(timeToNextTick);
+    private static void sleep(long millis) {
+        if (millis > 0) {
+            try {
+                Thread.sleep(millis);
+            } catch (InterruptedException e) {
+            }
         }
     }
 
