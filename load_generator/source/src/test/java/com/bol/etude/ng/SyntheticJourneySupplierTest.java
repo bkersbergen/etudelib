@@ -12,7 +12,7 @@ class SyntheticJourneySupplierTest {
 
     @Test
     public void shouldDetermineSingleThreaded() {
-        int C = 1000000;
+        int C = 10_000_000;
         SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(C);
         journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
         Journeys underTest = new Journeys(journeys);

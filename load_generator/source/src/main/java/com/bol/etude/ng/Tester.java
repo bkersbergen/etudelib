@@ -72,6 +72,8 @@ public class Tester {
                 }
 
                 runner.accept(new Request(ticks, rps, inflight, first));
+                long sleepingNanos = timeTillNextTick(nextTickMoment) / (rps - i);
+                LockSupport.parkNanos(sleepingNanos);
 
                 if (first) first = false;
             }
