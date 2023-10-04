@@ -76,7 +76,8 @@ public class Tester {
                 if (i + 1 < rps) {
                     long ttnt = timeTillNextTick(nextTickMoment);
                     if (ttnt > 5_000_000) {
-                        long timeTillNextRequestNanos = (long) (ttnt / (double) (rps - i));
+                        int requestsToFillTick = rps - i;
+                        long timeTillNextRequestNanos = (long) (ttnt / (double) requestsToFillTick);
                         if (timeTillNextRequestNanos > 2_000_000) {
                             Tester.sleep(timeTillNextRequestNanos / 1_000_000);
                         }

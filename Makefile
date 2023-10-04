@@ -1,7 +1,7 @@
 SHELL:=/bin/bash
 .DEFAULT_GOAL:=help
 
-PROJECT_ID=bk474715
+PROJECT_ID=bk474718
 REGION="europe-west4"
 USER ?= -SA
 JOB_NAME := $(USER)_etude_microbenchmark_$(shell date +'%Y%m%d_%H%M%S')
@@ -44,11 +44,16 @@ serving_k8s_deploy_gpu:  ## deploy rust serving engine in kubernetes
 	$(MAKE) undeploy_serving; \
     kubectl apply -f <( \
         sed -e 's/$${PROJECT_ID}/$(PROJECT_ID)/' \
+        -e 's/$${SERVING_NAME}/etuderustserving/' \
         -e 's/$${MODEL_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cuda\/gru4rec_bolcom_c1000000_t50_cuda_onnx.pth/' \
         -e 's/$${PAYLOAD_PATH}/gs:\/\/$(PROJECT_ID)-shared\/model_store\/gru4rec_bolcom_c1000000_t50_cuda\/gru4rec_bolcom_c1000000_t50_cuda_payload.yaml/' \
             $$YAML_TEMPLATE \
     );
-	kubectl apply -f .k8s/etudelibrust-service.yaml
+	SERVICE_TEMPLATE=.k8s/etudelibrust-service.yaml; \
+	kubectl apply -f <( \
+		sed -e 's/$${SERVING_NAME}/etuderustserving/' \
+			$$SERVICE_TEMPLATE \
+	);
 
 
 undeploy_serving:  ## undeploys etudelibrust from kubernetes

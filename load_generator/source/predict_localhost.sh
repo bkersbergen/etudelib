@@ -19,4 +19,4 @@ generate_post_data()
 EOF
 }
 
-curl -H "Content-Type: application/json" -X POST http://localhost:7080/predictions/model/1.0/ -d "$(generate_post_data)"
+curl -H "Content-Type: application/json" -X POST http://localhost:8080/predictions/model/1.0/ -d "$(generate_post_data)"
