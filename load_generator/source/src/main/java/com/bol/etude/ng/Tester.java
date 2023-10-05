@@ -13,7 +13,7 @@ public class Tester {
 
     private final Integer target;
     private final Duration ramp;
-    private final long secondInNanos = Duration.ofSeconds(1).toNanos();
+    private final long secondInMillis = Duration.ofSeconds(1).toMillis();
     private final Instant deadline;
 
     private Tester(Integer target, Duration ramp) {
@@ -23,7 +23,7 @@ public class Tester {
     }
 
     private void run(Consumer<Request> runner, Persister<Meta> metaPersister) {
-        long firstTickMoment = System.nanoTime();
+        long firstTickMillis = System.currentTimeMillis();
         long ticks = 0;
         AtomicInteger inflight = new AtomicInteger(0);
         Ramper ramper = new Ramper(target, ramp);
@@ -32,9 +32,8 @@ public class Tester {
         for (int rps : ramper) {
             ticks += 1;
             boolean first = true;
-            long nextTickNanos = secondInNanos * ticks;
-            long nextTickMoment = nextTickNanos + firstTickMoment;
-            long timeToNextTick;
+            long nextTickMillis = firstTickMillis + (ticks * secondInMillis);
+            long millisToNextTick;
 
             if (isDeadlineReached()) {
                 System.out.println("Tester.ticks['" + ticks + "'].deadline()");
@@ -45,8 +44,6 @@ public class Tester {
             Meta t = Meta.newBuilder().setTimestampEpochMillis(Instant.now().toEpochMilli()).setTicks(ticks).setRps(rps).setInflight(inflight.get()).build();
             metaPersister.accept(t);
             for (int i = 0; i < rps; i++) {
-                timeToNextTick = timeTillNextTick(nextTickMoment);
-
                 if (isDeadlineReached()) {
                     System.out.println("Tester.ticks['" + ticks + "'].deadline()");
                     return;
@@ -55,17 +52,15 @@ public class Tester {
                 if (inflight.get() >= rps ){
                     System.out.println("Tester.ticks['" + ticks + "'].park(rps = '" + rps + "', inflight = '" + inflight.get() + "' iteration = '" + i + "')");
                     while (inflight.get() >= rps) {
-                        if (timeToNextTick <= 0) {
+                        if (millisTillNextTick(nextTickMillis) <= 0) {
                             continue outer;
                         }
                         Tester.sleep(1);
-                        timeToNextTick = timeTillNextTick(nextTickMoment);
                     }
                 }
-
-                if (timeToNextTick <= 0) {
-                    long lag = Duration.ofNanos(timeToNextTick).toMillis();
-                    System.out.println("Tester.ticks['" + ticks + "'].break(lag = '" + lag + "', ops = '" + i + "', noops = '" + (rps - i) + "')");
+                millisToNextTick = millisTillNextTick(nextTickMillis);
+                if (millisToNextTick <= 0) {
+                    System.out.println("Tester.ticks['" + ticks + "'].break(lag = '" + millisToNextTick + "', requestsInTick = '" + i + "', requestsToFillTick = '" + (rps - i) + "')");
                     continue outer;
                 }
 
@@ -74,24 +69,24 @@ public class Tester {
                 if (first) first = false;
 
                 if (i + 1 < rps) {
-                    long ttnt = timeTillNextTick(nextTickMoment);
-                    if (ttnt > 5_000_000) {
+                    millisToNextTick = millisTillNextTick(nextTickMillis);
+                    if (millisToNextTick > 5) {
                         int requestsToFillTick = rps - i;
-                        long timeTillNextRequestNanos = (long) (ttnt / (double) requestsToFillTick);
-                        if (timeTillNextRequestNanos > 2_000_000) {
-                            Tester.sleep(timeTillNextRequestNanos / 1_000_000);
+                        long msTillNextRequest = (long) (millisToNextTick / (double) requestsToFillTick);
+                        if (msTillNextRequest > 2) {
+                            Tester.sleep(msTillNextRequest);
                         }
                     }
                 }
             }
 
-            timeToNextTick = timeTillNextTick(nextTickMoment);
+            millisToNextTick = millisTillNextTick(nextTickMillis);
 
-            if (timeToNextTick <= 0) {
-                System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(timeToNextTick).toSeconds() + "')");
+            if (millisToNextTick <= 0) {
+                System.out.println("Tester.ticks['" + ticks + "'].lag('" + Duration.ofNanos(millisToNextTick).toSeconds() + "')");
                 continue;
             }
-            Tester.sleep(timeToNextTick / 1_000_000);
+            Tester.sleep(millisToNextTick);
         }
     }
 
@@ -108,8 +103,8 @@ public class Tester {
         return !Instant.now().isBefore(deadline);
     }
 
-    private static long timeTillNextTick(long next) {
-        return next - System.nanoTime();
+    private static long millisTillNextTick(long next) {
+        return next - System.currentTimeMillis();
     }
 
     private static class Ramper implements Iterable<Integer>, Iterator<Integer> {
