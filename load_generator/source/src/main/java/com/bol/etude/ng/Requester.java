@@ -93,7 +93,7 @@ public class Requester<T> implements Closeable {
 
     @Override
     public void close() throws IOException {
-        phaser.arriveAndAwaitAdvance();
+        phaser.arrive();
         client.close();
     }
 

@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static com.bol.etude.ng.Tester.rampWithBackPressure;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -149,13 +150,14 @@ public class Main {
                 Thread.sleep(Duration.ofMinutes(5).toMillis());
             } catch (InterruptedException ex) {
                 // ignore, can't fix
+                ex.printStackTrace();
             }
         }
 //        System.out.println("Last line of code in addShutdownHook");
         try {
             Thread.sleep(Duration.ofSeconds(10).toMillis());
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
@@ -229,17 +231,29 @@ public class Main {
                     });
                 });
             });
-            System.out.println("Thread.sleep(Duration.ofSeconds(10).toMillis());");
-            Thread.sleep(Duration.ofSeconds(10).toMillis());
+
+            System.out.println("requester.close()");
+            try {
+                requester.close();
+            } catch (Exception exception) {
+                exception.printStackTrace();
+            }
+            System.out.println("done requester.close()");
+            try {
+                System.out.println("Shutdown the executor to prevent it from accepting new tasks");
+                executor.shutdown();
+                System.out.println("Wait for all tasks to complete or a specified timeout");
+                if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    System.out.println("tasks did not finished after xx seconds, force termination");
+                    executor.shutdownNow();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            System.out.println("The executor is shutdown");
         } catch (Exception err) {
             System.out.println("Scenario.err()");
             err.printStackTrace();
-        }
-        System.out.println("requester.close()");
-        try {
-            requester.close();
-        } catch (Exception exception) {
-            exception.printStackTrace();
         }
         System.out.println("reportPersister.close()");
         try {
@@ -253,12 +267,7 @@ public class Main {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-        try {
-            System.out.println("Thread.sleep(Duration.ofSeconds(5).toMillis());");
-            Thread.sleep(Duration.ofSeconds(5).toMillis());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        System.out.println("metaPersister.close() done");
 
     }
 

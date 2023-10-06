@@ -95,6 +95,7 @@ public class Tester {
             try {
                 Thread.sleep(millis);
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
