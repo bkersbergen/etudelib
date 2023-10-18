@@ -86,6 +86,9 @@ public class Main {
                     System.out.println("using dataset 'synthetic_bolcom'");
                     journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
                     break;
+                case "synthetic_yoochoose":
+                    System.out.println("using synthetic dataset yoochoose");
+                    journeys = createSyntheticYoochooseJourneys(Integer.parseInt(catalog_size_arg));
                 case "sample_bolcom":
                     System.out.println("using dataset 'sample_bolcom'");
                     journeys = createBolcomJourneys(Integer.parseInt(catalog_size_arg));
@@ -115,6 +118,12 @@ public class Main {
             Thread.sleep(Duration.ofMinutes(1).toMillis());
         }
         System.exit(0);
+    }
+
+    private static Journeys createSyntheticYoochooseJourneys(int C) {
+        SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(C);
+
+        return null;
     }
 
     private static String appendMetaToBaseFilename(String originalPath) {
@@ -175,7 +184,7 @@ public class Main {
     private static Journeys createSyntheticJourneys(int size) {
         System.out.println("SyntheticJourneys.create(" + size + ")");
         SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(size);
-        journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
+//        journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
         return new Journeys(journeys);
     }
 

@@ -82,17 +82,18 @@ export -f file_exists
 export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-models=('core' 'gcsan' 'gru4rec' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-devices=('cpu' 'cuda')
+#models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
+models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
+devices=('cuda')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(53000)
+c_values=(1000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
-JOURNEY_SOURCES=('sample_bolcom' 'sample_yoochoose')
+JOURNEY_SOURCES=('synthetic_bolcom')
 
 # Number of parallel executions
-max_parallel=8
+max_parallel=4
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
@@ -106,7 +107,7 @@ for ((repeat=0; repeat<QTY_EXPERIMENT_REPEATS; repeat++)); do
            for MODEL in "${models[@]}"; do
              MODEL_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_${RUNTIME}.pth"
              PAYLOAD_PATH="gs://${PROJECT_ID}-shared/model_store/${MODEL}_bolcom_c${c}_t50_${DEVICE}/${MODEL}_bolcom_c${c}_t50_${DEVICE}_payload.yaml"
-             REPORT_LOCATION="gs://${PROJECT_ID}-shared/${JOURNEY_SOURCE}_${repeat}/${MODEL}_${JOURNEY_SOURCE}_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
+             REPORT_LOCATION="gs://${PROJECT_ID}-shared/${JOURNEY_SOURCE}_${repeat}_v2loadgen_a100/${MODEL}_${JOURNEY_SOURCE}_c${c}_t50_${DEVICE}_${RUNTIME}_rps${TARGET_RPS}.avro"
              if (file_exists ${REPORT_LOCATION}); then
                continue
              fi

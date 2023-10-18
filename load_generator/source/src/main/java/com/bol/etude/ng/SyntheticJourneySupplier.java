@@ -16,10 +16,14 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
     private PoissonDistribution sessionLengthDistribution;
     private PolynomialSplineFunction itemFunction;
     private double rangeMin;
+
     private double rangeMax;
-
-
     private Random random = new Random();
+
+    private double sessionLambda;
+
+    private double itemXMin;
+    private double itemExponent;
 
     public SyntheticJourneySupplier(int C) {
         this.C = C;
@@ -32,8 +36,8 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
         assert this.rangeMax != -1.0;
 
         List<Long> result = new ArrayList<>();
-        for (int i = 0 ; i < sessionLength; i++) {
-            double randomValue = this.rangeMin + (this.rangeMax - this.rangeMin) * random.nextDouble();
+        for (int i = 0; i < sessionLength; i++) {
+            double randomValue = this.rangeMax * random.nextDouble();
             Long itemId = Math.round(itemFunction.value(randomValue));
             result.add(itemId);
         }
@@ -41,12 +45,12 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
     }
 
     public void fit(List<Row> rows) {
-        double lambda = determineSessionLengthLambda(rows);
+        double sessionLambda = determineSessionLengthLambda(rows);
         Pair<Double, Double> xMinExponent = determineItemParameters(rows);
         double xMin = xMinExponent.getFirst();
         double exponent = xMinExponent.getSecond();
 
-        this.fit(lambda, xMin, exponent);
+        this.fit(sessionLambda, xMin, exponent);
     }
 
     private static Pair<Double, Double> determineItemParameters(List<Row> rows) {
@@ -54,7 +58,7 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting())).values().stream().map(r -> r.intValue()).collect(Collectors.toList());
         double itemFreqTotal = itemFreqs.stream().mapToDouble(f -> f.doubleValue()).sum();
 
-        List<Double> itemProbas = itemFreqs.stream().map(f -> f/itemFreqTotal).collect(Collectors.toList());
+        List<Double> itemProbas = itemFreqs.stream().map(f -> f / itemFreqTotal).collect(Collectors.toList());
         Collections.sort(itemProbas);
         Continuous fitted = Continuous.fit(itemProbas).fit();
         return new Pair<>(fitted.xMin(), fitted.exponent());
@@ -79,24 +83,29 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
         return lambda;
     }
 
-    public void fit(double lambda, double xMin, double exponent) {
-        System.out.println("SyntheticJourneys.fit(xMin ='" + xMin + "', lambda = '" + lambda + "', exponent = '" + exponent + "')");
 
-        this.sessionLengthDistribution = new PoissonDistribution(lambda);
+    public void fit(double sessionLambda, double itemXMin, double itemExponent) {
+        System.out.println("SyntheticJourneys.fit(xMin ='" + itemXMin + "', lambda = '" + sessionLambda + "', exponent = '" + itemExponent + "')");
 
-        Continuous itemDistribution = new Continuous(xMin, exponent);
+        this.sessionLambda = sessionLambda;
+        this.itemXMin = itemXMin;
+        this.itemExponent = itemExponent;
+        this.sessionLengthDistribution = new PoissonDistribution(sessionLambda);
+
+        Continuous itemDistribution = new Continuous(itemXMin, itemExponent);
+
 
         // Generate probabilities for items of catalog size C
         List<Double> itemCdf = itemDistribution.generate(C);
 
         double total = itemCdf.stream().mapToDouble(f -> f.doubleValue()).sum();
-        itemCdf = itemCdf.stream().map(f -> f/total).collect(Collectors.toList());
+        itemCdf = itemCdf.stream().map(f -> f / total).collect(Collectors.toList());
         Collections.sort(itemCdf);
 
         cumsum(itemCdf);
 
         double[] x = new double[itemCdf.size()];
-        for(int i=0;i<x.length;i++) {
+        for (int i = 0; i < x.length; i++) {
             x[i] = i;
         }
 
@@ -108,14 +117,27 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
 
     }
 
+
     public void cumsum(List<Double> input) {
         double total = 0.0;
-        for (int idx = 0 ; idx < input.size(); idx++) {
+        for (int idx = 0; idx < input.size(); idx++) {
             total += input.get(idx);
             input.set(idx, total);
         }
     }
 
+    public double getSessionLambda() {
+        return sessionLambda;
+    }
+
+
+    public double getItemXMin() {
+        return itemXMin;
+    }
+
+    public double getItemExponent() {
+        return itemExponent;
+    }
 
     public static class Row {
 
@@ -137,7 +159,7 @@ public class SyntheticJourneySupplier implements Supplier<List<Long>> {
             return itemId;
         }
 
-        public int getTime(){
+        public int getTime() {
             return time;
         }
 
