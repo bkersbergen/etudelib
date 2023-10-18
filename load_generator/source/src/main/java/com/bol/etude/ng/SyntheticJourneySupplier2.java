@@ -50,7 +50,7 @@ public class SyntheticJourneySupplier2 implements Supplier<List<Long>> {
         int sessionLength = Math.max(1, (int) Math.round(sessionsDistribution.generate()));
         List<Long> result = new ArrayList<>();
         for (int i = 0; i < sessionLength; i++) {
-            double randomValue = this.itemRangeMax * random.nextDouble();
+            double randomValue = (itemRangeMax - itemRangeMin) * random.nextDouble() + itemRangeMin;
             Long itemId = Math.round(itemFunction.value(randomValue));
             result.add(itemId);
         }

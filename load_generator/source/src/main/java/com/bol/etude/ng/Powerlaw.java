@@ -21,7 +21,7 @@ public class Powerlaw {
     public double generate() {
         double pow = Math.pow(random.nextDouble(), (1 / alpha));
         double x = loc + (scale * pow);
-        return Math.min(Math.ceil(x), scale);
+        return Math.min(x, scale);
     }
 
     public List<Double> generate(int n) {
