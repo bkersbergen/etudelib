@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 import  java.util.regex.Matcher;
 
 public class CsvBasedJourneySupplier implements Supplier<List<Long>> {
-    private int C = 0;
+    private final int C;
     private List<String> sessions;
     private AtomicInteger idx = new AtomicInteger(0);
     private final Lock lock = new ReentrantLock();

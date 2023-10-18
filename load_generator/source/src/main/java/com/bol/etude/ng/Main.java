@@ -81,24 +81,26 @@ public class Main {
             URI endpoint = URI.create(endpoint_arg);
 
             Journeys journeys;
+            final int C = Integer.parseInt(catalog_size_arg);
             switch (journeysource_arg) {
                 case "synthetic_bolcom":
-                    System.out.println("using dataset 'synthetic_bolcom'");
-                    journeys = createSyntheticJourneys(Integer.parseInt(catalog_size_arg));
+                    System.out.println("using synthetic dataset 'synthetic_bolcom'");
+                    journeys = createSyntheticJourneys(C);
+                    break;
+                case "sample_bolcom":
+                    System.out.println("using csv based dataset 'sample_bolcom'");
+                    journeys = createCsvJourneys(C);
                     break;
                 case "synthetic_yoochoose":
                     System.out.println("using synthetic dataset yoochoose");
-                    journeys = createSyntheticYoochooseJourneys(Integer.parseInt(catalog_size_arg));
-                case "sample_bolcom":
-                    System.out.println("using dataset 'sample_bolcom'");
-                    journeys = createBolcomJourneys(Integer.parseInt(catalog_size_arg));
+                    journeys = createSyntheticYoochooseJourneys(C);
                     break;
                 case "sample_yoochoose":
-                    System.out.println("using dataset 'sample_yoochoose'");
-                    journeys = createYoochooseJourneys(Integer.parseInt(catalog_size_arg));
+                    System.out.println("using csv based dataset 'sample_yoochoose'");
+                    journeys = createCsvYoochooseJourneys(C);
                     break;
                 default:
-                    // Handle the case where 'a' doesn't match any strategy
+                    // Handle the case where 'journeysource_arg' doesn't match any strategy
                     throw new IllegalArgumentException("Invalid value of 'journeysource_arg'" + journeysource_arg);
             }
 
@@ -121,9 +123,11 @@ public class Main {
     }
 
     private static Journeys createSyntheticYoochooseJourneys(int C) {
-        SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(C);
-
-        return null;
+        SyntheticJourneySupplier syntheticSupplier = new SyntheticJourneySupplier(C,
+                0.10324840656752753, 0.9999999999999999, 199.00000000000003,
+                0.07980915552672938, 0.9999999999999999, 147418.00000000003
+        );
+        return new Journeys(syntheticSupplier);
     }
 
     private static String appendMetaToBaseFilename(String originalPath) {
@@ -170,22 +174,24 @@ public class Main {
         }
     }
 
-    private static Journeys createYoochooseJourneys(int size) {
+    private static Journeys createCsvYoochooseJourneys(int size) {
         CsvBasedJourneySupplier journeys = new CsvBasedJourneySupplier(size, "yoochoose_sample.csv");
         return new Journeys(journeys);
 
     }
 
-    private static Journeys createBolcomJourneys(int size) {
+    private static Journeys createCsvJourneys(int size) {
         CsvBasedJourneySupplier journeys = new CsvBasedJourneySupplier(size, "raw_click_lists.csv");
         return new Journeys(journeys);
     }
 
-    private static Journeys createSyntheticJourneys(int size) {
-        System.out.println("SyntheticJourneys.create(" + size + ")");
-        SyntheticJourneySupplier journeys = new SyntheticJourneySupplier(size);
-//        journeys.fit(5.597568416279968, 8.0E-5, 3.650557039874508);
-        return new Journeys(journeys);
+    private static Journeys createSyntheticJourneys(int C) {
+        System.out.println("SyntheticJourneys.create(" + C + ")");
+        SyntheticJourneySupplier syntheticSupplier = new SyntheticJourneySupplier(C,
+                0.07004263982467046, 1.9999999999999998, 277.00000000000006,
+                0.040690006010909816, 0.9999999999999999, 2335.0000000000005
+        );
+        return new Journeys(syntheticSupplier);
     }
 
     private static void executeTestScenario(URI endpoint, File tempReportFile, File tempMetaFile, Journeys journeys, int targetRps, Duration ramp) throws IOException {
