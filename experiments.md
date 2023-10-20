@@ -15,7 +15,7 @@ Prepare the Docker images:
 `make docker`
 
 ## Getting started 
-Prepare all models and save them to a storage bucket 
+Prepare all models and save them to a storage bucket.
 
 `make training_k8s_deploy_gpu`
 
