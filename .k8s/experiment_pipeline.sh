@@ -83,17 +83,17 @@ export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
-devices=('cuda')
+models=('core' 'gru4rec' 'stamp')
+devices=('cpu')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(1000000)
+c_values=(50000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
-JOURNEY_SOURCES=('synthetic_bolcom')
+JOURNEY_SOURCES=('synthetic_bolcom' 'sample_bolcom' 'synthetic_yoochoose' 'sample_yoochoose')
 
 # Number of parallel executions
-max_parallel=4
+max_parallel=3
 QTY_EXPERIMENT_REPEATS=3
 
 # Initial sleep delay (seconds) for the first deployments
