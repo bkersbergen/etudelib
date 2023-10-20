@@ -4,13 +4,12 @@ Etude - A Framework for Measuring the Inference Latency of Session-Based Recomme
 
 
 ## Introduction
-Etudelib is a deep learning library that aims to enable algorithm designers and data scientists to evaluate the computational performance of their models, without forcing them to go through a difficult deployment cycle
+Etudelib aims to enable algorithm designers and data scientists to evaluate the computational performance of their models
 
 ### Key Features
 * Ready to use deep learning SBR algorithms and benchmarks
 * PyTorch Lightning based model implementations to reduce the boilerplate code and limit the implementation efforts to the bare essentials
-* All models can be exported for accelerated inference hardware
-* A set of tools for quick and easy evaluate the computational performance of (their) models, without forcing them to go through a difficult deployment cycle
+* A set of tools for evaluate the computational performance of (their) models
 * A set of inference tools to quick and easy deployment of the standard or custom session based recommendation models.
 
 ### Getting started
@@ -27,12 +26,11 @@ pip install -e .
 
 
 ### Load test
-(zie microbenchmarking.py)
 Always use the same machine for models: 
-* model names: 'core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'noop', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp'
-* catalog size: [1_000, 10_000, 100_000, 500_000, 1_000_000, 5_000_000, 10_000_000, 20_000_000]
-* runtimes: eager, jitopt, onnx
-* device_types: cpu of gpu (impliciet dmv hardware voor endpoint deployment)
+* model names: 'core', 'gcsan', 'gru4rec', 'lightsans', 'narm', 'repeatnet', 'sasrec', 'sine', 'srgnn', 'stamp'
+* catalog size: [1_000, 10_000, 100_000, 1_000_000, 10_000_000, 20_000_000]
+* runtimes: eager, jitopt
+* device_types: cpu or gpu 
 
 
 ## Training 
@@ -43,33 +41,6 @@ Training a model on a specific dataset and category requires further configurati
 Alternatively, a model name could also be provided as an argument, where the scripts automatically find the corresponding config file.
 where the current available models are:
 
-TODO: list of models
-
-
-For example, to train LightSans you can use
-xxxxx
-
-
-## Inference
-xxxxx
-
-
-## Exporting Model to ONNX
-It is possible to export your model to ONNX 
-```
-optimization:
-    export_mode: "onnx"
-```
-
-## Hyper parameter Optimization
-To run hyperparameter optimization, use the following command:
-
-```bash
-python tools/hpo/sweep.py \
-    --model lightsans
-    --model_config path_to_config.yaml
-    --sweep_config tools/hpo/sweep.yaml
-```
 
 
 #### Troubleshooting install

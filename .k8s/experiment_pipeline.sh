@@ -82,14 +82,14 @@ export -f file_exists
 export -f deploy_evaluate
 
 #models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'noop' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp' 'topkonly')
-models=('core' 'gcsan' 'gru4rec' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
+models=('core' 'gcsan' 'gru4rec' 'lightsans' 'narm' 'repeatnet' 'sasrec' 'sine' 'srgnn' 'stamp')
 devices=('cpu' 'cuda')
 #runtimes=('jitopt' 'onnx')
 runtimes=('jitopt')
-c_values=(53000)
+c_values=(10000 100000 1000000 10000000 20000000)
 TARGET_RPS=1000
 RAMP_DURATION_MINUTES=10
-JOURNEY_SOURCES=('sample_bolcom' 'sample_yoochoose')
+JOURNEY_SOURCES=('synthetic_bolcom')
 
 # Number of parallel executions
 max_parallel=8
